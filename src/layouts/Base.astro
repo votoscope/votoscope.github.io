@@ -1,0 +1,34 @@
+---
+import "../styles/dashboard.css";
+import "../styles/site.css";
+
+interface Props { titre: string; description?: string; election?: "qc" | "ca" }
+const { titre, description = "Projections électorales fondées sur les sondages publics, à code et données ouverts.", election } = Astro.props;
+const chemin = Astro.url.pathname;
+const liens = [["/quebec/", "Québec"], ["/canada/", "Canada"], ["/methode/", "Méthode"], ["/a-propos/", "À propos"]];
+---
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titre === "Votoscope" ? titre : `${titre} · Votoscope`}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  </head>
+  <body data-election={election}>
+    <nav class="site">
+      <a class="marque" href="/">Votoscope</a>
+      <ul>
+        {liens.map(([href, nom]) => <li><a href={href} aria-current={chemin.startsWith(href) ? "page" : undefined}>{nom}</a></li>)}
+      </ul>
+    </nav>
+    <slot />
+    <footer class="site">
+      <p>Votoscope est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts&nbsp;: <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
+    </footer>
+  </body>
+</html>

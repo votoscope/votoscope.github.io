@@ -1,0 +1,59 @@
+<div class="row trend">
+    <section><h2>Tendance des intentions de vote</h2><div id="trend-chart"></div></section>
+  </div>
+
+  <div class="row explore">
+    <section><h2>Projection par circonscription (carte 2023)</h2>
+      <div class="range-controls" id="map-mode">
+        <button id="btn-tiles">Tuiles</button>
+        <button id="btn-geo">Carte géographique</button>
+      </div>
+      <div id="tile-map"></div>
+      <div id="riding-map" hidden></div>
+    </section>
+    <div class="side">
+      <section><h2>Circonscription sélectionnée</h2><div id="riding-detail"></div></section>
+      <section><h2>Circonscriptions les plus serrées</h2><div id="watchlist"></div>
+        <p class="note">Circonscriptions classées par écart projeté entre le favori et son poursuivant.
+        La sélection d'une ligne met à jour la fiche ci-contre.</p>
+      </section>
+      <section><h2>Circonscriptions des chefs</h2><div id="leader-ridings"></div></section>
+    </div>
+  </div>
+
+  <div class="row bottom">
+    <section><h2>Distribution des sièges</h2><div id="seat-bar"></div></section>
+    <section><h2>Scénarios de gouvernement</h2><div id="government-outcomes"></div></section>
+    <section class="wide"><h2>Votes et sièges : la distorsion du scrutin</h2><div id="disproportion"></div></section>
+  </div>
+
+  <details class="methodology">
+    <summary>Méthodologie</summary>
+    <h4>1. Données</h4>
+    <p>Résultats officiels d'Élections Canada par circonscription (2015, 2019, 2021 et 2025), transposition
+    officielle des résultats de 2021 sur la carte de 2023, sondages nationaux depuis 2015 et ventilations
+    régionales publiées par 338Canada depuis décembre 2019 (Atlantique, Québec, Ontario,
+    Manitoba et Saskatchewan, Alberta, Colombie-Britannique).</p>
+    <h4>2. Cibles régionales</h4>
+    <p>Pour chaque région, les ventilations publiées depuis l'élection de 2025 sont regroupées avec le
+    poids n·exp(−âge/τ), l'âge étant mesuré sur une horloge où un jour de campagne compte pour D jours&nbsp;
+    τ = 120 jours et D = 16 sont estimés par prévision un pas en avant de l'écart région-national de
+    chacun des 717 sondages ventilés. Les cibles sont corrigées du biais régional moyen des sondages de
+    veille de 2021 et 2025, multiplié parti par parti par un facteur de retrait m²/(m² + s²/k), où m et s²
+    sont la moyenne et la variance de l'écart national entre sondages de veille et résultats sur les
+    k = 3 derniers scrutins.</p>
+    <h4>3. Circonscriptions</h4>
+    <p>Dans chaque région, les résultats de 2025 sont portés vers la cible par transfert&nbsp; un parti en
+    recul perd la même proportion de ses voix partout, modulée par (s/s̄)^(−β) avec β = 0,5 (rétention
+    plus forte là où il est fort), et les voix libérées vont aux partis en progression au prorata de
+    leurs gains. Évalué à parts régionales connues sur les transitions 2015→2019, 2019→2021 et
+    2021→2025, ce transfert réduit l'erreur absolue de sièges de 106 à 90 par rapport à un déplacement
+    proportionnel uniforme.</p>
+    <h4>4. Incertitude</h4>
+    <p>Chaque tirage combine un choc national et un choc régional en log-ratios centrés (écarts-types par
+    parti estimés sur les erreurs des sondages de veille) et, pour chaque circonscription, un écart local
+    tiré parmi les erreurs des trois transitions, centrées par région. À la veille des scrutins de 2021
+    et de 2025, chacun évalué avec des paramètres estimés sans lui, 11 des 12 intervalles à 90&nbsp;% des
+    sièges par parti contiennent le résultat&nbsp; l'erreur absolue de sièges du scénario médian (médoïde)
+    est de 36 et de 14.</p>
+  </details>

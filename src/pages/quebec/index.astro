@@ -1,0 +1,13 @@
+---
+import Base from "../../layouts/Base.astro";
+import Tableau from "../../components/TableauQuebec.astro";
+---
+<Base titre="Québec" election="qc">
+  <header class="page">
+    <p class="kicker">Élections générales québécoises</p>
+    <h1>Intentions de vote et projection des sièges</h1>
+    <div id="status">Chargement…</div>
+  </header>
+  <Tableau />
+  <script>import "../../scripts/dashboard.js";</script>
+</Base>

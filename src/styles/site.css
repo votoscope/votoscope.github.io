@@ -1,0 +1,24 @@
+/* Habillage du site : navigation, pages de texte, cartes d'accueil.
+   Mêmes jetons que les tableaux de bord (dashboard.css). */
+a { color: var(--heading); text-decoration: underline; text-decoration-color: rgba(28, 25, 23, 0.3); text-underline-offset: 2px; }
+a:hover { text-decoration-color: var(--heading); }
+
+nav.site { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+nav.site .marque { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; color: var(--heading); text-decoration: none; }
+nav.site ul { list-style: none; display: flex; gap: 1.4rem; margin: 0; padding: 0; font-size: 0.92rem; }
+nav.site ul a { text-decoration: none; color: var(--muted); }
+nav.site ul a:hover, nav.site ul a[aria-current="page"] { color: var(--heading); }
+
+footer.site { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }
+
+.prose { font-family: var(--serif); font-size: 1.05rem; line-height: 1.7; max-width: 720px; color: var(--text); }
+.prose h1 { margin-bottom: 1.2rem; }
+.prose h2 { font-family: var(--sans); font-size: 1.05rem; margin: 2rem 0 0.5rem; }
+.prose p, .prose ul { margin: 0 0 1rem; }
+
+.cartes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+.carte { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem 1.75rem; text-decoration: none; color: var(--text); transition: border-color 0.2s; }
+.carte:hover { border-color: var(--heading); }
+.carte h2 { margin: 0 0 0.4rem; }
+.carte p { margin: 0; font-family: var(--serif); font-size: 0.95rem; color: var(--muted); }
+.intro { font-family: var(--serif); font-size: 1.15rem; line-height: 1.6; max-width: 720px; color: var(--text); }

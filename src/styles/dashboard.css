@@ -1,0 +1,115 @@
+/* Tableaux de bord Votoscope : noir et blanc sur neutres chauds ; la seule
+   couleur de la page est celle des partis, dans les graphiques et les
+   pastilles. Lora pour la prose, Inter pour l'interface. */
+:root {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --heading: #1c1917;
+  --text: #44403c;
+  --muted: #6b6560;
+  --faint: #74706b;
+  --line: #e7e5e4;
+  --line-strong: #d6d3d1;
+  --hover: #f5f5f4;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --serif: "Lora", Georgia, "Times New Roman", serif;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 1440px;
+  -webkit-font-smoothing: antialiased;
+}
+header.page { margin-bottom: 2rem; }
+header.page .kicker { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.4rem; }
+h1 { font-family: var(--serif); font-size: 2.1rem; font-weight: 600; line-height: 1.15; color: var(--heading); margin: 0 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; color: var(--heading); margin: 0 0 1rem; }
+#status { color: var(--muted); font-size: 0.88rem; }
+
+.row { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+.row.trend { grid-template-columns: 1fr; }
+.row.explore { grid-template-columns: 1.15fr 1fr; align-items: stretch; }
+.row.explore .side { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.row.explore > section { display: flex; flex-direction: column; }
+.row.bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.row.bottom > section.wide { grid-column: 1 / -1; }
+@media (max-width: 1100px) { .row.explore, .row.bottom { grid-template-columns: 1fr; } }
+
+section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  min-width: 0;
+  transition: background 0.3s ease;
+}
+section.flash { animation: flash-bg 0.9s ease; }
+@keyframes flash-bg { 0% { background: var(--hover); } 100% { background: var(--surface); } }
+@media (prefers-reduced-motion: reduce) { section.flash { animation: none; } }
+
+#riding-map { flex: 1; min-height: 620px; background: var(--surface); }
+.leaflet-container { background: var(--surface); font-family: var(--sans); }
+.range-controls { margin-bottom: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.range-controls button {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.35rem 0.95rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--heading);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.range-controls button:hover { border-color: var(--heading); }
+.range-controls button.active { background: var(--heading); border-color: var(--heading); color: #fff; }
+
+#tile-map svg { width: 100%; height: auto; display: block; }
+#tile-map .tile { cursor: pointer; }
+#tile-map text { pointer-events: none; font-family: var(--sans); }
+
+/* Observable Plot fixe 10 px sur le svg racine : taille de base lisible,
+   police de l'interface ; les tailles posées par marque restent. */
+svg[class*="plot-"] { font-size: 12.5px !important; font-family: var(--sans) !important; color: var(--text); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 0.75rem; }
+.clickable-row { cursor: pointer; }
+.clickable-row:hover { background: var(--hover); }
+.selected-row { background: var(--hover); font-weight: 600; }
+#watchlist { max-height: 360px; overflow-y: auto; }
+.chip { white-space: nowrap; }
+.row.explore.nomap { grid-template-columns: 1fr; }
+.row.explore.nomap .side { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 1100px) { .row.explore.nomap .side { grid-template-columns: 1fr; } }
+.sw { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 2px; margin-right: 0.45em; vertical-align: -0.02em; }
+
+.note { font-family: var(--serif); font-size: 0.86rem; color: var(--muted); max-width: 640px; line-height: 1.55; margin-top: 0.9rem; }
+.muted-cell { color: var(--muted); font-style: italic; }
+#riding-detail h3 { font-family: var(--serif); margin: 0 0 0.7rem; font-size: 1.25rem; font-weight: 600; color: var(--heading); }
+#leader-ridings { min-height: 2rem; }
+
+details.methodology {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.1rem 1.75rem;
+  margin-bottom: 2rem;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+details.methodology summary { font-family: var(--sans); font-weight: 600; color: var(--heading); cursor: pointer; }
+details.methodology h4 { font-family: var(--sans); margin: 1.2rem 0 0.3rem; font-size: 0.85rem; font-weight: 600; color: var(--heading); }
+details.methodology p, details.methodology ul { margin: 0.2rem 0 0.7rem; max-width: 760px; }
+details.methodology ul { padding-left: 1.2rem; }
+
+footer.page { font-size: 0.8rem; color: var(--muted); margin-top: 2rem; }
+#watchlist td:last-child, #riding-detail td { white-space: nowrap; }
