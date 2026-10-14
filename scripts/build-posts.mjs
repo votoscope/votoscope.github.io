@@ -38,12 +38,25 @@ function displayLast(code, locale) {
   return code.slice(0, last.start) + `display(${shown});` + code.slice(last.end);
 }
 
+/**
+ * TeX of tangent/note ($...$ inline, $$...$$ display) as Notebook Kit
+ * interpolations (${tex`...`}, ${tex.block`...`}). Only spans holding TeX
+ * syntax (\, ^, _ or braces) are converted, so amounts such as « 2 $ » stay
+ * as they are.
+ */
+function tex(text) {
+  const raw = (s) => s.replace(/`/g, "\\`");
+  return text
+    .replace(/\$\$([\s\S]+?)\$\$/g, (m, t) => (/[\\^_{}]/.test(t) ? `\${tex.block\`${raw(t.trim())}\`}` : m))
+    .replace(/(?<![\\$])\$(?![\s{$])([^$\n]+?)(?<=\S)\$(?!\d)/g, (m, t) => (/[\\^_{}]/.test(t) ? `\${tex\`${raw(t)}\`}` : m));
+}
+
 /** The notebook with every module cell adapted by displayLast and empty cells removed. */
 function adapt(notebook, locale) {
   // Inclusive forms such as élu.es read as web addresses (.es domain) to the
   // markdown renderer, which turns them into links; a span splits them.
   notebook = notebook.replace(/(<script\b[^>]*\btype="text\/markdown"[^>]*>)([\s\S]*?)(<\/script>)/g,
-    (cell, open, text, close) => open + text.replace(/(\p{L})\.(es?)\b/gu, "$1<span>.</span>$2") + close);
+    (cell, open, text, close) => open + tex(text).replace(/(\p{L})\.(es?)\b/gu, "$1<span>.</span>$2") + close);
   return notebook.replace(/\n?[ \t]*<script\b([^>]*)\btype="module"([^>]*)>([\s\S]*?)<\/script>/g, (cell, before, after, code) => {
     if (!code.trim()) return "";
     return cell.replace(code, () => displayLast(code, locale));

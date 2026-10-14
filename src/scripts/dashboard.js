@@ -45,11 +45,12 @@ const T = {
     majority: "majoritaire", minority: "minoritaire", na: "sans objet", noneSuffices: "aucun tiers parti seul",
     govNote: (t) => "Chaque simulation est classée dans un scénario unique; les probabilités somment à 100 % (scénarios sous 1 % omis). " +
       `Balance du pouvoir : partis autres que le gouvernement et l'opposition officielle dont les sièges, ajoutés à ceux du gouvernement, atteindraient la majorité de ${t} sièges, du plus petit au plus grand.`,
-    balanceAxis: "Probabilité de détenir la balance du pouvoir (%)",
-    balanceTip: (p, b) => `${p}\nBalance du pouvoir : ${b} % des simulations`,
-    balanceNote: "Part des simulations où le parti détient la balance du pouvoir : le gouvernement est minoritaire, le parti n'est ni le gouvernement " +
-      "ni l'opposition officielle, et ses sièges, ajoutés à ceux du gouvernement, atteignent la majorité. Plusieurs partis peuvent la détenir dans une même simulation.",
-    balanceNone: "Aucun parti ne détient la balance du pouvoir dans plus de 0,5 % des simulations.",
+    certainty: ["sûre", "probable", "penchant", "incertaine"],
+    certaintyAxis: "Circonscriptions où le parti est favori",
+    certaintyTip: (p, c, n, names) => `${p}, ${c} : ${n} circonscription${n > 1 ? "s" : ""}\n${names}`,
+    certaintyNote: (t) => "Chaque circonscription est attribuée à son parti favori et classée selon sa probabilité de victoire : " +
+      `sûre (95 % ou plus), probable (75 à 95 %), penchant (60 à 75 %), incertaine (moins de 60 %). Trait pointillé : majorité (${t} sièges).`,
+    candidate: "Candidat.e", noCandidate: "aucune candidature",
     loading: "Chargement des données…",
     status: (d, n, r, c) => `Intentions de vote au ${d} · ${n} sondages · ${r} circonscriptions · mis à jour le ${c}`,
     trendNote: (s) => "Courbes : moyenne des sondages. La prévision utilise les parts corrigées de l'écart historique " +
@@ -89,11 +90,12 @@ const T = {
     majority: "majority", minority: "minority", na: "not applicable", noneSuffices: "no single third party",
     govNote: (t) => "Each simulation is assigned to a single scenario; probabilities sum to 100% (scenarios below 1% omitted). " +
       `Balance of power: parties other than the government and the Official Opposition whose seats, added to the government's, would reach the ${t}-seat majority, from smallest to largest.`,
-    balanceAxis: "Probability of holding the balance of power (%)",
-    balanceTip: (p, b) => `${p}\nBalance of power: ${b}% of simulations`,
-    balanceNote: "Share of simulations in which the party holds the balance of power: the government is a minority, the party is neither the government " +
-      "nor the Official Opposition, and its seats, added to the government's, reach a majority. Several parties can hold it in the same simulation.",
-    balanceNone: "No party holds the balance of power in more than 0.5% of simulations.",
+    certainty: ["safe", "likely", "lean", "toss-up"],
+    certaintyAxis: "Ridings where the party is the favourite",
+    certaintyTip: (p, c, n, names) => `${p}, ${c}: ${n} riding${n > 1 ? "s" : ""}\n${names}`,
+    certaintyNote: (t) => "Each riding is assigned to its favourite party and classed by that party's probability of winning: " +
+      `safe (95% or more), likely (75 to 95%), lean (60 to 75%), toss-up (under 60%). Dashed line: majority (${t} seats).`,
+    candidate: "Candidate", noCandidate: "no candidate",
     loading: "Loading data…",
     status: (d, n, r, c) => `Voting intentions as of ${d} · ${n} polls · ${r} ridings · updated ${c}`,
     trendNote: (s) => "Lines: poll average. The forecast uses shares corrected for the historical gap " +
@@ -200,7 +202,7 @@ function selectRiding(code, { zoom = true } = {}) {
   registry.selectedCode = code;
 
   renderRidingDetail(code, name, entry, registry.ridingBaseline.sharesFor(code), registry.partyCodes,
-    registry.winProbs?.[code] ?? null);
+    registry.winProbs?.[code] ?? null, registry.candidates?.[code] ?? null);
 
   // Map: reset every layer to its default style, then highlight the
   // selected one with a heavy black outline that stays until the next
@@ -254,7 +256,7 @@ function selectRiding(code, { zoom = true } = {}) {
   detailSection.classList.add("flash");
 }
 
-function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCodes, winProbs) {
+function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCodes, winProbs, candidates) {
   const host = document.getElementById("riding-detail");
   host.innerHTML = "";
 
@@ -262,7 +264,9 @@ function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCode
   title.textContent = name;
   host.appendChild(title);
 
+  // With a candidate list, a party with no candidate and no previous vote here is left out.
   const rows = partyCodes
+    .filter((p) => !candidates || candidates[p] || (baselineShares?.[p] ?? 0) > 0)
     .map((p) => ({
       party: p,
       projected: forecastEntry.shares[p],
@@ -277,16 +281,18 @@ function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCode
   // QS ahead by 0.8 in the central scenario, PCQ the likelier winner).
   // Plain-language headers on purpose.
   const table = document.createElement("table");
-  table.innerHTML =
-    `<thead><tr>${T.detailHead(CFG.previousElection.label)}</tr></thead>`;
+  // Candidates, when the forecast lists them: a column after the party.
+  const head = T.detailHead(CFG.previousElection.label);
+  table.innerHTML = `<thead><tr>${candidates ? head.replace(/(<\/th>)/, `$1<th>${T.candidate}</th>`) : head}</tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const r of rows) {
     const tr = document.createElement("tr");
     const proj = formatPercent(r.projected, 1);
     const base = r.baseline !== null ? formatPercent(r.baseline, 1) : T.nd;
     const pw = r.pWin !== null ? formatPercent(r.pWin) : T.nd;
+    const cand = candidates ? `<td>${candidates[r.party] ?? `<span class="muted-cell">${T.noCandidate}</span>`}</td>` : "";
     tr.innerHTML =
-      `<td>${chip(r.party)}</td>` +
+      `<td>${chip(r.party)}</td>${cand}` +
       `<td>${pw}</td><td>${proj}</td><td>${base}</td>`;
     tbody.appendChild(tr);
   }
@@ -328,7 +334,7 @@ function renderTrendChart(fullSeries, polls, partyCodes) {
 
     const points = [];
     for (const row of series) {
-      for (const party of partyCodes) points.push({ date: new Date(row.date), party, ...row[party] });
+      for (const party of partyCodes) if (row[party]) points.push({ date: new Date(row.date), party, ...row[party] });
     }
 
     // End-of-line labels: party name + last predicted share, right of the
@@ -868,46 +874,64 @@ function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
   host.appendChild(note);
 }
 
-// ---- Balance of power -------------------------------------------------------
-// Probability that each party holds the balance of power, summed over the
-// minority scenarios in which it does.
+// ---- Seats by certainty ----------------------------------------------------
+// Each riding goes to its favourite (highest probability of winning), classed
+// by that probability; one stacked bar per party, darker = surer.
 
-function renderBalanceOfPower(scenarios, partyCodes) {
-  const host = document.getElementById("balance-of-power");
-  if (!scenarios) { host.closest("section")?.remove(); return; }
+const CERTAINTY = [0.95, 0.75, 0.6, 0];
+const CERTAINTY_OPACITY = [1, 0.68, 0.42, 0.2];
+
+function renderSeatCertainty(winProbs, partyCodes, totalSeats) {
+  const host = document.getElementById("seat-certainty");
+  if (!winProbs) { host.closest("section")?.remove(); return; }
   host.innerHTML = "";
-  const probability = Object.fromEntries(partyCodes.map((p) => [p, 0]));
-  for (const s of scenarios) for (const p of balanceHolders(s)) probability[p] += s.probability;
-  const rows = partyCodes
-    .filter((p) => probability[p] >= 0.005)
-    .map((p) => ({ party: p, probability: probability[p] }))
-    .sort((a, b) => b.probability - a.probability);
-
-  if (rows.length) {
-    host.appendChild(Plot.plot({
-      width: 560,
-      height: 40 * rows.length + 40,
-      marginLeft: 72,
-      marginRight: 60,
-      x: { label: T.balanceAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, 100], percent: true, grid: true },
-      marginBottom: 44,
-      y: { domain: rows.map((r) => r.party), label: null, tickFormat: label },
-      color: colorScale(partyCodes),
-      marks: [
-        Plot.barX(rows, { x: "probability", y: "party", fill: "party", rx: 4, insetTop: 6, insetBottom: 6 }),
-        Plot.text(rows, { x: "probability", y: "party", text: (r) => formatPercent(r.probability), dx: 6, textAnchor: "start", fill: "#333", fontSize: 11 }),
-        Plot.tip(rows, Plot.pointerY({
-          x: "probability", y: "party",
-          title: (r) => T.balanceTip(label(r.party), formatNumber(r.probability * 100)),
-        })),
-        Plot.ruleX([0]),
-      ],
-    }));
+  const cells = new Map();
+  for (const [code, probs] of Object.entries(winProbs)) {
+    const p = partyCodes.reduce((b, q) => ((probs[q] ?? 0) > (probs[b] ?? 0) ? q : b), partyCodes[0]);
+    const k = CERTAINTY.findIndex((t) => probs[p] >= t);
+    const key = `${p}|${k}`;
+    if (!cells.has(key)) cells.set(key, { party: p, k, n: 0, names: [] });
+    const c = cells.get(key); c.n++; c.names.push(registry.nameByCode.get(code) ?? code);
   }
+  const totals = Object.fromEntries(partyCodes.map((p) => [p, 0]));
+  for (const c of cells.values()) totals[c.party] += c.n;
+  const parties = partyCodes.filter((p) => totals[p] > 0).sort((a, b) => totals[b] - totals[a]);
+  const rows = [...cells.values()].sort((a, b) => a.k - b.k);
+  const threshold = Math.floor(totalSeats / 2) + 1;
+  const list = (names) => names.length > 12 ? `${names.slice(0, 12).join(", ")}…` : names.join(", ");
 
+  host.appendChild(Plot.plot({
+    width: 560,
+    height: 40 * parties.length + 50,
+    marginLeft: 72,
+    marginRight: 20,
+    marginBottom: 44,
+    x: { label: T.certaintyAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, Math.max(threshold, ...Object.values(totals)) * 1.04], grid: true },
+    y: { domain: parties, label: null, tickFormat: label },
+    marks: [
+      Plot.barX(rows, Plot.stackX({
+        x: "n", y: "party", order: "k", fill: (d) => PARTY_COLORS[d.party] ?? "#a8a29e",
+        fillOpacity: (d) => CERTAINTY_OPACITY[d.k], insetTop: 6, insetBottom: 6,
+      })),
+      Plot.text(rows.filter((d) => d.n >= 3), Plot.stackX({
+        x: "n", y: "party", order: "k", text: "n", fill: (d) => (d.k < 2 ? "white" : "#1c1917"), fontSize: 11,
+      })),
+      Plot.tip(rows, Plot.pointer(Plot.stackX({
+        x: "n", y: "party", order: "k",
+        title: (d) => T.certaintyTip(label(d.party), T.certainty[d.k], d.n, list(d.names)),
+      }))),
+      Plot.ruleX([threshold], { stroke: "#1c1917", strokeDasharray: "3,3" }),
+      Plot.ruleX([0]),
+    ],
+  }));
+
+  const legend = document.createElement("div");
+  legend.className = "certainty-legend";
+  legend.innerHTML = T.certainty.map((c, k) => `<span><i style="opacity:${CERTAINTY_OPACITY[k]}"></i>${c}</span>`).join("");
+  host.appendChild(legend);
   const note = document.createElement("p");
   note.className = "note";
-  note.textContent = rows.length ? T.balanceNote : T.balanceNone;
+  note.textContent = T.certaintyNote(threshold);
   host.appendChild(note);
 }
 
@@ -947,6 +971,7 @@ async function main() {
   const ridingForecast = new Map(Object.entries(projection.ridingForecast));
   registry.ridingForecast = ridingForecast;
   registry.winProbs = projection.ridingWinProbs ?? null;
+  registry.candidates = projection.ridingCandidates ?? null;
   const baselineAll = projection.ridingBaseline ?? projection.ridingBaseline2022;
   registry.ridingBaseline = { sharesFor: (code) => baselineAll[String(code)] ?? null };
 
@@ -964,7 +989,8 @@ async function main() {
     // Dots come from the raw poll rows (a cheap pivot, no fitting); the
     // smoothed series and bands come precomputed.
     const { polls } = pivotPolls(pollRows);
-    renderTrendChart(trendSeries, polls, partyCodes);
+    // The trend may include parties of earlier cycles (trendPartyCodes).
+    renderTrendChart(trendSeries, polls, projection.trendPartyCodes ?? partyCodes);
     // When the seat projection uses vote shares corrected for the polls'
     // historical bias, say so under the poll trend, with the shares used.
     if (meta.projectedVote) {
@@ -1009,7 +1035,7 @@ async function main() {
       projection.medoidCounts ?? projection.pointCounts));
   section("government-outcomes", () =>
     renderGovernmentScenarios(projection.scenarios, totalSeats, partyCodes));
-  section("balance-of-power", () => renderBalanceOfPower(projection.scenarios, partyCodes));
+  section("seat-certainty", () => renderSeatCertainty(projection.ridingWinProbs, partyCodes, totalSeats));
   section("disproportion", () =>
     renderDisproportion(projection.disproportion, partyCodes));
 

@@ -1,14 +1,17 @@
 ---
 import "../styles/dashboard.css";
 import "../styles/site.css";
-import { NAV, PAGES, SITE, langOf, translationOf } from "../i18n/routes.js";
+import { NAV, PAGES, SITE, ELECTION_DATES, langOf, translationOf } from "../i18n/routes.js";
 
 interface Props { title: string; description?: string; election?: "qc" | "bc" | "ca" }
 const path = Astro.url.pathname;
 const lang = langOf(path);
 const S = SITE[lang];
 const { title, description = S.description, election } = Astro.props;
-const links = NAV[lang].map(([page, name]) => [PAGES[page][lang], name]);
+const entry = ([page, name]) => ({ href: PAGES[page][lang], name, current: path.startsWith(PAGES[page][lang]), date: ELECTION_DATES[page] });
+const items = NAV[lang].map(([a, b]) => (Array.isArray(b)
+  ? { label: a, links: b.flatMap((group, g) => group.map((l, i) => ({ ...entry(l), separator: g > 0 && i === 0 }))) }
+  : entry([a, b])));
 const home = PAGES.home[lang];
 const otherLang = lang === "fr" ? "en" : "fr";
 ---
@@ -31,11 +34,29 @@ const otherLang = lang === "fr" ? "en" : "fr";
     <nav class="site">
       <a class="brand" href={home}><img src="/logo.svg" alt="" width="31" height="34" />Votoscope</a>
       <ul>
-        {links.map(([href, name]) => <li><a href={href} aria-current={path.startsWith(href) ? "page" : undefined}>{name}</a></li>)}
+        {items.map((it) => it.links
+          ? <li class="menu"><details><summary class={it.links.some((l) => l.current) ? "current" : undefined}>{it.label}<span class="live-dot" hidden></span></summary>
+              <ul>{it.links.map((l) => <li class={l.separator ? "separator" : undefined}><a href={l.href} aria-current={l.current ? "page" : undefined} data-election-date={l.date}>{l.name}<span class="live-dot" hidden></span></a></li>)}</ul>
+            </details></li>
+          : <li><a href={it.href} aria-current={it.current ? "page" : undefined}>{it.name}</a></li>)}
         <li class="language"><a href={translationOf(path)} hreflang={otherLang} lang={otherLang}>{S.otherLanguage}</a></li>
       </ul>
     </nav>
     <slot />
+    <script>
+      // Election under way (vote within 60 days): red dot on the entry and on the menu.
+      for (const a of document.querySelectorAll("nav.site a[data-election-date]")) {
+        const days = (Date.parse(a.dataset.electionDate) - Date.now()) / 864e5;
+        if (days > -1 && days <= 60) {
+          a.querySelector(".live-dot").hidden = false;
+          a.closest("details").querySelector("summary .live-dot").hidden = false;
+        }
+      }
+      // Close the drop-down menu on a click outside it or on Escape.
+      const menus = document.querySelectorAll("nav.site details");
+      document.addEventListener("click", (e) => { for (const d of menus) if (!d.contains(e.target)) d.open = false; });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const d of menus) d.open = false; });
+    </script>
     <footer class="site">
       <p>{S.footer} <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
     </footer>

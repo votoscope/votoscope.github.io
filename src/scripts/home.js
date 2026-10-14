@@ -12,7 +12,7 @@ const T = {
     majority: (n) => `Majorité : ${n} élus`, seatsOf: (p, n) => `${p} : ${n} élus`,
     house: (t, n) => `${t} circonscriptions · majorité : ${n}`,
     first: (p) => `${p} premier en nombre d'élus`, majorityGov: "Gouvernement majoritaire",
-    asOf: (d, n) => `Sondages au ${d} · ${n} sondages`, unavailable: "Prévision indisponible.",
+    asOf: (d, n) => `Sondages au ${d} · ${n} sondages`, unavailable: "Prévision indisponible.", live: (d) => `Élections le ${d}`,
     colon: " :",
   },
   en: {
@@ -20,7 +20,7 @@ const T = {
     majority: (n) => `Majority: ${n} seats`, seatsOf: (p, n) => `${p}: ${n} seats`,
     house: (t, n) => `${t} ridings · majority: ${n}`,
     first: (p) => `${p} first in seats`, majorityGov: "Majority government",
-    asOf: (d, n) => `Polls as of ${d} · ${n} polls`, unavailable: "Forecast unavailable.",
+    asOf: (d, n) => `Polls as of ${d} · ${n} polls`, unavailable: "Forecast unavailable.", live: (d) => `Election on ${d}`,
     colon: ":",
   },
 }[LANG];
@@ -73,10 +73,13 @@ function trend(proj, P) {
   const last = proj.partyCodes.filter((p) => p !== "AUTRES" && rows.at(-1)[p] && rows.at(-1)[p].mean >= 0.04)
     .map((p) => ({ p, v: rows.at(-1)[p].mean })).sort((a, b) => b.v - a.v);
   last[0].y = last[0].v;
-  for (let i = 1; i < last.length; i++) last[i].y = Math.min(last[i].v, last[i - 1].y - 0.045);
+  for (let i = 1; i < last.length; i++) last[i].y = Math.min(last[i].v, last[i - 1].y - 0.065);
+  // Labels pushed below the axis move up together.
+  const lift = Math.max(0, 0.03 - last.at(-1).y);
+  for (const l of last) l.y += lift;
   return Plot.plot({
-    width: 260, height: 140, marginLeft: 0, marginRight: 66, marginTop: 8, marginBottom: 22,
-    x: { ticks: 0, label: null }, y: { axis: null, domain: [0, Math.max(...points.map((d) => d.v)) * 1.08] },
+    width: 320, height: 150, marginLeft: 0, marginRight: 70, marginTop: 8, marginBottom: 22,
+    x: { ticks: 0, label: null }, y: { axis: null, domain: [0, Math.max(...points.map((d) => d.v), ...last.map((d) => d.y)) * 1.08] },
     marks: [
       Plot.ruleY([0], { stroke: "#d6d3d1" }),
       Plot.lineY(points, { x: "date", y: "v", z: "p", stroke: (d) => P.color(d.p), strokeWidth: 2 }),
@@ -92,6 +95,17 @@ function summarise(election, proj) {
   const P = { color: (p) => C.colors[p] ?? "#a8a29e", label: (p) => partyLabel(election, p) };
   const host = document.querySelector(`.tile.election[data-election="${election}"] .summary`);
   host.innerHTML = "";
+
+  // Election under way: the vote is within the next 60 days.
+  const days = proj.meta?.electionDate ? (Date.parse(proj.meta.electionDate) - Date.now()) / 864e5 : null;
+  if (days !== null && days > -1 && days <= 60) {
+    const tile = host.closest(".tile.election");
+    tile.classList.add("live");
+    const badge = document.createElement("p");
+    badge.className = "live-badge";
+    badge.textContent = T.live(formatDate(proj.meta.electionDate));
+    tile.querySelector("h2").after(badge);
+  }
 
   const { bar, order, seats, threshold } = seatBar(proj, P);
   const frame = document.createElement("div");

@@ -10,7 +10,7 @@ export const DASHBOARD = {
     leaders: "Circonscriptions des chefs",
     seats: "Distribution des sièges",
     scenarios: "Scénarios de gouvernement",
-    balance: "Balance du pouvoir",
+    certainty: "Sièges par degré de certitude",
     distortion: "Votes et sièges : la distorsion du scrutin",
   },
   en: {
@@ -23,7 +23,7 @@ export const DASHBOARD = {
     leaders: "Leaders' ridings",
     seats: "Seat distribution",
     scenarios: "Government scenarios",
-    balance: "Balance of power",
+    certainty: "Seats by certainty",
     distortion: "Votes and seats: the distortion of the electoral system",
   },
 };

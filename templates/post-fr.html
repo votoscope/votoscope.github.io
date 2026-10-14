@@ -28,6 +28,17 @@
       footer.site { margin-top: 4rem; padding: 1.5rem 1.6rem; background: #f6f5f3; border-radius: 14px; font: 1rem/1.55 "Inter Variable", system-ui, sans-serif; color: #44403c; }
       footer.site p { margin: 0; }
       footer.site a { color: #1c1917; }
+      nav.site li.menu { position: relative; }
+      nav.site li.menu summary { list-style: none; cursor: pointer; color: #78716c; white-space: nowrap; }
+      nav.site li.menu summary::-webkit-details-marker { display: none; }
+      nav.site li.menu summary::after { content: ""; display: inline-block; margin-left: 0.4rem; width: 0.38rem; height: 0.38rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-0.2rem) rotate(45deg); }
+      nav.site li.menu summary:hover, nav.site li.menu details[open] summary { color: #1c1917; }
+      nav.site li.menu ul { position: absolute; z-index: 1000; top: calc(100% + 0.5rem); left: -0.9rem; display: flex; flex-direction: column; gap: 0; min-width: 13rem; padding: 0.4rem 0; background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(28, 25, 23, 0.12), 0 0 0 1px rgba(28, 25, 23, 0.06); }
+      nav.site li.menu ul a { display: block; padding: 0.45rem 0.9rem; }
+      nav.site li.menu ul a:hover { background: #f5f5f4; }
+      nav.site li.menu li.separator { border-top: 1px solid #e8e8e8; margin-top: 0.35rem; padding-top: 0.35rem; }
+      nav.site .live-dot { display: inline-block; width: 0.45rem; height: 0.45rem; margin-left: 0.4rem; border-radius: 50%; background: #ef4444; vertical-align: 0.1rem; }
+      nav.site .live-dot[hidden] { display: none; }
       header.post { margin: 0 0 2rem; }
       header.post h1 { font-family: "Source Serif 4 Variable", Georgia, serif; font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; color: #1c1917; margin: 0 0 0.5rem; }
       header.post .date { font: 0.95rem "Inter Variable", system-ui, sans-serif; color: #6b6560; margin: 0; }
@@ -37,8 +48,13 @@
     <nav class="site">
       <a class="brand" href="/fr/"><img src="/logo.svg" alt="" width="31" height="34">Votoscope</a>
       <ul>
-        <li><a href="/fr/quebec/">Québec</a></li>
-        <li><a href="/fr/canada/">Canada</a></li>
+        <li class="menu"><details><summary>Prévisions<span class="live-dot" hidden></span></summary>
+          <ul>
+            <li><a href="/fr/british-columbia/" data-election-date="2026-10-24">Colombie-Britannique<span class="live-dot" hidden></span></a></li>
+            <li><a href="/fr/quebec/" data-election-date="2030-10-07">Québec<span class="live-dot" hidden></span></a></li>
+            <li class="separator"><a href="/fr/canada/">Canada</a></li>
+          </ul>
+        </details></li>
         <li><a href="/fr/posts/">Billets</a></li>
         <li><a href="/fr/method/">Méthode</a></li>
         <li><a href="/fr/about/">À propos</a></li>
@@ -46,6 +62,15 @@
       </ul>
     </nav>
     <main></main>
+    <script>
+      for (const a of document.querySelectorAll("nav.site a[data-election-date]")) {
+        const days = (Date.parse(a.dataset.electionDate) - Date.now()) / 864e5;
+        if (days > -1 && days <= 60) { a.querySelector(".live-dot").hidden = false; a.closest("details").querySelector("summary .live-dot").hidden = false; }
+      }
+      const menus = document.querySelectorAll("nav.site details");
+      document.addEventListener("click", (e) => { for (const d of menus) if (!d.contains(e.target)) d.open = false; });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const d of menus) d.open = false; });
+    </script>
     <footer class="site">
       <p>Votoscope est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts&nbsp;: <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
     </footer>

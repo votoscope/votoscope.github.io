@@ -4,10 +4,17 @@ export const PAGES = Object.fromEntries(
   Object.entries(SLUGS).map(([page, slug]) => [page, { fr: `/fr/${slug}`, en: `/en/${slug}` }]),
 );
 
+// A [label, [group, ...]] entry is a drop-down menu; each group is a list of
+// [page, name], separated by a rule (provinces in alphabetical order, then
+// the federal level).
 export const NAV = {
-  fr: [["quebec", "Québec"], ["bc", "Colombie-Britannique"], ["canada", "Canada"], ["posts", "Billets"], ["method", "Méthode"], ["about", "À propos"]],
-  en: [["quebec", "Quebec"], ["bc", "British Columbia"], ["canada", "Canada"], ["posts", "Posts"], ["method", "Method"], ["about", "About"]],
+  fr: [["Prévisions", [[["bc", "Colombie-Britannique"], ["quebec", "Québec"]], [["canada", "Canada"]]]], ["posts", "Billets"], ["method", "Méthode"], ["about", "À propos"]],
+  en: [["Forecasts", [[["bc", "British Columbia"], ["quebec", "Quebec"]], [["canada", "Canada"]]]], ["posts", "Posts"], ["method", "Method"], ["about", "About"]],
 };
+
+// Date of the next general election, when known: the menu marks an election
+// under way (vote within 60 days).
+export const ELECTION_DATES = { bc: "2026-10-24", quebec: "2030-10-07" };
 
 export const SITE = {
   fr: {
