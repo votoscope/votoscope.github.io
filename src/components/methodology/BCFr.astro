@@ -1,0 +1,48 @@
+<details class="methodology">
+  <summary>Méthodologie</summary>
+  <h4>1. Données</h4>
+  <p>Résultats officiels d'Elections BC par circonscription (2017, 2020 et 2024, données ouvertes de
+  DataBC), sondages provinciaux publiés depuis 2017 (Wikipédia), ventilations régionales de 48
+  sondages tirées des rapports des maisons de sondage, dont 34 depuis l'élection de 2024, et
+  candidatures officielles de 2026. Les résultats de 2020 sont transposés sur la carte de 2023 :
+  les votes du jour du scrutin de chaque section de vote sont répartis entre les circonscriptions
+  de 2023 selon les électeurs inscrits de 2024 dans le recoupement des sections, et les votes par
+  anticipation, par la poste et spéciaux, connus seulement par circonscription, suivent pour chaque
+  parti la répartition de ses votes du jour du scrutin. Limites des 93 circonscriptions de la
+  redistribution de 2023 (Elections BC), simplifiées pour l'affichage.</p>
+  <h4>2. Intentions de vote provinciales</h4>
+  <p>La moyenne des sondages est un processus gaussien sur les log-ratios isométriques des parts,
+  ajusté sur les sondages publiés depuis l'élection de 2024 (dernier sondage de chaque firme par
+  semaine), avec des points de rupture aux changements de chef et aux recompositions du système de
+  partis, et prédite à la date du scrutin. À la veille des élections de 2020 et de 2024, l'erreur
+  absolue moyenne de cette moyenne est de 1,2 et de 1,0 point. Un parti mesuré dans toute la province
+  mais présent dans une partie seulement des circonscriptions voit sa part ramenée à p·c, c étant la
+  part des votes de 2024 des circonscriptions où il présente une candidature.</p>
+  <h4>3. Circonscriptions</h4>
+  <p>Les résultats de 2024 sont portés vers la composition provinciale par deux formes de swing, chacune
+  dans la moitié des tirages. Par transfert, un parti en recul perd la même proportion de ses voix
+  partout et les voix libérées vont aux partis en progression, au prorata de leurs gains ; par swing
+  additif, chaque parti gagne ou perd le même nombre de points partout. Dans les deux cas, un parti sans
+  candidature dans une circonscription n'y reçoit aucune voix. Évalués à parts provinciales connues,
+  le transfert donne une erreur quadratique moyenne des parts par circonscription de 6,2 points
+  (2017→2020) et de 6,5 points (2020→2024), le swing additif 5,7 et 7,4, un déplacement proportionnel
+  6,1 et 17,3 ; le mélange des deux premières formes a, en moyenne, la meilleure log-vraisemblance des gagnants à
+  la veille des deux scrutins. Un déplacement régional tiré des ventilations (Metro Vancouver, île de
+  Vancouver, reste de la province) et un effet des député.es sortant.es (siège libéré, sortant.e sous
+  une autre bannière), évalués de la même façon, n'améliorent pas la prévision : leur poids est nul.</p>
+  <h4>4. Incertitude</h4>
+  <p>Chaque tirage combine un tirage de la moyenne des sondages, un choc provincial en log-ratios
+  centrés de variance τ²/s pour un parti de part s, τ étant estimé sur les erreurs des sondages de
+  veille de 2020 et de 2024, et, pour chaque circonscription, un écart local tiré parmi les erreurs des
+  transitions 2017→2020 et 2020→2024 sous la même forme de swing, centrées par région. À la veille des
+  scrutins de 2020 et de 2024, chacun évalué avec des paramètres estimés sans lui, les 6 intervalles à
+  90&nbsp;% des sièges par parti contiennent le résultat ; l'erreur absolue de sièges du scénario médian
+  (médoïde) est de 0 et de 6, et le gagnant est correct dans 73 des 87 et 79 des 93 circonscriptions.</p>
+  <h4>5. Scénarios de gouvernement et balance du pouvoir</h4>
+  <p>Chaque tirage est classé dans un scénario de gouvernement unique : majoritaire lorsque le
+  premier parti atteint 47 sièges, minoritaire sinon. Pour un gouvernement minoritaire sont
+  énumérés les partis dont les sièges, ajoutés à ceux du premier parti, atteignent la majorité, à
+  l'exclusion de l'opposition officielle (deuxième parti en sièges) : ces partis détiennent la
+  balance du pouvoir. La probabilité qu'un parti détienne la balance du pouvoir est la part des
+  tirages où il figure parmi eux.</p>
+</details>

@@ -2,18 +2,21 @@
 import Base from "../../layouts/Base.astro";
 import QuebecDashboard from "../QuebecDashboard.astro";
 import CanadaDashboard from "../CanadaDashboard.astro";
+import BCDashboard from "../BCDashboard.astro";
 
-interface Props { lang: "fr" | "en"; election: "qc" | "ca" }
+interface Props { lang: "fr" | "en"; election: "qc" | "bc" | "ca" }
 const { lang, election } = Astro.props;
 const T = {
   fr: {
     qc: { title: "Québec", h1: "Québec : intentions de vote et prévision électorale" },
     ca: { title: "Canada", h1: "Canada : intentions de vote et prévision électorale" },
+    bc: { title: "Colombie-Britannique", h1: "Colombie-Britannique : intentions de vote et prévision électorale" },
     loading: "Chargement…",
   },
   en: {
     qc: { title: "Quebec", h1: "Quebec: voting intentions and election forecast" },
     ca: { title: "Canada", h1: "Canada: voting intentions and election forecast" },
+    bc: { title: "British Columbia", h1: "British Columbia: voting intentions and election forecast" },
     loading: "Loading…",
   },
 }[lang];
@@ -23,6 +26,6 @@ const T = {
     <h1>{T[election].h1}</h1>
     <div id="status">{T.loading}</div>
   </header>
-  {election === "qc" ? <QuebecDashboard lang={lang} /> : <CanadaDashboard lang={lang} />}
+  {election === "qc" ? <QuebecDashboard lang={lang} /> : election === "bc" ? <BCDashboard lang={lang} /> : <CanadaDashboard lang={lang} />}
   <script>import "../../scripts/dashboard.js";</script>
 </Base>

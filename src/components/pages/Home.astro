@@ -10,7 +10,7 @@ const T = {
   fr: {
     headline: "Prévisions électorales",
     intro: "Élections fédérales et provinciales au Canada : la probabilité de victoire de chaque parti dans chaque circonscription, calculée à partir des sondages et des résultats des élections précédentes. Modèles, code et données ouverts.",
-    qc: "Québec", ca: "Canada",
+    qc: "Québec", bc: "Colombie-Britannique", ca: "Canada",
     loading: "Chargement…", dashboard: "Tableau de bord", polls: "Derniers sondages",
     posts: "Billets", noPosts: "Aucun billet publié.", allPosts: "Tous les billets",
     method: "Méthode", methodLink: "La méthode",
@@ -19,7 +19,7 @@ const T = {
   en: {
     headline: "Election forecasts",
     intro: "Federal and provincial elections in Canada: each party's chance of winning every riding, built from polls and the results of previous elections. Open models, code and data.",
-    qc: "Quebec", ca: "Canada",
+    qc: "Quebec", bc: "British Columbia", ca: "Canada",
     loading: "Loading…", dashboard: "Dashboard", polls: "Latest polls",
     posts: "Posts", noPosts: "No posts yet.", allPosts: "All posts",
     method: "Method", methodLink: "The method",
@@ -36,6 +36,11 @@ const T = {
   <div class="election-tiles">
     <a class="tile election" href={PAGES.quebec[lang]} data-election="qc">
       <h2>{T.qc}</h2>
+      <div class="summary" aria-live="polite"><p class="pending">{T.loading}</p></div>
+      <span class="more">{T.dashboard}</span>
+    </a>
+    <a class="tile election" href={PAGES.bc[lang]} data-election="bc">
+      <h2>{T.bc}</h2>
       <div class="summary" aria-live="polite"><p class="pending">{T.loading}</p></div>
       <span class="more">{T.dashboard}</span>
     </a>

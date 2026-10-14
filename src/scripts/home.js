@@ -8,7 +8,7 @@ import { PARTIES, repoData, LANG, LOCALE, partyLabel, formatPercent } from "./pa
 
 const T = {
   fr: {
-    name: { qc: "Québec", ca: "Canada" }, party: "Parti", seats: "Élus", interval: "Intervalle à 90 %",
+    name: { qc: "Québec", bc: "Colombie-Britannique", ca: "Canada" }, short: { bc: "C.-B." }, party: "Parti", seats: "Élus", interval: "Intervalle à 90 %",
     majority: (n) => `Majorité : ${n} élus`, seatsOf: (p, n) => `${p} : ${n} élus`,
     house: (t, n) => `${t} circonscriptions · majorité : ${n}`,
     first: (p) => `${p} premier en nombre d'élus`, majorityGov: "Gouvernement majoritaire",
@@ -16,7 +16,7 @@ const T = {
     colon: " :",
   },
   en: {
-    name: { qc: "Quebec", ca: "Canada" }, party: "Party", seats: "Seats", interval: "90% interval",
+    name: { qc: "Quebec", bc: "British Columbia", ca: "Canada" }, short: { bc: "B.C." }, party: "Party", seats: "Seats", interval: "90% interval",
     majority: (n) => `Majority: ${n} seats`, seatsOf: (p, n) => `${p}: ${n} seats`,
     house: (t, n) => `${t} ridings · majority: ${n}`,
     first: (p) => `${p} first in seats`, majorityGov: "Majority government",
@@ -27,6 +27,7 @@ const T = {
 
 const SOURCES = {
   qc: { repo: "quebec", projection: "qc_projection.json", polls: "qc_national_polls.json" },
+  bc: { repo: "bc", projection: "bc_dashboard.json", polls: "bc_national_polls.json" },
   ca: { repo: "canada", projection: "ca_dashboard.json", polls: "ca_national_polls.json" },
 };
 const monthYear = (d) => d.toLocaleDateString(LOCALE, { month: "short", year: "numeric", timeZone: "UTC" });
@@ -159,7 +160,7 @@ function latestPolls(batches) {
   ol.innerHTML = "";
   for (const s of list.slice(0, 6)) {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="jurisdiction">${T.name[s.election]}</span>` +
+    li.innerHTML = `<span class="jurisdiction">${T.short[s.election] ?? T.name[s.election]}</span>` +
       `<span class="firm">${s.firm}</span>` +
       `<span class="leading"><span class="sw" style="background:${s.color}"></span>${s.label} ${Math.round(s.value)}</span>` +
       `<span class="date">${formatDate(s.date)}</span>`;

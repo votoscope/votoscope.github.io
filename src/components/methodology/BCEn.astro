@@ -1,0 +1,45 @@
+<details class="methodology">
+  <summary>Methodology</summary>
+  <h4>1. Data</h4>
+  <p>Official Elections BC results by electoral district (2017, 2020 and 2024, DataBC open data),
+  provincial polls published since 2017 (Wikipedia), regional breakdowns of 48 polls taken from the
+  pollsters' reports, 34 of them since the 2024 election, and the official 2026 candidate list. The
+  2020 results are transposed onto the 2023 map: the election-day votes of each voting area are
+  split between the 2023 districts according to the 2024 registered voters in the overlap of voting
+  areas, and advance, mail-in and special votes, known only by district, follow for each party the
+  distribution of its election-day votes. Boundaries of the 93 districts of the 2023 redistribution
+  (Elections BC), simplified for display.</p>
+  <h4>2. Provincial voting intentions</h4>
+  <p>The poll average is a Gaussian process on the isometric log-ratios of the shares, fitted to the
+  polls published since the 2024 election (each firm's last poll per week), with changepoints at
+  leadership changes and party-system realignments, and predicted at election day. On the eve of
+  the 2020 and 2024 elections, the mean absolute error of this average is 1.2 and 1.0 points. A
+  party measured province-wide but running in only some districts has its share scaled to p·c, c
+  being the share of the 2024 votes cast in the districts where it has a candidate.</p>
+  <h4>3. Districts</h4>
+  <p>The 2024 results are carried to the provincial composition by two swing forms, each in half of the
+  draws. By transfer, a declining party loses the same proportion of its votes everywhere and the freed
+  votes go to the growing parties, in proportion to their gains; by additive swing, each party gains or
+  loses the same number of points everywhere. In both, a party with no candidate in a district receives
+  no votes there. Evaluated at known provincial shares, the transfer gives a root mean square error of
+  district shares of 6.2 points (2017→2020) and 6.5 points (2020→2024), the additive swing 5.7 and 7.4,
+  a proportional swing 6.1 and 17.3; the mixture of the first two forms has, on average, the best log-likelihood of
+  the winners on the eve of both elections. A regional shift taken from the breakdowns (Metro
+  Vancouver, Vancouver Island, rest of the province) and an incumbency effect (open seat, incumbent
+  running under another banner), evaluated the same way, do not improve the forecast: their weight is
+  zero.</p>
+  <h4>4. Uncertainty</h4>
+  <p>Each draw combines a draw of the poll average, a provincial shock in centred log-ratios with
+  variance τ²/s for a party of share s, τ being estimated on the eve-of-election poll errors of 2020
+  and 2024, and, for each district, a local deviation drawn from the errors of the 2017→2020 and
+  2020→2024 transitions under the same swing form, centred by region. On the eve of the 2020 and 2024
+  elections, each evaluated with parameters estimated without it, all 6 of the 90% intervals of seats
+  by party contain the result; the absolute seat error of the median scenario (medoid) is 0 and 6, and
+  the winner is correct in 73 of 87 and 79 of 93 districts.</p>
+  <h4>5. Government scenarios and balance of power</h4>
+  <p>Each draw is assigned to a single government scenario: majority when the first party reaches 47
+  seats, minority otherwise. For a minority government, the parties whose seats, added to those of
+  the first party, reach a majority are listed, excluding the Official Opposition (second party in
+  seats): these parties hold the balance of power. The probability that a party holds the balance of
+  power is the share of draws in which it is one of them.</p>
+</details>

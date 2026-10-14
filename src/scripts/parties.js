@@ -10,6 +10,13 @@ export const PARTIES = {
     colors: { LPC: "#d62728", CPC: "#1d4ed8", NDP: "#ea7c0c", BQ: "#0891b2", GPC: "#15803d", PPC: "#8b5cf6", AUTRES: "#a8a29e" },
     labels: { fr: { LPC: "PLC", CPC: "PCC", NDP: "NPD", GPC: "PV", AUTRES: "Autres" }, en: { AUTRES: "Others" } },
   },
+  bc: {
+    colors: { NDP: "#ea7c0c", CON: "#1d4ed8", GRN: "#15803d", BCU: "#d62728", ONEBC: "#8b5cf6", CENTRE: "#0891b2", AUTRES: "#a8a29e" },
+    labels: {
+      fr: { NDP: "NPD", CON: "Cons.", GRN: "Verts", BCU: "BC United", ONEBC: "OneBC", CENTRE: "CentreBC", AUTRES: "Autres" },
+      en: { CON: "Con.", GRN: "Green", BCU: "BC United", ONEBC: "OneBC", CENTRE: "CentreBC", AUTRES: "Others" },
+    },
+  },
 };
 
 /** Data folder of a model repository: local copy in development, published repository otherwise. */

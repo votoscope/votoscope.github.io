@@ -3,7 +3,7 @@ import "../styles/dashboard.css";
 import "../styles/site.css";
 import { NAV, PAGES, SITE, langOf, translationOf } from "../i18n/routes.js";
 
-interface Props { title: string; description?: string; election?: "qc" | "ca" }
+interface Props { title: string; description?: string; election?: "qc" | "bc" | "ca" }
 const path = Astro.url.pathname;
 const lang = langOf(path);
 const S = SITE[lang];

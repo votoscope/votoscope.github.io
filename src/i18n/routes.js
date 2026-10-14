@@ -1,12 +1,12 @@
 // Site pages: the same path in each language, under /fr/ or /en/.
-const SLUGS = { home: "", quebec: "quebec/", canada: "canada/", posts: "posts/", method: "method/", about: "about/" };
+const SLUGS = { home: "", quebec: "quebec/", bc: "british-columbia/", canada: "canada/", posts: "posts/", method: "method/", about: "about/" };
 export const PAGES = Object.fromEntries(
   Object.entries(SLUGS).map(([page, slug]) => [page, { fr: `/fr/${slug}`, en: `/en/${slug}` }]),
 );
 
 export const NAV = {
-  fr: [["quebec", "Québec"], ["canada", "Canada"], ["posts", "Billets"], ["method", "Méthode"], ["about", "À propos"]],
-  en: [["quebec", "Quebec"], ["canada", "Canada"], ["posts", "Posts"], ["method", "Method"], ["about", "About"]],
+  fr: [["quebec", "Québec"], ["bc", "Colombie-Britannique"], ["canada", "Canada"], ["posts", "Billets"], ["method", "Méthode"], ["about", "À propos"]],
+  en: [["quebec", "Quebec"], ["bc", "British Columbia"], ["canada", "Canada"], ["posts", "Posts"], ["method", "Method"], ["about", "About"]],
 };
 
 export const SITE = {

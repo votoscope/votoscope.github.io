@@ -19,6 +19,7 @@ const T = {
     nd: "n/d",
     gallagherQc: "17,8 au Québec en 2026",
     gallagherCa: (g) => `${formatNumber(g, 1)} au Canada en 2025`,
+    gallagherBc: (g) => `${formatNumber(g, 1)} en Colombie-Britannique en 2024`,
     ranges: ["3 mois", "6 mois", "1 an", (y) => `Depuis l'élection ${y}`, "Tout"],
     error: (id, m) => `Erreur (${id}) : ${m}`,
     detailHead: (y) => `<th>Parti</th><th>Chances de gagner</th><th>Appui prévu</th><th>Résultat ${y}</th>`,
@@ -53,19 +54,23 @@ const T = {
     status: (d, n, r, c) => `Intentions de vote au ${d} · ${n} sondages · ${r} circonscriptions · mis à jour le ${c}`,
     trendNote: (s) => "Courbes : moyenne des sondages. La prévision utilise les parts corrigées de l'écart historique " +
       `entre les sondages de veille et les résultats, par région : ${s}.`,
+    trendNoteBc: (s) => "Courbes : moyenne des sondages. La prévision prolonge la moyenne au jour du scrutin et ramène la part de chaque parti " +
+      `à la part des votes des circonscriptions où il présente une candidature : ${s}.`,
     fatal: (m) => `Erreur : ${m}`,
   },
   en: {
     nd: "n/a",
     gallagherQc: "17.8 in Quebec in 2026",
     gallagherCa: (g) => `${formatNumber(g, 1)} in Canada in 2025`,
+    gallagherBc: (g) => `${formatNumber(g, 1)} in British Columbia in 2024`,
     ranges: ["3 months", "6 months", "1 year", (y) => `Since the ${y} election`, "All"],
     error: (id, m) => `Error (${id}): ${m}`,
     detailHead: (y) => `<th>Party</th><th>Chance of winning</th><th>Forecast support</th><th>${y} result</th>`,
     date: "Date", intention: "Voting intention",
     winProb: "Probability of winning:",
     tileNote: (pc) => `Colour: favourite party · intensity: probability of winning · outline: runner-up when the favourite is below ${pc}%.`,
-    region: { "C.-B.": "B.C.", "Alb.": "Alta.", "Qc": "Que.", "Atlantique": "Atlantic", "Territoires": "Territories" },
+    region: { "C.-B.": "B.C.", "Alb.": "Alta.", "Qc": "Que.", "Atlantique": "Atlantic", "Territoires": "Territories",
+      "Île": "Island", "Vallée du Fraser": "Fraser Valley", "Intérieur": "Interior", "Nord": "North" },
     watchHead: "<th>Riding</th><th>Favourite</th><th>Runner-up</th><th>Gap</th>",
     pt: "pts",
     leaderHead: "<th>Party</th><th>Leader</th><th>Riding</th><th>Forecast</th>",
@@ -93,6 +98,8 @@ const T = {
     status: (d, n, r, c) => `Voting intentions as of ${d} · ${n} polls · ${r} ridings · updated ${c}`,
     trendNote: (s) => "Lines: poll average. The forecast uses shares corrected for the historical gap " +
       `between eve-of-election polls and results, by region: ${s}.`,
+    trendNoteBc: (s) => "Lines: poll average. The forecast extends the average to election day and scales each party's share " +
+      `to the share of the votes cast in the districts where it has a candidate: ${s}.`,
     fatal: (m) => `Error: ${m}`,
   },
 }[LANG];
@@ -100,7 +107,7 @@ const T = {
 /** "197.0", 197 and "197" designate the same riding. */
 const normalizeRidingCode = (code) => { const n = parseFloat(code); return Number.isFinite(n) ? String(Math.round(n)) : String(code); };
 
-// One page, one election: <body data-election="qc|ca"> picks the config.
+// One page, one election: <body data-election="qc|bc|ca"> picks the config.
 const CONFIGS = {
   qc: {
     files: Object.fromEntries(Object.entries({
@@ -121,6 +128,16 @@ const CONFIGS = {
     previousElection: { date: "2025-04-28", label: "2025" },
     initialBounds: [[42, -128], [56, -55]],
     gallagherRef: (meta) => T.gallagherCa(meta.gallagherPrevious),
+  },
+  bc: {
+    files: Object.fromEntries(Object.entries({
+      projection: "bc_dashboard.json", polls: "bc_national_polls.json",
+      geojson: "bc_ridings_2023.geojson", tiles: "bc_tile_layout.json",
+    }).map(([k, f]) => [k, repoData("bc") + f])),
+    colors: PARTIES.bc.colors,
+    previousElection: { date: "2024-10-19", label: "2024" },
+    gallagherRef: (meta) => T.gallagherBc(meta.gallagherPrevious),
+    trendNote: (s) => T.trendNoteBc(s),
   },
 };
 const ELECTION = document.body.dataset.election ?? "qc";
@@ -699,7 +716,7 @@ function renderSeatDistributions(distributions, totalSeats, partyCodes, medoidCo
   const plot = Plot.plot({
     width: 640,
     height: 90 * ordered.length,
-    marginLeft: 62,
+    marginLeft: 72,
     marginRight: 20,
     x: { label: T.seats, domain: [0, totalSeats], grid: true },
     y: { label: null, axis: null, domain: [0, 1] },
@@ -752,7 +769,7 @@ function renderDisproportion(d, partyCodes) {
   const plot = Plot.plot({
     width: 640,
     height: 46 * rows.length + 50,
-    marginLeft: 62,
+    marginLeft: 72,
     marginRight: 175,
     x: { label: T.dispAxis, grid: true },
     y: { domain: ordered, label: null, tickFormat: label },
@@ -870,7 +887,7 @@ function renderBalanceOfPower(scenarios, partyCodes) {
     host.appendChild(Plot.plot({
       width: 560,
       height: 40 * rows.length + 40,
-      marginLeft: 62,
+      marginLeft: 72,
       marginRight: 60,
       x: { label: T.balanceAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, 100], percent: true, grid: true },
       marginBottom: 44,
@@ -956,7 +973,7 @@ async function main() {
       const shares = partyCodes.filter((p) => meta.projectedVote[p] >= 0.005)
         .sort((a, b) => meta.projectedVote[b] - meta.projectedVote[a])
         .map((p) => `${label(p)} ${formatPercent(meta.projectedVote[p], 1)}`).join(", ");
-      note.textContent = T.trendNote(shares);
+      note.textContent = (CFG.trendNote ?? T.trendNote)(shares);
       document.getElementById("trend-chart").appendChild(note);
     }
   });
