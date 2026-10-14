@@ -1,5 +1,5 @@
 // ---
-// title: source
+// title: La distorsion électorale de 2026
 // id: distorsion-scrutin
 // ---
 
@@ -12,17 +12,23 @@
 // Ton vote ne dépasse pas ta circonscription. La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu la dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté (permettez la minuscule), invite à former le gouvernement la personne qui a l'appui de la majorité des élu.es. C'est normalement la cheffe ou le chef du parti qui a le plus d'élu.es (le *caucus* gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que ses élu.es l'appuient, et choisit ses ministres parmi elleux. Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.
 //
 // Un parti peut donc avoir 13 % des votes exprimés, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote exprimé, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
+//
+// Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
 
 // %% [javascript] #collapse-cell
+// charger les packages
 const Plot = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm");
 const d3 = await import("https://cdn.jsdelivr.net/npm/d3@7/+esm");
+const sankeyMod = await import("https://cdn.jsdelivr.net/npm/d3-sankey@0.12/+esm");
 
+// constantes
 const TOTAL_SIEGES = 127;
 const INSCRITS = 6495984;
 const VOTES_EXERCES = 4345857;
 const VOTES_VALIDES = 4282551;
 const POPULATION = 9030000; // ISQ, population au 1er janvier 2026 (Le bilan démographique du Québec, édition 2026)
 
+// résultats
 const partis = [
   { parti: "PQ",  votesN: 1199925, sieges: 59, couleur: "#2B50C8" },
   { parti: "PLQ", votesN: 1037051, sieges: 40, couleur: "#E01020" },
@@ -30,12 +36,6 @@ const partis = [
   { parti: "CAQ", votesN: 571520,  sieges: 0,  couleur: "#6EC9F5" },
   { parti: "QS",  votesN: 532176,  sieges: 9,  couleur: "#F28C28" },
 ];
-
-// %% [markdown]
-// Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
-
-// %% [javascript] #collapse-cell
-const sankeyMod = await import("https://cdn.jsdelivr.net/npm/d3-sankey@0.12/+esm");
 
 // --- palette et typographie du graphique (hors couleurs de partis) ---
 const ENCRE = "#2A2E24";        // encre teintée feuille, pas de noir pur
@@ -186,9 +186,11 @@ svgSankey.node();
 //
 // Dans chaque circonscription, seuls les votes pour la personne gagnante servent à élire quelqu'un. Les autres votes n'ont aucun effet sur la composition de l'Assemblée nationale. En 2026, c'est le cas de 58 % des votes. Aucun des 572 000 votes de la CAQ n'a élu de député.
 
-// %% [javascript]
-const resultats = d3.csvParse(await (await fetch("https://gist.githubusercontent.com/essicolo/a524325ee67cbb45f81ff5ae6e3e14c1/raw/6582d5fb07f8a8bc7253ba508db1adbf3d008802/resultats_quebec_1970_2026.csv")).text(), d3.autoType);
-const prevision = await (await fetch("https://gist.githubusercontent.com/essicolo/7783201178c93ebf0a811fd1041be91f/raw/daddbd30fb02430dbb602cdac4c7ecf4fda200d6/prevision_2030.json")).json();
+// %% [javascript] #collapse-cell
+const aq = await import("https://cdn.jsdelivr.net/npm/arquero@8/+esm");
+const op = aq.op;
+const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
+const prevision = await (await fetch("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
 
 const COULEURS = { PQ: "#1d4ed8", PLQ: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", Autres: "#a8a29e" };
 // Sigles des partis. Avant 2012, les données nomment les partis au long.
@@ -201,30 +203,37 @@ const sigle = (p) => SIGLES[p] ?? p;
 const nombre = (x, d = 0) => x.toLocaleString("fr-CA", { minimumFractionDigits: d, maximumFractionDigits: d });
 // Arrondi à deux chiffres significatifs : 33 736 devient 34 000.
 const arrondi = (x) => { const pas = 10 ** (Math.floor(Math.log10(x)) - 1); return Math.round(x / pas) * pas; };
-
 // Date d'élection au format AAAA-MM-JJ.
 const jour = (x) => (x instanceof Date ? x.toISOString() : String(x)).slice(0, 10);
-// Résultats d'une élection par circonscription : votes de chaque parti, gagnant, écart avec le deuxième.
-function circonscriptions(election) {
-  const parCirc = d3.rollup(resultats.filter((r) => jour(r.election) === election),
-    (v) => Object.fromEntries(d3.rollups(v, (w) => d3.sum(w, (x) => +x.votes), (x) => x.parti)),
-    (r) => r.circonscription);
-  return [...parCirc].map(([nom, votes]) => {
-    const tri = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-    return { nom, votes, gagnant: tri[0][0], ecart: tri[0][1] - (tri[1]?.[1] ?? 0), total: d3.sum(tri, (t) => t[1]) };
-  });
-}
-const circ2026 = circonscriptions("2026-10-05");
 
-// Votes qui ont élu quelqu'un et votes qui n'ont élu personne, par parti.
-const elus2026 = ["PQ", "LIB", "PCQ", "CAQ", "QS"].map((p) => {
-  const total = d3.sum(circ2026, (c) => c.votes[p] ?? 0);
-  const utiles = d3.sum(circ2026.filter((c) => c.gagnant === p), (c) => c.votes[p]);
-  return { parti: sigle(p), total, utiles, perdus: total - utiles };
-});
-const partPerdue = 1 - d3.sum(circ2026, (c) => c.votes[c.gagnant]) / d3.sum(circ2026, (c) => c.total);
+// Votes de chaque parti dans chaque circonscription, avec son rang et le total de la circonscription.
+const votesCirc = resultats
+  .derive({ election: aq.escape((d) => jour(d.election)) })
+  .groupby("election", "circonscription", "parti")
+  .rollup({ votes: op.sum("votes") })
+  .groupby("election", "circonscription")
+  .orderby(aq.desc("votes"))
+  .derive({ rang: op.row_number(), total: op.sum("votes") })
+  .ungroup();
+// Une ligne par circonscription : gagnant et écart avec le deuxième.
+const cles = ["election", "circonscription"];
+const luttes = votesCirc.filter((d) => d.rang === 1)
+  .select(...cles, { parti: "gagnant" }, { votes: "v1" }, "total")
+  .join_left(votesCirc.filter((d) => d.rang === 2).select(...cles, { votes: "v2" }), [cles, cles], [aq.all(), ["v2"]])
+  .derive({ ecart: (d) => (d.v2 == null ? d.v1 : d.v1 - d.v2), annee: (d) => op.parse_int(op.substring(d.election, 0, 4)) });
 
-// %% [javascript]
+// Votes qui ont élu quelqu'un et votes qui n'ont élu personne, par parti, en 2026.
+const votesCirc2026 = votesCirc.filter((d) => d.election === "2026-10-05");
+const elus2026 = votesCirc2026
+  .filter(aq.escape((d) => ["PQ", "LIB", "PCQ", "CAQ", "QS"].includes(d.parti)))
+  .groupby("parti")
+  .rollup({ total: op.sum("votes"), utiles: (d) => op.sum(d.rang === 1 ? d.votes : 0) })
+  .derive({ perdus: (d) => d.total - d.utiles, parti: aq.escape((d) => sigle(d.parti)) })
+  .orderby(aq.desc("total"))
+  .objects();
+const bilan2026 = votesCirc2026.rollup({ utiles: (d) => op.sum(d.rang === 1 ? d.votes : 0), total: op.sum("votes") }).object();
+const partPerdue = 1 - bilan2026.utiles / bilan2026.total;
+
 Plot.plot({
   width: 760, height: 230, marginLeft: 50, marginRight: 100,
   x: { label: "votes (millions)", transform: (x) => x / 1e6, grid: true },
@@ -249,7 +258,7 @@ Plot.plot({
 // %% [markdown]
 // Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{½ Σ (vᵢ − sᵢ)²}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
 
-// %% [javascript]
+// %% [javascript] #collapse-cell
 const gallagherMonde = [ // de Wikipedia
   { label: "Québec 2026",       g: 17.80, type: "qc" },
   { label: "Québec 2022",       g: 25.80, type: "qc" },
@@ -311,7 +320,7 @@ function sainteLague(votes, sieges) {
   }
   return s;
 }
-// Pouvoir de pivot : part des coalitions majoritaires où le parti est indispensable.
+// Pouvoir de pivot : part des combinaisons majoritaires où le parti est indispensable.
 function banzhaf(sieges, majorite) {
   const partis = Object.keys(sieges).filter((p) => sieges[p] > 0);
   const pivots = partis.map(() => 0);
@@ -321,25 +330,24 @@ function banzhaf(sieges, majorite) {
     if (t < majorite) continue;
     partis.forEach((p, i) => { if (m >> i & 1 && t - sieges[p] < majorite) pivots[i]++; });
   }
-  const total = d3.sum(pivots);
+  const total = pivots.reduce((a, b) => a + b, 0);
   return Object.fromEntries(partis.map((p, i) => [p, pivots[i] / total]));
 }
 const SIEGES = 127, MAJORITE = 64;
-const votes2026 = Object.fromEntries(["PQ", "LIB", "PCQ", "CAQ", "QS"].map((p) => [sigle(p), d3.sum(circ2026, (c) => c.votes[p] ?? 0)]));
-const siegesActuels = d3.rollup(circ2026, (v) => v.length, (c) => sigle(c.gagnant));
-const siegesProportionnels = sainteLague(votes2026, SIEGES);
-const pivotActuel = banzhaf(Object.fromEntries(siegesActuels), MAJORITE);
+const votesParParti = Object.fromEntries(elus2026.map((d) => [d.parti, d.total]));
+const siegesActuels = Object.fromEntries(luttes.filter((d) => d.election === "2026-10-05").groupby("gagnant").count().objects().map((d) => [sigle(d.gagnant), d.count]));
+const siegesProportionnels = sainteLague(votesParParti, SIEGES);
+const pivotActuel = banzhaf(siegesActuels, MAJORITE);
 const pivotProportionnel = banzhaf(siegesProportionnels, MAJORITE);
-const comparaison = Object.keys(votes2026).map((p) => ({
+const comparaison = Object.keys(votesParParti).map((p) => ({
   parti: p,
-  "votes (%)": 100 * votes2026[p] / d3.sum(circ2026, (c) => c.total),
-  "sièges actuels": siegesActuels.get(p) ?? 0,
+  "votes (%)": 100 * votesParParti[p] / bilan2026.total,
+  "sièges actuels": siegesActuels[p] ?? 0,
   "sièges à la proportionnelle": siegesProportionnels[p],
   "pouvoir de pivot actuel (%)": 100 * (pivotActuel[p] ?? 0),
   "pouvoir de pivot à la proportionnelle (%)": 100 * (pivotProportionnel[p] ?? 0),
 }));
 
-// %% [javascript]
 Plot.plot({
   width: 760,
   height: 46 * comparaison.length + 50,
@@ -383,13 +391,14 @@ Plot.plot({
   //caption: "Point : sièges obtenus en 2026. Pointe de la flèche : sièges avec les mêmes votes répartis à la proportionnelle. Pointillé : majorité de 64 sièges.",
 })
 
-// %% [javascript]
-comparaison.map((d) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, typeof v === "number" ? Math.round(v * 10) / 10 : v])))
+// %% [javascript] #collapse-cell
+["votes (%)", "sièges actuels", "sièges à la proportionnelle", "pouvoir de pivot actuel (%)", "pouvoir de pivot à la proportionnelle (%)"]
+  .map((mesure) => ({ mesure, ...Object.fromEntries(comparaison.map((d) => [d.parti, Math.round(d[mesure] * 10) / 10])) }))
 
 // %% [markdown]
-// Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres coalitions demanderaient trois partis.
+// Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres combinaisons demanderaient trois partis.
 //
-// Le pouvoir de pivot mesure le poids d'un parti dans ces coalitions. C'est la part des coalitions majoritaires qui perdent leur majorité sans lui [2]. Avec les sièges réels, le PQ détient la moitié de ce pouvoir, puisque l'appui d'un seul autre parti lui suffit. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
+// Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PQ atteint la majorité avec l'appui du PLQ, du PCQ ou de QS. Le pouvoir de pivot mesure la part de cette balance que détient chaque parti [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
 
 // %% [markdown]
 // ## Ton vote change-t-il quelque chose ?
@@ -398,16 +407,15 @@ comparaison.map((d) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, 
 
 // %% [javascript] #collapse-cell
 // Écart entre les deux premiers dans chaque circonscription, de 1970 à 2026.
-const elections = [...new Set(resultats.map((r) => jour(r.election)))].sort();
-const luttes = elections.flatMap((e) => circonscriptions(e).map((c) => ({ ...c, annee: +e.slice(0, 4) })));
 // Chance d'une égalité parfaite : la part des écarts de moins de 100 voix, divisée par 100.
-const serrees = luttes.filter((c) => c.ecart < 100);
-const probabiliteEgalite = serrees.length / (100 * luttes.length);
+const nLuttes = luttes.numRows();
+const nSerrees = luttes.filter((d) => d.ecart < 100).numRows();
+const probabiliteEgalite = nSerrees / (100 * nLuttes);
 
-// %% [javascript] #collapse-cell
-d3.sort(luttes, (c) => c.ecart).slice(0, 10).map((c) => ({
-  année: String(c.annee), circonscription: c.nom, gagnant: sigle(c.gagnant), "écart (voix)": c.ecart, "votes valides": c.total,
-}))
+luttes.orderby("ecart").slice(0, 10)
+  .derive({ annee: aq.escape((d) => String(d.annee)), gagnant: aq.escape((d) => sigle(d.gagnant)) })
+  .select({ annee: "année", circonscription: "circonscription", gagnant: "gagnant", ecart: "écart (voix)", total: "votes valides" })
+  .objects()
 
 // %% [javascript] #collapse-cell
 Plot.plot({
@@ -415,14 +423,14 @@ Plot.plot({
   x: { type: "log", domain: [1, 50000], label: "écart entre les deux premiers (voix, échelle logarithmique)", grid: true, ticks: [1, 10, 100, 1000, 10000], tickFormat: (x) => nombre(x) },
   y: { label: "circonscriptions", grid: true },
   marks: [
-    Plot.rectY(luttes.filter((c) => c.ecart >= 1), Plot.binX({ y: "count" }, {
-      x: "ecart", thresholds: d3.range(0, 4.8, 0.1).map((e) => 10 ** e), fill: "#a8a29e", inset: 0.5,
+    Plot.rectY(luttes.filter((d) => d.ecart >= 1).objects(), Plot.binX({ y: "count" }, {
+      x: "ecart", thresholds: Array.from({ length: 48 }, (_, i) => 10 ** (i / 10)), fill: "#a8a29e", inset: 0.5,
     })),
     Plot.ruleX([100], { stroke: "#1c1917", strokeDasharray: "3,3" }),
     Plot.text([100], { x: (d) => d, frameAnchor: "top", dx: 6, textAnchor: "start", text: () => "100 voix", fontSize: 11 }),
     Plot.ruleY([0]),
   ],
-  //caption: `Écart entre les deux premiers dans ${nombre(luttes.length)} circonscriptions, élections de 1970 à 2026. À gauche du pointillé, les ${serrees.length} gagnées par moins de 100 voix.`,
+  //caption: `Écart entre les deux premiers dans ${nombre(nLuttes)} circonscriptions, élections de 1970 à 2026. À gauche du pointillé, les ${nSerrees} gagnées par moins de 100 voix.`,
 })
 
 // %% [markdown]
@@ -433,38 +441,34 @@ Plot.plot({
 // %% [javascript] #collapse-cell
 // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
 // Méthode : note [4] à la fin du billet.
-function qnorm(p) { // inverse de la loi normale
-  const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];
-  const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
-  const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
-  const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
-  const q = Math.min(Math.max(p, 1e-12), 1 - 1e-12), r = q < 0.5 ? q : 1 - q;
-  let x;
-  if (r < 0.02425) { const t = Math.sqrt(-2 * Math.log(r)); x = (((((c[0] * t + c[1]) * t + c[2]) * t + c[3]) * t + c[4]) * t + c[5]) / ((((d[0] * t + d[1]) * t + d[2]) * t + d[3]) * t + 1); }
-  else { const t = r - 0.5, u = t * t; x = (((((a[0] * u + a[1]) * u + a[2]) * u + a[3]) * u + a[4]) * u + a[5]) * t / (((((b[0] * u + b[1]) * u + b[2]) * u + b[3]) * u + b[4]) * u + 1); x = -x; }
-  return q < 0.5 ? -x : x;
-}
+const { normal } = await import("https://cdn.jsdelivr.net/npm/@tangent.to/proba@0.2/+esm");
 const deuxPremiers = prevision.circonscriptions.map((c) => {
   const [[p1], [p2]] = Object.entries(c.parts).sort((a, b) => b[1] - a[1]);
   const m = c.parts[p1] - c.parts[p2];
   const p = c.victoire[p1] / Math.max(c.victoire[p1] + c.victoire[p2], 1e-9);
-  const mesurable = p > 0.02 && p < 0.98 && Math.abs(qnorm(p)) > 0.05;
-  return { c, p1, p2, m, s: mesurable ? m / qnorm(p) : null };
+  const z = normal.quantile(p, { mu: 0, sigma: 1 });
+  const mesurable = p > 0.02 && p < 0.98 && Math.abs(z) > 0.05;
+  return { nom: c.nom, p1, p2, m, electeurs: c.votes2026, s: mesurable ? m / z : null };
 });
-const ecartTypeMedian = d3.median(deuxPremiers.filter((d) => d.s > 0), (d) => d.s);
-const densite = (m, s) => Math.exp(-((m / s) ** 2) / 2) / (Math.sqrt(2 * Math.PI) * s);
-const decisif = deuxPremiers.map(({ c, p1, p2, m, s }) => ({
-  nom: c.nom, premier: sigle(p1), deuxieme: sigle(p2), electeurs: c.votes2026,
-  probabilite: densite(m, s > 0 ? s : ecartTypeMedian) / c.votes2026,
+const ecartTypeMedian = aq.from(deuxPremiers).filter((d) => d.s > 0).rollup({ s: op.median("s") }).get("s", 0);
+const decisif = deuxPremiers.map(({ nom, p1, p2, m, s, electeurs }) => ({
+  nom, premier: sigle(p1), deuxieme: sigle(p2), electeurs,
+  probabilite: normal.pdf(m, { mu: 0, sigma: s > 0 ? s : ecartTypeMedian }) / electeurs,
 }));
-// À la proportionnelle, un siège pour environ 34 000 votes : la même chance pour tout le monde.
-const proportionnel = SIEGES / d3.sum(prevision.circonscriptions, (c) => c.votes2026);
+const tableDecisif = aq.from(decisif);
+const resume = tableDecisif.rollup({
+  max: op.max("probabilite"),
+  mediane: op.median("probabilite"),
+  moyenne: (d) => op.sum(d.probabilite * d.electeurs) / op.sum(d.electeurs),
+}).object();
+const plusSerree = tableDecisif.orderby(aq.desc("probabilite")).get("nom", 0);
+// À la proportionnelle, un siège pour environ 34 000 votes : la même chance pour tout le monde.
+const proportionnel = SIEGES / aq.from(prevision.circonscriptions).rollup({ n: op.sum("votes2026") }).get("n", 0);
 const unSur = (p) => `1 sur ${nombre(arrondi(1 / p))}`;
 // Sous ce seuil, la circonscription est considérée comme sûre.
 const PLANCHER = 1e-7;
 const sures = decisif.filter((d) => d.probabilite < PLANCHER).length;
 
-// %% [javascript] #collapse-cell
 Plot.plot({
   width: 640, height: 300, marginTop: 30, marginLeft: 20, marginRight: 20,
   x: {
@@ -480,7 +484,7 @@ Plot.plot({
       title: (d) => `${d.nom} : ${unSur(d.probabilite)} (${d.premier} devant ${d.deuxieme})`,
     })),
   ],
-  //caption: `Un point par circonscription, coloré selon le parti en tête dans la prévision pour 2030. Plus le point est à droite, plus un vote compte. La plus serrée : ${d3.greatest(decisif, (d) => d.probabilite).nom}, environ ${unSur(d3.max(decisif, (d) => d.probabilite))}. À gauche, les ${sures} circonscriptions sûres. Pointillé : à la proportionnelle, environ ${unSur(proportionnel)} pour tout le monde.`,
+  //caption: `Un point par circonscription, coloré selon le parti en tête dans la prévision pour 2030. Plus le point est à droite, plus un vote compte. La plus serrée : ${plusSerree}, environ ${unSur(resume.max)}. À gauche, les ${sures} circonscriptions sûres. Pointillé : à la proportionnelle, environ ${unSur(proportionnel)} pour tout le monde.`,
 })
 
 // %% [markdown]
@@ -491,9 +495,9 @@ Plot.plot({
 // %% [markdown]
 // ## Pourquoi voter quand même
 //
-// Pour la même raison que le danger n'et pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangeurosité × la probabilité que ça arrive.
+// Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangeurosité × la probabilité que ça arrive.
 //
-// Donc une chance sur 26 000 de faire la différence, c'est négligeable. L'enjeu, par contre, touche tout le Québec : des budgets, des lois, tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabiilté d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets, multipliés font que voter reste un acte démocratique *raisonnable* pour qui se soucie des autres et de la postérité (Edlin, Gelman et Kaplan, 2007).
+// Donc une chance sur 26 000 de faire la différence, c'est négligeable. L'enjeu, par contre, touche tout le Québec : des budgets, des lois, tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabiilté d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets, multipliés font que voter reste un acte démocratique *rationnel* pour qui se soucie des autres et de la postérité ([Edlin, Gelman et Kaplan, 2007](https://www.nber.org/papers/w13562)).
 //
 // Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. Un vote rapporte ainsi environ 3 $ par année à son parti, ou 12 $ sur quatre ans. Une personne peut donner au plus 100 $ par année à un parti.
 
@@ -504,7 +508,7 @@ const parVote = allocationTotale / VOTES_VALIDES;
 elus2026.map((d) => ({
   parti: d.parti,
   "votes 2026": d.total,
-  "élu.es": siegesActuels.get(d.parti) ?? 0,
+  "élu.es": siegesActuels[d.parti] ?? 0,
   "allocation annuelle ($)": Math.round(d.total * parVote),
   "sur quatre ans ($)": Math.round(4 * d.total * parVote),
 }))
@@ -524,6 +528,8 @@ elus2026.map((d) => ({
 // D'autres arguments tiennent moins. On dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026. On dit qu'une réforme serait trop compliquée, mais les systèmes mixtes, qui gardent une personne élue par circonscription et ajoutent des sièges répartis selon les votes, fonctionnent en Allemagne, en Nouvelle-Zélande et en Écosse. Le projet de loi 39 en proposait un, avec 80 sièges de circonscription et 45 sièges régionaux. On dit enfin que la proportionnelle ouvrirait la porte aux petits partis extrêmes, mais un seuil, comme les 5 % allemands, limite l'entrée des très petits partis.
 //
 // Lors du débat des chefs de Radio-Canada, le candidat du Parti québécois, maintenant premier ministre élu, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
+//
+// Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votoscope/votoscope.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
 
 // %% [markdown]
 // -----
@@ -532,7 +538,7 @@ elus2026.map((d) => ({
 //
 // [1] La répartition proportionnelle donne les 127 sièges aux cinq grands partis selon leurs votes de 2026, sans seuil (méthode de Sainte-Laguë). Les autres partis, environ 1 % des votes, n'ont aucun siège.
 //
-// [2] Le pouvoir de pivot d'un parti est la part des coalitions de 64 sièges ou plus qui perdent leur majorité sans lui (indice de Banzhaf).
+// [2] Pouvoir de pivot (indice de Banzhaf normalisé) : pour chaque parti, on compte les combinaisons de partis de 64 sièges ou plus qui perdent leur majorité sans lui, puis on divise par la somme de ces comptes pour tous les partis.
 //
 // [3] De 1970 à 2026, 25 circonscriptions sur 1 946 ont été gagnées par moins de 100 voix. Si ces écarts se répartissent également entre 0 et 100 voix, une égalité parfaite arrive environ une fois sur 7 800.
 //

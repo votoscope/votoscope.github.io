@@ -27,9 +27,20 @@ for (const [lang, other] of Object.entries(LANGUAGES)) {
 
   for (const slug of slugs) {
     const notebook = readFileSync(`${root}/${slug}/index.html`, "utf-8");
-    const translation = /<meta\s+name="translation"\s+content="([^"]+)"/.exec(notebook)?.[1];
-    if (!translation) continue;
     const page = `${output}/${slug}/index.html`;
-    writeFileSync(page, readFileSync(page, "utf-8").replace(`<a href="/${other}/posts/" hreflang="${other}"`, `<a href="${translation}" hreflang="${other}"`));
+    let html = readFileSync(page, "utf-8");
+    // Title and date of the notebook at the top of the post (the list of posts reads the same tags).
+    const title = /<title>([^<]*)<\/title>/.exec(notebook)?.[1]?.trim();
+    const date = /<meta\s+name="date"\s+content="([^"]+)"/.exec(notebook)?.[1];
+    const dateText = date
+      ? new Intl.DateTimeFormat(lang === "en" ? "en-CA" : "fr-CA", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(date))
+      : "";
+    if (title) {
+      html = html.replace("<main>", `<main><header class="post"><h1>${title}</h1>${dateText ? `<p class="date">${dateText}</p>` : ""}</header>`)
+        .replace(/<title>[^<]*<\/title>/, `<title>${title} · Votoscope</title>`);
+    }
+    const translation = /<meta\s+name="translation"\s+content="([^"]+)"/.exec(notebook)?.[1];
+    if (translation) html = html.replace(`<a href="/${other}/posts/" hreflang="${other}"`, `<a href="${translation}" hreflang="${other}"`);
+    writeFileSync(page, html);
   }
 }
