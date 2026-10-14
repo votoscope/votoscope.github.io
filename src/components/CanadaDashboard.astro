@@ -1,0 +1,39 @@
+---
+import { DASHBOARD } from "../i18n/dashboard.js";
+import MethodologyFr from "./methodology/CanadaFr.astro";
+import MethodologyEn from "./methodology/CanadaEn.astro";
+
+interface Props { lang: "fr" | "en" }
+const { lang } = Astro.props;
+const T = DASHBOARD[lang];
+---
+<div class="row trend">
+  <section><h2>{T.trend}</h2><div id="trend-chart"></div></section>
+</div>
+
+<div class="row explore">
+  <section><h2>{T.forecast("2023")}</h2>
+    <div class="range-controls" id="map-mode">
+      <button id="btn-tiles">{T.tiles}</button>
+      <button id="btn-geo">{T.geo}</button>
+    </div>
+    <div id="tile-map"></div>
+    <div id="riding-map" hidden></div>
+  </section>
+  <div class="side">
+    <section><h2>{T.selected}</h2><div id="riding-detail"></div></section>
+    <section><h2>{T.closest}</h2><div id="watchlist"></div>
+      <p class="note">{T.closestNote}</p>
+    </section>
+    <section><h2>{T.leaders}</h2><div id="leader-ridings"></div></section>
+  </div>
+</div>
+
+<div class="row bottom">
+  <section><h2>{T.seats}</h2><div id="seat-bar"></div></section>
+  <section><h2>{T.scenarios}</h2><div id="government-outcomes"></div></section>
+  <section><h2>{T.pivot}</h2><div id="pivot-power"></div></section>
+  <section><h2>{T.distortion}</h2><div id="disproportion"></div></section>
+</div>
+
+{lang === "fr" ? <MethodologyFr /> : <MethodologyEn />}

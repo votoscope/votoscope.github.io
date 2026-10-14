@@ -12,49 +12,136 @@ import { mva } from "@tangent.to/ds";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { pivotPolls } from "./compositional.js";
-/** "197.0", 197 et "197" désignent la même circonscription. */
+import { PARTIES, repoData, LANG, LOCALE, partyLabel, formatNumber, formatPercent } from "./parties.js";
+// Every visible string, in the page's language (<html lang>).
+const T = {
+  fr: {
+    nd: "n/d",
+    gallagherQc: "17,8 au Québec en 2026",
+    gallagherCa: (g) => `${formatNumber(g, 1)} au Canada en 2025`,
+    ranges: ["3 mois", "6 mois", "1 an", (y) => `Depuis l'élection ${y}`, "Tout"],
+    error: (id, m) => `Erreur (${id}) : ${m}`,
+    detailHead: (y) => `<th>Parti</th><th>Chances de gagner</th><th>Appui prévu</th><th>Résultat ${y}</th>`,
+    date: "Date", intention: "Intention de vote",
+    winProb: "Probabilité de victoire :",
+    tileNote: (pc) => `Couleur : parti favori · intensité : probabilité de victoire · contour : parti poursuivant lorsque le favori est sous ${pc} %.`,
+    region: {},
+    watchHead: "<th>Circonscription</th><th>Favori</th><th>Poursuivant</th><th>Écart</th>",
+    pt: "pt",
+    leaderHead: "<th>Parti</th><th>Chef</th><th>Circonscription</th><th>Prévision</th>",
+    notAnnounced: "candidature non annoncée", currentSeat: "siège actuel",
+    holds: "conserve", gains: "gagne",
+    seats: "Sièges",
+    seatNote: (n, t) => `Distribution du nombre de sièges par parti sur ${n} simulations. Trait pointillé : seuil de majorité (${t} sièges). ` +
+      "Valeurs à droite : sièges dans le scénario médian de la distribution jointe (médoïde), suivis de l'intervalle à 90 %.",
+    dispAxis: "du % des votes vers le % des sièges",
+    pctVotes: (v) => `${v} % des votes`, pctSeats: (v) => `${v} % des sièges`,
+    dispNote: (n, s, g, lo, hi, ref) => `Espérances sur les ${n} simulations : la flèche va de la part des votes à la part des ${s} sièges. ` +
+      "Le scrutin uninominal amplifie le parti en tête et pénalise les appuis dispersés. " +
+      `Indice de disproportion de Gallagher : ${g} [intervalle à 90 % : ${lo}–${hi}] ; repères : 4 à 6 sous un scrutin proportionnel, ${ref}.`,
+    govLead: (a, b) => `<strong>${a} %</strong> de probabilité d'un gouvernement majoritaire, <strong>${b} %</strong> d'un gouvernement minoritaire.`,
+    govHead: "<th>Probabilité</th><th>Gouvernement</th><th>Opposition</th><th>Appuis suffisants</th>",
+    majority: "majoritaire", minority: "minoritaire", na: "sans objet", noneSuffices: "aucun parti seul ne suffit",
+    govNote: (t) => "Chaque simulation est classée dans un scénario unique; les probabilités somment à 100 % (scénarios sous 1 % omis). " +
+      `Appuis suffisants : partis dont les sièges, ajoutés à ceux du parti arrivé en tête, atteindraient la majorité de ${t} sièges, du plus petit au plus grand. ` +
+      "Il s'agit d'une possibilité arithmétique et non d'une entente anticipée.",
+    banzhafAxis: "Indice de Banzhaf moyen (%)",
+    banzhafTip: (p, b, q) => `${p}\nIndice de Banzhaf moyen : ${b} %\nDécisif dans au moins une coalition majoritaire : ${q} % des tirages sans majorité d'un seul parti`,
+    pivotNote: "Pour chaque simulation, parmi toutes les coalitions de partis qui atteignent la majorité, part des cas où les sièges du parti sont décisifs " +
+      "(la coalition perd la majorité sans lui) : indice de Banzhaf normalisé, moyenné sur les simulations. Un parti majoritaire seul vaut 100 %. " +
+      "Mesure arithmétique, indépendante des affinités entre partis.",
+    loading: "Chargement des données…",
+    status: (d, n, r, c) => `Intentions de vote au ${d} · ${n} sondages · ${r} circonscriptions · mis à jour le ${c}`,
+    trendNote: (s) => "Courbes : moyenne des sondages. La prévision utilise les parts corrigées de l'écart historique " +
+      `entre les sondages de veille et les résultats, par région : ${s}.`,
+    fatal: (m) => `Erreur : ${m}`,
+  },
+  en: {
+    nd: "n/a",
+    gallagherQc: "17.8 in Quebec in 2026",
+    gallagherCa: (g) => `${formatNumber(g, 1)} in Canada in 2025`,
+    ranges: ["3 months", "6 months", "1 year", (y) => `Since the ${y} election`, "All"],
+    error: (id, m) => `Error (${id}): ${m}`,
+    detailHead: (y) => `<th>Party</th><th>Chance of winning</th><th>Forecast support</th><th>${y} result</th>`,
+    date: "Date", intention: "Voting intention",
+    winProb: "Probability of winning:",
+    tileNote: (pc) => `Colour: favourite party · intensity: probability of winning · outline: runner-up when the favourite is below ${pc}%.`,
+    region: { "C.-B.": "B.C.", "Alb.": "Alta.", "Qc": "Que.", "Atlantique": "Atlantic", "Territoires": "Territories" },
+    watchHead: "<th>Riding</th><th>Favourite</th><th>Runner-up</th><th>Gap</th>",
+    pt: "pts",
+    leaderHead: "<th>Party</th><th>Leader</th><th>Riding</th><th>Forecast</th>",
+    notAnnounced: "candidacy not announced", currentSeat: "current seat",
+    holds: "holds", gains: "gains",
+    seats: "Seats",
+    seatNote: (n, t) => `Distribution of the number of seats per party over ${n} simulations. Dashed line: majority threshold (${t} seats). ` +
+      "Values on the right: seats in the median scenario of the joint distribution (medoid), followed by the 90% interval.",
+    dispAxis: "from % of votes to % of seats",
+    pctVotes: (v) => `${v}% of votes`, pctSeats: (v) => `${v}% of seats`,
+    dispNote: (n, s, g, lo, hi, ref) => `Expectations over the ${n} simulations: the arrow goes from the share of votes to the share of the ${s} seats. ` +
+      "First-past-the-post amplifies the leading party and penalises dispersed support. " +
+      `Gallagher disproportionality index: ${g} [90% interval: ${lo}–${hi}]; benchmarks: 4 to 6 under proportional representation, ${ref}.`,
+    govLead: (a, b) => `<strong>${a}%</strong> probability of a majority government, <strong>${b}%</strong> of a minority government.`,
+    govHead: "<th>Probability</th><th>Government</th><th>Opposition</th><th>Sufficient supports</th>",
+    majority: "majority", minority: "minority", na: "not applicable", noneSuffices: "no single party suffices",
+    govNote: (t) => "Each simulation is assigned to a single scenario; probabilities sum to 100% (scenarios below 1% omitted). " +
+      `Sufficient supports: parties whose seats, added to those of the leading party, would reach the ${t}-seat majority, from smallest to largest. ` +
+      "This is an arithmetic possibility, not an anticipated agreement.",
+    banzhafAxis: "Mean Banzhaf index (%)",
+    banzhafTip: (p, b, q) => `${p}\nMean Banzhaf index: ${b}%\nDecisive in at least one majority coalition: ${q}% of draws without a single-party majority`,
+    pivotNote: "For each simulation, among all coalitions of parties reaching a majority, share of cases in which the party's seats are decisive " +
+      "(the coalition loses its majority without it): normalised Banzhaf index, averaged over simulations. A party holding a majority alone scores 100%. " +
+      "Arithmetic measure, independent of affinities between parties.",
+    loading: "Loading data…",
+    status: (d, n, r, c) => `Voting intentions as of ${d} · ${n} polls · ${r} ridings · updated ${c}`,
+    trendNote: (s) => "Lines: poll average. The forecast uses shares corrected for the historical gap " +
+      `between eve-of-election polls and results, by region: ${s}.`,
+    fatal: (m) => `Error: ${m}`,
+  },
+}[LANG];
+
+/** "197.0", 197 and "197" designate the same riding. */
 const normalizeRidingCode = (code) => { const n = parseFloat(code); return Number.isFinite(n) ? String(Math.round(n)) : String(code); };
 
 // One page, one election: <body data-election="qc|ca"> picks the config.
-// Party colours are validated as a set (dataviz validate_palette.js, all
-// pairs, light surface): same hue per party family across both elections.
-const DEPOT = (nom) => (import.meta.env.DEV ? `/donnees/${nom}/` : `https://raw.githubusercontent.com/votoscope/${nom}/main/data/`);
 const CONFIGS = {
   qc: {
     files: Object.fromEntries(Object.entries({
       projection: "qc_projection.json", polls: "qc_national_polls.json",
       geojson: "qc_ridings_2026.geojson", leaders: "qc_leaders.json",
-      tiles: "qc_tile_layout.json", candidates: "qc_candidates.json",
-    }).map(([k, f]) => [k, DEPOT("quebec") + f])),
-    colors: { PQ: "#1d4ed8", LIB: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", AUTRES: "#a8a29e" },
-    labels: { LIB: "PLQ", AUTRES: "Autres" },
-    previousElection: { date: "2022-10-03", label: "2022" },
-    gallagherRef: () => "25,8 au Québec en 2022",
+      tiles: "qc_tile_layout.json",
+    }).map(([k, f]) => [k, repoData("quebec") + f])),
+    colors: PARTIES.qc.colors,
+    previousElection: { date: "2026-10-05", label: "2026" },
+    gallagherRef: () => T.gallagherQc,
   },
   ca: {
-    files: { projection: DEPOT("canada") + "ca_dashboard.json", polls: DEPOT("canada") + "ca_national_polls.json" },
-    colors: { LPC: "#d62728", CPC: "#1d4ed8", NDP: "#ea7c0c", BQ: "#0891b2", GPC: "#15803d", PPC: "#8b5cf6", AUTRES: "#a8a29e" },
-    labels: { LPC: "PLC", CPC: "PCC", NDP: "NPD", GPC: "PV", AUTRES: "Autres" },
+    files: Object.fromEntries(Object.entries({
+      projection: "ca_dashboard.json", polls: "ca_national_polls.json",
+      geojson: "ca_ridings_2023.geojson", tiles: "ca_tile_layout.json",
+    }).map(([k, f]) => [k, repoData("canada") + f])),
+    colors: PARTIES.ca.colors,
     previousElection: { date: "2025-04-28", label: "2025" },
-    gallagherRef: (meta) => `${meta.gallagherPrevious.toFixed(1).replace(".", ",")} au Canada en 2025`,
+    initialBounds: [[42, -128], [56, -55]],
+    gallagherRef: (meta) => T.gallagherCa(meta.gallagherPrevious),
   },
 };
-const CFG = CONFIGS[document.body.dataset.election ?? "qc"];
+const ELECTION = document.body.dataset.election ?? "qc";
+const CFG = CONFIGS[ELECTION];
 const PARTY_COLORS = CFG.colors;
-/** Display label of a party code (French acronyms). */
-const label = (p) => CFG.labels[p] ?? p;
+/** Display label of a party code, in the page's language. */
+const label = (p) => partyLabel(ELECTION, p);
 /** Colour swatch + label in ink: identity by the mark, text stays readable. */
 const chip = (p) => `<span class="chip"><span class="sw" style="background:${PARTY_COLORS[p] ?? "#ccc"}"></span>${label(p)}</span>`;
 
 // A range is either rolling (`days` back from today) or anchored (`since` a
-// fixed date). "Depuis l'élection" anchors at the last general election --
+// fixed date). "Since the election" anchors at the last general election --
 // the natural "this whole cycle" view, which no rolling window can express.
 const RANGES = [
-  { label: "3 mois", days: 90 },
-  { label: "6 mois", days: 182 },
-  { label: "1 an", days: 365 },
-  { label: `Depuis l'élection ${CFG.previousElection.label}`, since: CFG.previousElection.date },
-  { label: "Tout", days: null },
+  { label: T.ranges[0], days: 90 },
+  { label: T.ranges[1], days: 182 },
+  { label: T.ranges[2], days: 365 },
+  { label: T.ranges[3](CFG.previousElection.label), since: CFG.previousElection.date },
+  { label: T.ranges[4], days: null },
 ];
 
 function section(id, fn) {
@@ -63,7 +150,7 @@ function section(id, fn) {
   } catch (err) {
     console.error(`[dashboard] section "${id}" failed:`, err);
     const el = document.getElementById(id);
-    if (el) el.textContent = `Erreur (${id}) : ${err.message}`;
+    if (el) el.textContent = T.error(id, err.message);
   }
 }
 
@@ -98,7 +185,7 @@ function selectRiding(code, { zoom = true } = {}) {
   registry.selectedCode = code;
 
   renderRidingDetail(code, name, entry, registry.ridingBaseline.sharesFor(code), registry.partyCodes,
-    registry.winProbs?.[code] ?? null, registry.candidates?.[code] ?? null);
+    registry.winProbs?.[code] ?? null);
 
   // Map: reset every layer to its default style, then highlight the
   // selected one with a heavy black outline that stays until the next
@@ -111,11 +198,11 @@ function selectRiding(code, { zoom = true } = {}) {
     selectedLayer.setStyle({ weight: 3.5, color: "#000" });
     selectedLayer.bringToFront();
     selectedLayer
-      .bindPopup(`<strong>${name}</strong><br>${label(entry.winner)} ${(entry.shares[entry.winner] * 100).toFixed(0)} %`)
+      .bindPopup(`<strong>${name}</strong><br>${label(entry.winner)} ${formatPercent(entry.shares[entry.winner])}`)
       .openPopup();
     const geoVisible = !document.getElementById("riding-map")?.hidden;
     if (zoom && geoVisible && registry.leafletMap) {
-      registry.leafletMap.fitBounds(selectedLayer.getBounds(), { maxZoom: 9 });
+      registry.leafletMap.fitBounds(selectedLayer.getBounds(), { maxZoom: 11 });
     }
   }
 
@@ -136,7 +223,12 @@ function selectRiding(code, { zoom = true } = {}) {
   const watchRow = registry.watchlistRowsByCode.get(code);
   if (watchRow) {
     watchRow.classList.add("selected-row");
-    watchRow.scrollIntoView({ block: "nearest" });
+    // Scroll the list only, never the page (scrollIntoView would also move
+    // the window, e.g. on the default selection at load).
+    const list = document.getElementById("watchlist");
+    const top = watchRow.offsetTop - list.offsetTop, bottom = top + watchRow.offsetHeight;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
   }
 
   // Detail panel: a brief flash draws the eye to it, since it can be a
@@ -147,7 +239,7 @@ function selectRiding(code, { zoom = true } = {}) {
   detailSection.classList.add("flash");
 }
 
-function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCodes, winProbs, candidates) {
+function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCodes, winProbs) {
   const host = document.getElementById("riding-detail");
   host.innerHTML = "";
 
@@ -170,19 +262,17 @@ function renderRidingDetail(code, name, forecastEntry, baselineShares, partyCode
   // QS ahead by 0.8 in the central scenario, PCQ the likelier winner).
   // Plain-language headers on purpose.
   const table = document.createElement("table");
-  const candCol = candidates ? "<th>Candidat.e</th>" : "";
   table.innerHTML =
-    `<thead><tr><th>Parti</th>${candCol}<th>Chances de gagner</th><th>Appui projeté</th><th>Résultat ${CFG.previousElection.label}</th></tr></thead>`;
+    `<thead><tr>${T.detailHead(CFG.previousElection.label)}</tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const r of rows) {
     const tr = document.createElement("tr");
-    const proj = (r.projected * 100).toFixed(1) + "%";
-    const base = r.baseline !== null ? (r.baseline * 100).toFixed(1) + "%" : "n/d";
-    const pw = r.pWin !== null ? Math.round(r.pWin * 100) + " %" : "n/d";
-    const cand = candidates ? `<td>${candidates[r.party] ?? '<span class="muted-cell">n/d</span>'}</td>` : "";
+    const proj = formatPercent(r.projected, 1);
+    const base = r.baseline !== null ? formatPercent(r.baseline, 1) : T.nd;
+    const pw = r.pWin !== null ? formatPercent(r.pWin) : T.nd;
     tr.innerHTML =
       `<td>${chip(r.party)}</td>` +
-      `${cand}<td>${pw}</td><td>${proj}</td><td>${base}</td>`;
+      `<td>${pw}</td><td>${proj}</td><td>${base}</td>`;
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);
@@ -233,7 +323,7 @@ function renderTrendChart(fullSeries, polls, partyCodes) {
     const last = series.at(-1);
     const endLabels = partyCodes
       .filter((p) => last?.[p])
-      .map((p) => ({ party: p, value: last[p].mean, label: `${label(p)} ${(last[p].mean * 100).toFixed(1)} %` }))
+      .map((p) => ({ party: p, value: last[p].mean, label: `${label(p)} ${formatPercent(last[p].mean, 1)}` }))
       .sort((a, b) => b.value - a.value);
     const MIN_GAP = 0.022; // in share units, ~9px at this height
     endLabels.forEach((d, i) => { d.y = d.value; });
@@ -246,12 +336,12 @@ function renderTrendChart(fullSeries, polls, partyCodes) {
       height: 420,
       marginLeft: 55,
       marginRight: 78,
-      x: { label: "Date" },
-      y: { label: "Intention de vote", percent: true, grid: true },
+      x: { label: T.date },
+      y: { label: T.intention, percent: true, grid: true },
       color: colorScale(partyCodes),
       marks: [
         Plot.areaY(points, { x: "date", y1: "p05", y2: "p95", fill: "party", fillOpacity: 0.12 }),
-        Plot.dot(dots, { x: "date", y: "share", fill: "party", r: 2.5, fillOpacity: 0.55, title: (d) => `${d.firm}\n${label(d.party)} : ${(d.share * 100).toFixed(1)} %` }),
+        Plot.dot(dots, { x: "date", y: "share", fill: "party", r: 2.5, fillOpacity: 0.55, title: (d) => `${d.firm}\n${label(d.party)} ${formatPercent(d.share, 1)}` }),
         Plot.lineY(points, { x: "date", y: "mean", stroke: "party", strokeWidth: 2.5, z: "party" }),
         Plot.text(endLabels, {
           x: () => new Date(last.date), y: "y", text: "label", fill: "party",
@@ -267,7 +357,7 @@ function renderTrendChart(fullSeries, polls, partyCodes) {
             const lines = partyCodes
               .filter((p) => row?.[p])
               .sort((a, b) => row[b].mean - row[a].mean)
-              .map((p) => `${label(p)} : ${(row[p].mean * 100).toFixed(1)} %`);
+              .map((p) => `${label(p)} ${formatPercent(row[p].mean, 1)}`);
             return [at, ...lines].join("\n");
           },
         })),
@@ -289,9 +379,9 @@ function renderTrendChart(fullSeries, polls, partyCodes) {
     buttons.push(btn);
     controls.appendChild(btn);
   }
-  // Default: since the last election -- shown as ALREADY PRESSED, since a
+  // Default: the last twelve months -- shown as ALREADY PRESSED, since a
   // control whose state is invisible reads as "nothing selected".
-  const defaultRange = RANGES.find((r) => r.since === CFG.previousElection.date);
+  const defaultRange = RANGES.find((r) => r.days === 365);
   buttons[RANGES.indexOf(defaultRange)].classList.add("active");
   draw(defaultRange);
 }
@@ -314,12 +404,18 @@ function renderTileMap(layout, winProbs, ridingForecast) {
   // tools/make_tiles.mjs); U converts to pixels.
   const tilesById = layout.tiles ?? layout;
   const U = 56, SIDE = U * 0.94;
-  const xs = Object.values(tilesById).map((t) => t.x);
-  const ys = Object.values(tilesById).map((t) => t.y);
+  // Frame: every tile and every region label, with a margin for the labels.
+  const regionsList = layout.regions ?? [];
+  const xs = [...Object.values(tilesById).map((t) => t.x), ...regionsList.map((r) => r.x)];
+  const ys = Object.values(tilesById).map((t) => t.y), ry = regionsList.map((r) => r.y);
   const x0 = Math.min(...xs) - 0.65, x1 = Math.max(...xs) + 0.65;
-  const y0 = Math.min(...ys) - 1.3, y1 = Math.max(...ys) + 2.1; // room for the below-cluster region labels
+  const y0 = Math.min(...ys, ...ry) - 0.9, y1 = Math.max(...ys, ...ry) + 0.7;
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `${x0 * U} ${y0 * U} ${(x1 - x0) * U} ${(y1 - y0) * U}`);
+  // Strokes and labels are sized in viewBox units; this ratio keeps them
+  // near their intended screen size whatever the map's scale (the federal
+  // map is about four times wider than Quebec's).
+  const unitsPerPx = ((x1 - x0) * U) / (host.clientWidth || 600);
 
   for (const [code, t] of Object.entries(tilesById)) {
     const probs = winProbs?.[code];
@@ -342,17 +438,18 @@ function renderTileMap(layout, winProbs, ridingForecast) {
     // Opacity carries certainty: a 52/48 race must not look like 90/10.
     rect.setAttribute("fill-opacity", (0.25 + 0.7 * pFav).toFixed(2));
     rect.setAttribute("stroke", close ? PARTY_COLORS[runner] ?? "#999" : "#ddd");
-    rect.setAttribute("stroke-width", close ? 4 : 1);
+    rect.setAttribute("stroke-width", close ? 4 * Math.min(Math.max(1, unitsPerPx), 2) : 1);
     const title = document.createElementNS(svg.namespaceURI, "title");
     title.textContent = probs
-      ? `${t.name}\nProbabilité de victoire :\n${ranked.slice(0, 3).filter(([, p]) => p >= 0.005)
-        .map(([p, v]) => `${label(p)} ${(v * 100).toFixed(0)} %`).join("\n")}`
+      ? `${t.name}\n${T.winProb}\n${ranked.slice(0, 3).filter(([, p]) => p >= 0.005)
+        .map(([p, v]) => `${label(p)} ${formatPercent(v)}`).join("\n")}`
       : t.name;
     rect.appendChild(title);
     rect.addEventListener("click", () => selectRiding(code, { zoom: false }));
     registry.tileByCode.set(code, rect);
     g.appendChild(rect);
 
+    if (!t.abbr) { svg.appendChild(g); continue; }
     const tileText = document.createElementNS(svg.namespaceURI, "text");
     tileText.setAttribute("x", t.x * U);
     tileText.setAttribute("y", t.y * U + 5);
@@ -370,15 +467,16 @@ function renderTileMap(layout, winProbs, ridingForecast) {
 
   // Region labels on top (they sit in space the layout kept free): bearings,
   // not boundaries.
+  const labelSize = Math.max(13, 12 * unitsPerPx);
   for (const r of layout.regions ?? []) {
     const lbl = document.createElementNS(svg.namespaceURI, "text");
     lbl.setAttribute("x", r.x * U);
     lbl.setAttribute("y", r.y * U);
     lbl.setAttribute("text-anchor", "middle");
-    lbl.setAttribute("font-size", "13");
+    lbl.setAttribute("font-size", labelSize.toFixed(1));
     lbl.setAttribute("letter-spacing", "0.08em");
     lbl.setAttribute("fill", "#8a8a8a");
-    lbl.textContent = r.label.toUpperCase();
+    lbl.textContent = (T.region[r.label] ?? r.label).toUpperCase();
     svg.appendChild(lbl);
   }
 
@@ -398,8 +496,9 @@ function renderTileMap(layout, winProbs, ridingForecast) {
     halo.appendChild(r);
     return r;
   };
-  const haloOuter = mk("#000", 2.5, 7);
-  const haloInner = mk("#fff", 2.5, 4.5);
+  const k = Math.max(1, unitsPerPx);
+  const haloOuter = mk("#000", 2.5 * k, 7 * k);
+  const haloInner = mk("#fff", 2.5 * k, 4.5 * k);
   halo.setAttribute("hidden", "");
   svg.appendChild(halo);
   registry.tileSelFrame = {
@@ -419,8 +518,7 @@ function renderTileMap(layout, winProbs, ridingForecast) {
   const note = document.createElement("p");
   note.className = "note";
   note.textContent =
-    "Couleur : parti favori · intensité : probabilité de victoire · " +
-    `contour : parti poursuivant lorsque le favori est sous ${Math.round(CLOSE_RACE_P * 100)}%.`;
+    T.tileNote(Math.round(CLOSE_RACE_P * 100));
   host.appendChild(note);
 }
 
@@ -463,7 +561,10 @@ function renderMap(geojson, ridingForecast) {
   // resolves after this runs -- Leaflet would otherwise compute its bounds
   // against a provisional height and leave the province floating in dead
   // space. Recompute once layout has settled, and again on resize.
-  const fit = () => { map.invalidateSize(); map.fitBounds(layer.getBounds(), { padding: [12, 12] }); };
+  // Web Mercator stretches the Arctic: the federal map opens on the
+  // populated south (where nearly every riding lies), the north one pan away.
+  const bounds = CFG.initialBounds ? L.latLngBounds(CFG.initialBounds) : layer.getBounds();
+  const fit = () => { map.invalidateSize(); map.fitBounds(bounds, { padding: [12, 12] }); };
   requestAnimationFrame(fit);
   new ResizeObserver(fit).observe(container);
 }
@@ -480,18 +581,13 @@ function renderWatchlist(ridingForecast, partyCodes, n = 20) {
 
   const table = document.createElement("table");
   table.innerHTML =
-    "<thead><tr><th>Circonscription</th><th>Favori</th><th>Poursuivant</th><th>Écart</th></tr></thead>";
+    `<thead><tr>${T.watchHead}</tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const r of rows.slice(0, n)) {
     const tr = document.createElement("tr");
     tr.className = "clickable-row";
-    const cands = registry.candidates?.[r.code];
-    const withName = (party) => {
-      const n = cands?.[party];
-      return n ? `${chip(party)}<br><span class="muted-cell" style="font-size:0.85em">${n}</span>` : chip(party);
-    };
-    tr.innerHTML = `<td>${r.name}</td><td>${withName(r.winner)}</td>` +
-      `<td>${withName(r.runnerUp)}</td><td>${(r.margin * 100).toFixed(1)} pt</td>`;
+    tr.innerHTML = `<td>${r.name}</td><td>${chip(r.winner)}</td>` +
+      `<td>${chip(r.runnerUp)}</td><td>${formatNumber(r.margin * 100, 1)} ${T.pt}</td>`;
     tr.onclick = () => selectRiding(r.code);
     registry.watchlistRowsByCode.set(r.code, tr);
     tbody.appendChild(tr);
@@ -501,17 +597,11 @@ function renderWatchlist(ridingForecast, partyCodes, n = 20) {
 }
 
 // ---- Leaders' ridings -------------------------------------------------------
-// The riding shown is the one the leader CONTESTS in 2026, not the seat they
-// hold now. Those differ for a leader with no seat and for one switching
-// ridings, and both are perfectly projectable -- this table previously showed
-// the current seat and wrote "ne siège pas" for the two leaders without one,
-// withholding a projection that the model could produce perfectly well.
-//
-// `riding_source` distinguishes a confirmed candidacy from the assumption
-// that a sitting leader runs again where they sit, and the distinction is
-// shown rather than flattened. Only when there is neither is the riding
-// genuinely unknown -- and "non annoncée" says that, where "ne siège pas"
-// said something true but irrelevant.
+// The riding shown is the one the leader contests at the next election, not
+// necessarily the seat they hold. `riding_source` distinguishes a confirmed
+// candidacy from the assumption that a sitting leader runs again where they
+// sit, and the distinction is shown. With neither, the riding is unknown and
+// marked as not announced; a party with no designated leader is marked n/a.
 
 function renderLeaderRidings(leaders, partyCodes) {
   const host = document.getElementById("leader-ridings");
@@ -521,17 +611,26 @@ function renderLeaderRidings(leaders, partyCodes) {
 
   const table = document.createElement("table");
   table.innerHTML =
-    "<thead><tr><th>Parti</th><th>Chef</th><th>Circonscription</th><th>Projection</th></tr></thead>";
+    `<thead><tr>${T.leaderHead}</tr></thead>`;
   const tbody = document.createElement("tbody");
 
-  for (const leader of leaders) {
+  // Parties with no designated leader keep their row, marked n/d.
+  const withLeader = new Set(leaders.map((l) => l.party_code));
+  const rows = [...leaders, ...partyCodes.filter((p) => p !== "AUTRES" && !withLeader.has(p)).map((p) => ({ party_code: p }))];
+  for (const leader of rows) {
     const tr = document.createElement("tr");
     const partyCell = `<td>${chip(leader.party_code)}</td>`;
+
+    if (!leader.leader_name) {
+      tr.innerHTML = `${partyCell}<td class="muted-cell">${T.nd}</td><td colspan="2" class="muted-cell">${T.nd}</td>`;
+      tbody.appendChild(tr);
+      continue;
+    }
 
     if (!leader.riding_name) {
       tr.innerHTML =
         `${partyCell}<td>${leader.leader_name}</td>` +
-        `<td colspan="2" class="muted-cell">candidature non annoncée</td>`;
+        `<td colspan="2" class="muted-cell">${T.notAnnounced}</td>`;
       tbody.appendChild(tr);
       continue;
     }
@@ -541,13 +640,13 @@ function renderLeaderRidings(leaders, partyCodes) {
     // been announced.
     const ridingLabel =
       leader.riding_source === "siege actuel"
-        ? `${leader.riding_name} <span class="muted-cell">(siège actuel)</span>`
+        ? `${leader.riding_name} <span class="muted-cell">(${T.currentSeat})</span>`
         : leader.riding_name;
 
     const code = codeByName.get(leader.riding_name);
     const entry = code ? registry.ridingForecast.get(code) : null;
     if (!entry) {
-      tr.innerHTML = `${partyCell}<td>${leader.leader_name}</td><td>${ridingLabel}</td><td class="muted-cell">n/d</td>`;
+      tr.innerHTML = `${partyCell}<td>${leader.leader_name}</td><td>${ridingLabel}</td><td class="muted-cell">${T.nd}</td>`;
       tbody.appendChild(tr);
       continue;
     }
@@ -567,7 +666,7 @@ function renderLeaderRidings(leaders, partyCodes) {
     tr.className = "clickable-row";
     tr.innerHTML =
       `${partyCell}<td>${leader.leader_name}</td><td>${ridingLabel}</td>` +
-      `<td>${chip(entry.winner)} ${holds ? "conserve" : "gagne"} (+${(margin * 100).toFixed(1)} pt)</td>`;
+      `<td>${chip(entry.winner)} ${holds ? T.holds : T.gains} (+${formatNumber(margin * 100, 1)} ${T.pt})</td>`;
     tr.onclick = () => selectRiding(code);
     tbody.appendChild(tr);
   }
@@ -604,7 +703,7 @@ function renderSeatDistributions(distributions, totalSeats, partyCodes, medoidCo
     height: 90 * ordered.length,
     marginLeft: 62,
     marginRight: 20,
-    x: { label: "Sièges", domain: [0, totalSeats], grid: true },
+    x: { label: T.seats, domain: [0, totalSeats], grid: true },
     y: { label: null, axis: null, domain: [0, 1] },
     fy: { domain: ordered, label: null, tickFormat: label },
     color: colorScale(partyCodes),
@@ -627,10 +726,7 @@ function renderSeatDistributions(distributions, totalSeats, partyCodes, medoidCo
   const note = document.createElement("p");
   note.className = "note";
   note.textContent =
-    `Distribution du nombre de sièges par parti sur ${registry.nDraws.toLocaleString("fr-CA")} simulations. ` +
-    `Trait pointillé : seuil de majorité (${threshold} sièges). ` +
-    `Valeurs à droite : sièges dans le scénario médian de la distribution jointe (médoïde), ` +
-    `suivis de l'intervalle à 90 %.`;
+    T.seatNote(registry.nDraws.toLocaleString(LOCALE), threshold);
   host.appendChild(note);
 }
 
@@ -642,7 +738,7 @@ function renderSeatDistributions(distributions, totalSeats, partyCodes, medoidCo
 
 function renderDisproportion(d, partyCodes) {
   const host = document.getElementById("disproportion");
-  if (!d) { host.textContent = "n/d"; return; }
+  if (!d) { host.textContent = T.nd; return; }
   host.innerHTML = "";
 
   const ordered = [...partyCodes]
@@ -660,7 +756,7 @@ function renderDisproportion(d, partyCodes) {
     height: 46 * rows.length + 50,
     marginLeft: 62,
     marginRight: 175,
-    x: { label: "du % des votes vers le % des sièges", grid: true },
+    x: { label: T.dispAxis, grid: true },
     y: { domain: ordered, label: null, tickFormat: label },
     color: colorScale(partyCodes),
     marks: [
@@ -669,12 +765,12 @@ function renderDisproportion(d, partyCodes) {
         stroke: "party", strokeWidth: 2, headLength: 5,
       }),
       Plot.dot(rows, { x: "votes", y: "party", fill: "party", r: 4 }),
-      // Labels sit at their own mark: "% des votes" beside the dot on the
-      // side AWAY from the arrow, "% des sièges" beyond the arrowhead. When
+      // Labels sit at their own mark: the vote share beside the dot on the
+      // side AWAY from the arrow, the seat share beyond the arrowhead. When
       // the arrow is too short for side-by-side text, the two stack.
       ...(() => {
-        const vLbl = (r) => `${r.votes.toFixed(0)} % des votes`;
-        const sLbl = (r) => `${r.sieges.toFixed(0)} % des sièges`;
+        const vLbl = (r) => T.pctVotes(formatNumber(r.votes));
+        const sLbl = (r) => T.pctSeats(formatNumber(r.sieges));
         const wide = rows.filter((r) => Math.abs(r.sieges - r.votes) >= 3);
         const tight = rows.filter((r) => Math.abs(r.sieges - r.votes) < 3);
         const right = wide.filter((r) => r.sieges > r.votes);
@@ -683,15 +779,15 @@ function renderDisproportion(d, partyCodes) {
         // label (QS at 3 % overprinted the axis): it goes above the head.
         const leftFar = left.filter((r) => r.sieges >= 8);
         const leftEdge = left.filter((r) => r.sieges < 8);
-        const T = { fontSize: 11, fill: "#333", y: "party" };
+        const TXT = { fontSize: 11, fill: "#333", y: "party" };
         return [
-          Plot.text(right, { ...T, x: "votes", text: vLbl, dx: -9, textAnchor: "end" }),
-          Plot.text(right, { ...T, x: "sieges", text: sLbl, dx: 11, textAnchor: "start" }),
-          Plot.text(left, { ...T, x: "votes", text: vLbl, dx: 9, textAnchor: "start" }),
-          Plot.text(leftFar, { ...T, x: "sieges", text: sLbl, dx: -11, textAnchor: "end" }),
-          Plot.text(leftEdge, { ...T, x: "sieges", text: sLbl, dx: -4, dy: -12, textAnchor: "start" }),
-          Plot.text(tight, { ...T, x: (r) => Math.max(r.votes, r.sieges), text: sLbl, dx: 10, dy: -7, textAnchor: "start" }),
-          Plot.text(tight, { ...T, x: (r) => Math.max(r.votes, r.sieges), text: vLbl, dx: 10, dy: 7, textAnchor: "start" }),
+          Plot.text(right, { ...TXT, x: "votes", text: vLbl, dx: -9, textAnchor: "end" }),
+          Plot.text(right, { ...TXT, x: "sieges", text: sLbl, dx: 11, textAnchor: "start" }),
+          Plot.text(left, { ...TXT, x: "votes", text: vLbl, dx: 9, textAnchor: "start" }),
+          Plot.text(leftFar, { ...TXT, x: "sieges", text: sLbl, dx: -11, textAnchor: "end" }),
+          Plot.text(leftEdge, { ...TXT, x: "sieges", text: sLbl, dx: -4, dy: -12, textAnchor: "start" }),
+          Plot.text(tight, { ...TXT, x: (r) => Math.max(r.votes, r.sieges), text: sLbl, dx: 10, dy: -7, textAnchor: "start" }),
+          Plot.text(tight, { ...TXT, x: (r) => Math.max(r.votes, r.sieges), text: vLbl, dx: 10, dy: 7, textAnchor: "start" }),
         ];
       })(),
     ],
@@ -701,51 +797,47 @@ function renderDisproportion(d, partyCodes) {
   const note = document.createElement("p");
   note.className = "note";
   note.textContent =
-    `Espérances sur les ${registry.nDraws.toLocaleString("fr-CA")} simulations : la flèche va de la part des votes ` +
-    `à la part des ${registry.totalSeats} sièges. Le scrutin uninominal amplifie le parti en tête et pénalise les appuis dispersés. ` +
-    `Indice de disproportion de Gallagher : ${d.gallagher.p50.toFixed(1)} ` +
-    `[intervalle à 90 % : ${d.gallagher.p05.toFixed(1)}–${d.gallagher.p95.toFixed(1)}] ; ` +
-    `repères : 4 à 6 sous un scrutin proportionnel, ${CFG.gallagherRef(registry.meta)}.`;
+    T.dispNote(registry.nDraws.toLocaleString(LOCALE), registry.totalSeats, formatNumber(d.gallagher.p50, 1),
+      formatNumber(d.gallagher.p05, 1), formatNumber(d.gallagher.p95, 1), CFG.gallagherRef(registry.meta));
   host.appendChild(note);
 }
 
 // ---- Government scenarios ---------------------------------------------------
 // Mutually exclusive by construction: every simulation lands in exactly one
-// row, so the probabilities partition to 100%. The "balance of power" column
-// names the smallest party that could lift the plurality winner to a
-// majority -- arithmetic only. Whether such support would actually be given
-// is a political question this model cannot see.
+// row, so the probabilities partition to 100%. For a minority, every party
+// whose seats would lift the plurality winner to a majority is listed:
+// arithmetic only, whether such support would be given is a political
+// question this model cannot see.
 
 function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
   const host = document.getElementById("government-outcomes");
   host.innerHTML = "";
+  const threshold = Math.floor(totalSeats / 2) + 1;
 
   const majority = scenarios.filter((s) => s.type === "majority").reduce((a, s) => a + s.probability, 0);
   // Round once and subtract, rather than rounding both: two complementary
   // probabilities rounded independently display as 9% and 92%.
   const majPct = Math.round(majority * 100);
   const lead = document.createElement("p");
-  lead.innerHTML = `<strong>${majPct}%</strong> de probabilité d'un gouvernement majoritaire, ` +
-    `<strong>${100 - majPct}%</strong> d'un gouvernement minoritaire.`;
+  lead.innerHTML = T.govLead(majPct, 100 - majPct);
   host.appendChild(lead);
 
   const table = document.createElement("table");
-  table.innerHTML = "<thead><tr><th>Probabilité</th><th>Gouvernement</th><th>Opposition</th><th>Balance du pouvoir</th></tr></thead>";
+  table.innerHTML = `<thead><tr>${T.govHead}</tr></thead>`;
   const tbody = document.createElement("tbody");
 
   for (const s of scenarios.filter((x) => x.probability >= 0.01)) {
     const tr = document.createElement("tr");
-    const kind = s.type === "majority" ? "majoritaire" : "minoritaire";
-    let balance;
-    if (s.type === "majority") balance = '<span class="muted-cell">sans objet</span>';
-    else if (s.balanceOfPower) balance = chip(s.balanceOfPower);
-    else if (s.needsOpposition) balance = `<span class="muted-cell">appui de l'opposition requis</span>`;
-    else balance = '<span class="muted-cell">aucun parti seul ne suffit</span>';
+    const kind = s.type === "majority" ? T.majority : T.minority;
+    let supports;
+    if (s.type === "majority") supports = `<span class="muted-cell">${T.na}</span>`;
+    else if (s.supports?.length) supports = s.supports.map(chip).join(" ");
+    else supports = `<span class="muted-cell">${T.noneSuffices}</span>`;
     tr.innerHTML =
-      `<td>${(s.probability * 100).toFixed(0)}%</td>` +
+      `<td>${formatPercent(s.probability)}</td>` +
       `<td>${chip(s.leader)} <span class="muted-cell">${kind}</span></td>` +
       `<td>${s.opposition ? chip(s.opposition) : "-"}</td>` +
-      `<td>${balance}</td>`;
+      `<td>${supports}</td>`;
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);
@@ -754,10 +846,48 @@ function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
   const note = document.createElement("p");
   note.className = "note";
   note.textContent =
-    "Chaque simulation est classée dans un scénario unique; les probabilités somment à 100 % " +
-    "(scénarios sous 1 % omis). La balance du pouvoir désigne le plus petit parti dont les sièges, " +
-    "ajoutés à ceux du parti arrivé en tête, atteindraient la majorité; elle décrit une possibilité " +
-    "arithmétique et non une entente anticipée.";
+    T.govNote(threshold);
+  host.appendChild(note);
+}
+
+// ---- Pivot power --------------------------------------------------------------
+// Mean normalised Banzhaf index over the draws: the share of decisive
+// positions a party holds among all coalitions that reach a majority.
+
+function renderPivotPower(power, partyCodes) {
+  const host = document.getElementById("pivot-power");
+  if (!power) { host.closest("section")?.remove(); return; }
+  host.innerHTML = "";
+  const rows = partyCodes
+    .filter((p) => (power[p]?.banzhaf ?? 0) >= 0.005 || (power[p]?.pPivotal ?? 0) >= 0.01)
+    .map((p) => ({ party: p, banzhaf: power[p].banzhaf, pPivotal: power[p].pPivotal }))
+    .sort((a, b) => b.banzhaf - a.banzhaf);
+
+  const plot = Plot.plot({
+    width: 560,
+    height: 40 * rows.length + 40,
+    marginLeft: 62,
+    marginRight: 60,
+    x: { label: T.banzhafAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, 100], percent: true, grid: true },
+    marginBottom: 44,
+    y: { domain: rows.map((r) => r.party), label: null, tickFormat: label },
+    color: colorScale(partyCodes),
+    marks: [
+      Plot.barX(rows, { x: "banzhaf", y: "party", fill: "party", rx: 4, insetTop: 6, insetBottom: 6 }),
+      Plot.text(rows, { x: "banzhaf", y: "party", text: (r) => formatPercent(r.banzhaf), dx: 6, textAnchor: "start", fill: "#333", fontSize: 11 }),
+      Plot.tip(rows, Plot.pointerY({
+        x: "banzhaf", y: "party",
+        title: (r) => T.banzhafTip(label(r.party), formatNumber(r.banzhaf * 100), formatNumber(r.pPivotal * 100)),
+      })),
+      Plot.ruleX([0]),
+    ],
+  });
+  host.appendChild(plot);
+
+  const note = document.createElement("p");
+  note.className = "note";
+  note.textContent =
+    T.pivotNote;
   host.appendChild(note);
 }
 
@@ -771,7 +901,7 @@ async function loadJSON(path) {
 
 async function main() {
   const status = document.getElementById("status");
-  status.textContent = "Chargement des données...";
+  status.textContent = T.loading;
 
   // The page DISPLAYS a precomputed projection (js/tools/compute.mjs writes
   // qc_projection.json when the poll watch finds new data). The modelling
@@ -780,10 +910,9 @@ async function main() {
   // went from ~20s of GP fitting to rendering a JSON.
   const F = CFG.files;
   const opt = (path) => (path ? loadJSON(path).catch(() => null) : Promise.resolve(null));
-  const [projection, pollRows, geojson, leaders, tileLayout, candidates] = await Promise.all([
-    loadJSON(F.projection), loadJSON(F.polls), opt(F.geojson), opt(F.leaders), opt(F.tiles), opt(F.candidates),
+  const [projection, pollRows, geojson, leaders, tileLayout] = await Promise.all([
+    loadJSON(F.projection), loadJSON(F.polls), opt(F.geojson), opt(F.leaders), opt(F.tiles),
   ]);
-  registry.candidates = candidates;
 
   const { meta, partyCodes, trendSeries, totalSeats } = projection;
   registry.partyCodes = partyCodes;
@@ -802,11 +931,11 @@ async function main() {
   registry.ridingBaseline = { sharesFor: (code) => baselineAll[String(code)] ?? null };
 
   // generatedAt is ISO UTC; shown in Eastern time.
-  const computedAt = new Intl.DateTimeFormat("fr-CA", {
+  const computedAt = new Intl.DateTimeFormat(LOCALE, {
     timeZone: "America/Toronto", dateStyle: "long", timeStyle: "short",
   }).format(new Date(meta.generatedAt));
   status.textContent =
-    `Intentions de vote au ${meta.asOf} · ${meta.nPolls} sondages · ${meta.nRidings} circonscriptions · mis à jour le ${computedAt}`;
+    T.status(new Intl.DateTimeFormat(LOCALE, { dateStyle: "long", timeZone: "UTC" }).format(new Date(meta.asOf)), meta.nPolls, meta.nRidings, computedAt);
 
   // Sections without data for this election are removed, not left empty.
   const drop = (id) => document.getElementById(id)?.closest("section")?.remove();
@@ -823,9 +952,8 @@ async function main() {
       note.className = "note";
       const shares = partyCodes.filter((p) => meta.projectedVote[p] >= 0.005)
         .sort((a, b) => meta.projectedVote[b] - meta.projectedVote[a])
-        .map((p) => `${label(p)} ${(meta.projectedVote[p] * 100).toFixed(1).replace(".", ",")} %`).join(", ");
-      note.textContent = "Courbes : moyenne des sondages. La projection des sièges utilise les parts corrigées " +
-        `de l'écart historique entre les sondages de veille et les résultats, par région : ${shares}.`;
+        .map((p) => `${label(p)} ${formatPercent(meta.projectedVote[p], 1)}`).join(", ");
+      note.textContent = T.trendNote(shares);
       document.getElementById("trend-chart").appendChild(note);
     }
   });
@@ -861,6 +989,7 @@ async function main() {
       projection.medoidCounts ?? projection.pointCounts));
   section("government-outcomes", () =>
     renderGovernmentScenarios(projection.scenarios, totalSeats, partyCodes));
+  section("pivot-power", () => renderPivotPower(projection.pivotPower, partyCodes));
   section("disproportion", () =>
     renderDisproportion(projection.disproportion, partyCodes));
 
@@ -872,5 +1001,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  document.getElementById("status").textContent = `Erreur : ${err.message}`;
+  document.getElementById("status").textContent = T.fatal(err.message);
 });

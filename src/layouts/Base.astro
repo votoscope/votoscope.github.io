@@ -1,34 +1,43 @@
 ---
 import "../styles/dashboard.css";
 import "../styles/site.css";
+import { NAV, PAGES, SITE, langOf, translationOf } from "../i18n/routes.js";
 
-interface Props { titre: string; description?: string; election?: "qc" | "ca" }
-const { titre, description = "Projections électorales fondées sur les sondages publics, à code et données ouverts.", election } = Astro.props;
-const chemin = Astro.url.pathname;
-const liens = [["/quebec/", "Québec"], ["/canada/", "Canada"], ["/methode/", "Méthode"], ["/a-propos/", "À propos"]];
+interface Props { title: string; description?: string; election?: "qc" | "ca" }
+const path = Astro.url.pathname;
+const lang = langOf(path);
+const S = SITE[lang];
+const { title, description = S.description, election } = Astro.props;
+const links = NAV[lang].map(([page, name]) => [PAGES[page][lang], name]);
+const home = PAGES.home[lang];
+const otherLang = lang === "fr" ? "en" : "fr";
 ---
 <!doctype html>
-<html lang="fr">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{titre === "Votoscope" ? titre : `${titre} · Votoscope`}</title>
+    <title>{title === "Votoscope" ? title : `${title} · Votoscope`}</title>
     <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" hreflang={otherLang} href={new URL(translationOf(path), Astro.site)} />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet" />
   </head>
   <body data-election={election}>
     <nav class="site">
-      <a class="marque" href="/">Votoscope</a>
+      <a class="brand" href={home}><img src="/logo.svg" alt="" width="31" height="34" />Votoscope</a>
       <ul>
-        {liens.map(([href, nom]) => <li><a href={href} aria-current={chemin.startsWith(href) ? "page" : undefined}>{nom}</a></li>)}
+        {links.map(([href, name]) => <li><a href={href} aria-current={path.startsWith(href) ? "page" : undefined}>{name}</a></li>)}
+        <li class="language"><a href={translationOf(path)} hreflang={otherLang} lang={otherLang}>{S.otherLanguage}</a></li>
       </ul>
     </nav>
     <slot />
     <footer class="site">
-      <p>Votoscope est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts&nbsp;: <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
+      <p>{S.footer} <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
     </footer>
   </body>
 </html>

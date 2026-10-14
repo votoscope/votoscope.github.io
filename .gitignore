@@ -23,8 +23,16 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# Données copiées des dépôts voisins pour le développement
-public/donnees/
-# Consignes locales
+# Data copied from the neighbouring repositories for development
+public/data/
+# Local agent instructions
 CLAUDE.md
 AGENTS.md
+# Posts built by "npm run posts"
+public/fr/posts/
+public/en/posts/
+# taste-skill working files (screenshots, reports)
+.taste-skill/
+# Third-party skills: reinstalled from skills-lock.json (npx skills experimental_install)
+.claude/skills/design-taste-frontend/
+.claude/skills/humanizer/

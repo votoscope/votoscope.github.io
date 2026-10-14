@@ -1,0 +1,35 @@
+<details class="methodology">
+  <summary>Methodology</summary>
+  <h4>1. Data</h4>
+  <p>Official Elections Canada results by riding (2015, 2019, 2021 and 2025), the official transposition of
+  the 2021 results onto the 2023 map, national polls since 2015 and their regional breakdowns since
+  December 2019 (Atlantic, Quebec, Ontario, Manitoba and Saskatchewan, Alberta, British Columbia). Riding
+  boundaries of the 2023 Representation Order (Elections Canada), simplified for display.</p>
+  <h4>2. Regional targets</h4>
+  <p>For each region, the breakdowns published since the 2025 election are pooled with weight
+  n·exp(−age/τ), age being measured on a clock where one campaign day counts as D days: τ = 120 days
+  and D = 16 are estimated by one-step-ahead forecasting of the region-national gap of each of the 717
+  broken-down polls. The targets are corrected for the mean regional bias of the eve polls of 2021 and
+  2025, multiplied party by party by a shrinkage factor m²/(m² + s²/k), where m and s² are the mean and
+  variance of the national gap between eve polls and results over the last k = 3 elections.</p>
+  <h4>3. Ridings</h4>
+  <p>Within each region, the 2025 results are carried to the target by transfer: a declining party loses
+  the same proportion of its vote everywhere, modulated by (s/s̄)^(−β) with β = 0.5 (stronger retention
+  where it is strong), and the released votes go to the gaining parties in proportion to their gains.
+  Evaluated at known regional shares on the 2015→2019, 2019→2021 and 2021→2025 transitions, this
+  transfer reduces the absolute seat error from 106 to 90 compared with a uniform proportional swing.</p>
+  <h4>4. Uncertainty</h4>
+  <p>Each draw combines a national shock and a regional shock in centred log-ratios (per-party standard
+  deviations estimated on the errors of eve polls) and, for each riding, a local deviation drawn from the
+  errors of the three transitions, centred by region. On the eve of the 2021 and 2025 elections, each
+  evaluated with parameters estimated without it, 11 of the 12 per-party 90% seat intervals contain the
+  result; the absolute seat error of the median scenario (medoid) is 36 and 14.</p>
+  <h4>5. Government scenarios and pivot power</h4>
+  <p>Each draw is assigned to a single government scenario: majority when the first party reaches 172
+  seats, minority otherwise. For a minority government, the parties whose seats, added to those of the
+  first party, reach a majority are listed (sufficient supports). The pivot power of each party is the
+  normalised Banzhaf index of the seat allocation of each draw, averaged over draws: among all coalitions
+  of parties reaching a majority, the share of cases in which the party's seats are decisive, the
+  coalition losing its majority without it. A party holding a majority alone has an index of 1. These
+  measures are arithmetic and imply nothing about alliances.</p>
+</details>

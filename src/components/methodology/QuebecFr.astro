@@ -1,0 +1,221 @@
+<details class="methodology">
+  <summary>Méthodologie</summary>
+
+  <h4>1. Données</h4>
+  <p>Quatre sources alimentent le modèle. (i) Les sondages provinciaux d'intentions de vote de
+  2014 à aujourd'hui, compilés depuis les tableaux publics de Wikipédia (CC BY-SA), chaque
+  entrée renvoyant à la publication originale de la maison de sondage; les ventilations
+  régionales (Montréal, Québec, reste du Québec) proviennent des rapports des maisons lorsque
+  publiés. (ii) Les résultats officiels des élections générales de 2014, 2018, 2022 et 2026
+  (Élections Québec), exprimés sur la carte électorale de 2026 (127 circonscriptions), les
+  scrutins antérieurs par correspondance géographique des sections de vote, ainsi que les
+  élections partielles tenues depuis l'élection générale de 2026 (DGEQ). (iii) Le recensement de 2021 (Statistique Canada), agrégé des
+  aires de diffusion vers les circonscriptions. (iv) Le statut des députés sortants, les
+  retraits et les candidatures des chefs, relevés des pages de l'Assemblée nationale.</p>
+
+  <h4>2. Représentation compositionnelle</h4>
+  <p>Un vecteur d'intentions de vote est une composition : ses parts sont positives et somment
+  à l'unité, de sorte que l'analyse est conduite dans le simplexe et non dans l'espace
+  euclidien des pourcentages. Toutes les réponses et tous les prédicteurs de nature
+  compositionnelle sont transformés en coordonnées log-ratio isométriques (ILR), base
+  orthonormée de dimension k−1 dans laquelle les opérations linéaires et les distances sont
+  valides. Les ajustements multiplicatifs (primes et pénalités locales) sont appliqués comme
+  perturbations compositionnelles, l'opération interne du simplexe. Les partis non ventilés
+  par les sondages anciens sont traités par amalgamation dans la part résiduelle, avec
+  remplacement multiplicatif des zéros.</p>
+
+  <h4>3. Tendance nationale</h4>
+  <p>La trajectoire des intentions de vote est estimée par régression par processus gaussien,
+  un processus indépendant par coordonnée ILR, noyau de Matérn (ν = 3/2). La variance
+  d'observation de chaque sondage est calculée par coordonnée : méthode delta appliquée à
+  l'échantillonnage multinomial, Var(ilr_c) = Σ_p M²_cp / (n x_p), où M est le jacobien de
+  la transformation ILR. Une échelle multiplicative par coordonnée, estimée sur grille,
+  absorbe la surdispersion entre maisons de sondage. Les hyperparamètres (portée, échelle
+  de bruit et paramètres de non-stationnarité) sont marginalisés : la prédiction est la
+  moyenne des modèles de la grille pondérée par leur vraisemblance marginale, et
+  l'incertitude sur les hyperparamètres est ainsi incluse dans les intervalles
+  prédictifs.</p>
+  <p>Deux formes de non-stationnarité sont admises, chacune contenant le modèle stationnaire
+  comme cas particulier afin que la sélection relève de la vraisemblance et non d'un choix
+  discrétionnaire. Premièrement, des points de rupture aux changements de chefs (14 janvier
+  et 12 avril 2026) : la covariance entre régimes est multipliée par ρ<sup>|Δr|</sup>, ρ ∈ [0, 1]
+  estimé par vraisemblance marginale, ρ = 1 restituant le noyau stationnaire; une rupture
+  partielle est retenue sur une coordonnée, le modèle stationnaire ailleurs. Deuxièmement,
+  une dilatation de l'axe temporel en période de campagne (du décret au scrutin, fenêtres
+  2014, 2018, 2022 et 2026) : un jour de campagne compte pour k jours de temps de noyau,
+  k partagé entre toutes les campagnes (donc identifié principalement par les campagnes
+  passées) et k = 1 restituant l'horloge uniforme. La dilatation retenue est forte : portée
+  effective d'environ 40 à 190 jours en campagne selon la coordonnée, contre 300 à 1500 hors
+  campagne. La calibration des intervalles prédictifs est mesurée par validation
+  séquentielle : à chaque coupure mensuelle de 2016 à 2026, le modèle ajusté sur les
+  seuls sondages antérieurs prédit le sondage suivant. L'intervalle nominal à 90 %
+  couvre 79 % de ces 675 prédictions (95 % en période de campagne, 78 % hors
+  campagne). La validation croisée par plis aléatoires donne 90,5 %, chiffre qui
+  mesure l'interpolation de la série et non la prédiction.</p>
+
+  <h4>4. Sondages régionaux</h4>
+  <p>Les ventilations régionales publiées par les maisons de sondage (région métropolitaine
+  de Montréal, région métropolitaine de Québec, reste du Québec), toutes firmes, publiées
+  depuis l'élection précédente sont regroupées par région en moyenne pondérée. Le poids
+  d'un sondage est son effectif régional multiplié par exp(−âge/τ), l'âge étant mesuré sur
+  l'horloge de la tendance nationale (section 3) : un jour de campagne compte pour D jours.
+  τ = 240 jours et D = 16 sont estimés par prévision un pas en avant de l'écart
+  région-province de chacun des 152 sondages ventilés par région publiés de 2018 à 2026, à partir
+  des seuls sondages antérieurs du même cycle, sur des grilles contenant l'absence de
+  décroissance et l'absence de dilatation. La constante effective est ainsi de 15 jours en
+  campagne et de 240 jours hors campagne; l'erreur quadratique de prévision est de 0,163,
+  contre 0,216 pour une fenêtre fixe de 14 jours et 0,262 sans sondage régional. Pour chaque
+  région, l'écart entre la région et la province dans ces sondages, en log-ratios centrés
+  des cinq partis principaux, moins le même écart dans les résultats de l'élection
+  précédente, déplace les circonscriptions de la région, multiplié par un coefficient estimé
+  conjointement avec celui du swing par langue maternelle (section 5) sur les transitions
+  2014→2018, 2018→2022 et 2022→2026 : 0,75 pour les régions, 0,25 pour la langue. Les deux
+  coefficients étant choisis sur deux transitions et évalués sur la troisième, à vote
+  provincial connu, l'erreur quadratique moyenne des parts par circonscription passe de 5,66
+  à 5,44 points et le nombre de gagnants corrects de 309 à 316 sur 348 circonscriptions
+  évaluées. À la veille des trois scrutins, tendance nationale comprise, l'erreur absolue de
+  sièges du scénario central par circonscription passe de 36 à 30 sur l'ensemble des trois.</p>
+
+  <h4>5. Modèle de circonscription</h4>
+  <p>Le point de départ de chaque circonscription est son résultat à l'élection générale du
+  5 octobre 2026. Aucune correction de participation différentielle n'est appliquée : le
+  poids de rétrécissement de cette correction, estimé sur grille contre les sondages
+  finaux de 2022 et de 2026 combinés, est nul (erreur absolue moyenne de 1,89 point sans
+  correction, 2,06 avec). Le mouvement provincial estimé (section 3) est appliqué en
+  log-ratios. Quatre
+  ajustements estimés s'y superposent, tous en perturbation compositionnelle :</p>
+  <ul>
+    <li>Prime au sortant : un siège dont le député élu en 2026 ne se représente pas ou siège
+    désormais sous une autre bannière perd la prime personnelle, estimée par comparaison des candidats sortants et nouveaux de 2018 à 2022
+    (facteur 1,125 sur la part du parti tenant). Évaluée sur les transitions 2014→2018,
+    2018→2022 et 2022→2026, chacune prédite à partir des deux autres (sortants relevés
+    par appariement des noms des élus et des candidats), la pénalité choisie correspond à
+    un facteur de 1,11 à 1,16 et réduit l'erreur absolue de sièges à la veille, tendance
+    nationale comprise, de 32 à 26 sur l'ensemble des trois scrutins.</li>
+    <li>Effet de chef : estimé sur 37 candidatures de chefs aux élections générales de 1976
+    à 2026, classées arrivée (chef dans une circonscription qui n'est pas la sienne, 8 cas),
+    continuation (même chef, même circonscription, 14 cas) ou départ (circonscription du chef
+    précédent sans lui, 15 cas). Chaque cas est l'écart log entre la part obtenue et la part
+    prévue par le swing provincial uniforme. Une moyenne constante par type et un processus
+    gaussien sur l'année sont comparés en prévision séquentielle (chaque élection prédite par
+    les seules élections antérieures) ; la moyenne constante l'emporte pour les trois types :
+    arrivée ×1,39, continuation ×1,14, départ ×0,90.</li>
+    <li>Swing par langue maternelle : les ventilations francophones et non-francophones
+    des deux derniers sondages Léger donnent, pour chaque groupe, la variation log-ratio
+    de ses intentions de vote depuis la fin de la campagne précédente (moyenne pondérée
+    par les effectifs). Chaque circonscription reçoit le mélange de ces variations selon
+    sa composition linguistique (recensement de 2021, langue maternelle, agrégé des aires
+    de diffusion), centré sur la moyenne des circonscriptions, multiplié par un coefficient
+    de 0,25 estimé conjointement avec celui des sondages régionaux (section 4). Seul, ce
+    swing réduit, sur chacune des trois transitions prédite à partir des deux autres à vote
+    provincial connu, l'erreur quadratique moyenne des parts par circonscription : de 5,51
+    à 5,39, de 7,43 à 7,14 et de 5,23 à 4,83 points. La même construction par tranche d'âge
+    (18-34, 35-54, 55 ans et plus) n'apporte aucun gain : les écarts de niveau entre
+    tranches sont marqués, mais leurs variations d'une élection à l'autre sont voisines
+    et la composition par âge varie peu d'une circonscription à l'autre.</li>
+    <li>Élections partielles : chaque partielle tenue depuis l'élection générale de 2026 fournit une mesure locale
+    directe. L'écart entre son résultat et le swing provincial contemporain, net de la prime
+    au sortant retirée, entre dans la déviation locale avec un
+    poids de 0,5. Ce poids est un a priori documenté et non un paramètre estimé : aucune
+    série historique de partielles n'est disponible pour l'ajuster, et ces scrutins diffèrent
+    des générales par la participation et le contexte. Une analyse de sensibilité au poids
+    est fournie avec le code.</li>
+  </ul>
+  <p>Aucune déviation locale n'est prédite à partir du profil démographique. Une régression
+  par processus gaussien multivarié (noyau de Matérn, un processus par coordonnée ILR) du
+  changement de chaque circonscription sur le profil du recensement (langue, scolarité,
+  immigration, structure de l'emploi, âge, revenu, densité) et sur sa déviation précédente
+  atteint un R² de 0,44 à l'intérieur d'une transition, mais de −0,16 d'une transition à la
+  suivante (entraînement sur 2018→2022, prédiction de 2022→2026). Évaluée en sièges sur les
+  trois transitions 2014→2018, 2018→2022 et 2022→2026, chacune prédite à partir des deux
+  autres, elle cumule 221 sièges d'erreur contre 40 pour le report sans déviation locale;
+  sur 2026, à vote provincial connu, elle porte l'erreur quadratique moyenne des parts par
+  circonscription de 4,95 à 5,92 points.</p>
+  <p>Les ajustements par région (section 4) et par langue maternelle portent sur l'écart
+  entre les sondages publiés depuis l'élection de 2026 et les résultats de cette élection;
+  ils s'appliquent dès la publication de ventilations régionales ou linguistiques
+  postérieures au scrutin. La prévision affichée comprend les ajustements pour lesquels de
+  telles ventilations existent à la date du calcul.</p>
+
+  <h4>6. Simulation et quantification de l'incertitude</h4>
+  <p>La distribution des sièges est obtenue par simulation Monte Carlo (5 000 tirages)
+  propageant quatre sources d'incertitude : (i) la loi a posteriori de la tendance nationale;
+  (ii) un choc systémique commun à toutes les circonscriptions (biais collectif des maisons
+  de sondage et dérive d'opinion jusqu'au scrutin), calibré sur l'écart entre les derniers
+  sondages et les résultats réels de 2018 et 2022, isotrope en ILR; (iii) un choc régional,
+  les déviations locales étant spatialement corrélées; (iv) la déviation idiosyncrasique de
+  chaque circonscription, rééchantillonnée parmi les erreurs du modèle de circonscription
+  (swing provincial et swing par langue maternelle) lors des transitions générales
+  antérieures, 2014→2018, 2018→2022 et 2022→2026 regroupées (vecteurs ILR entiers, nets de
+  leur moyenne régionale). Ces erreurs sont mises à l'échelle parti par parti en log-ratios
+  centrés : CAQ ×0,75, PLQ ×0,75, PCQ ×0,5, PQ ×1, QS ×0,75. Les facteurs sont choisis sur une
+  grille contenant 1 en maximisant le log-score des probabilités de victoire hors
+  échantillon, les erreurs de chaque transition prédisant les autres (log-score de 0,824 à
+  0,772). Évaluée sur les trois transitions,
+  chacune prédite à partir des deux autres à vote provincial connu, cette mise à l'échelle
+  réduit le log-score total de 0,889 à 0,809 (modèle de circonscription sans les sondages
+  régionaux) et améliore chacune des trois. Chaque composante est ensuite bornée à ±0,75
+  écart-type de sa partie dans le bassin. Ce seuil est choisi sur une grille contenant
+  l'absence de borne, en évaluant chaque scrutin à partir des deux autres, à la veille et
+  tendance nationale comprise : il est retenu dans deux des trois cas (1 dans le troisième),
+  et réduit le log-score total de 0,964 à 0,915, en l'améliorant sur chacun des trois
+  scrutins. Chaque tirage attribue un
+  gagnant par circonscription; les 127 sièges sont donc alloués dans chaque tirage.</p>
+  <p>Deux statistiques résument la distribution jointe. La probabilité de victoire par
+  circonscription est la fréquence de victoire sur les tirages; par linéarité de l'espérance,
+  sa somme sur les circonscriptions égale l'espérance de sièges du parti, et ces espérances
+  somment exactement à 127, l'unique décomposition par circonscription qui soit additive.
+  Le scénario central rapporté est le médoïde de la distribution jointe : le tirage
+  minimisant la distance L1 moyenne aux autres tirages. Contrairement au vecteur des médianes
+  marginales, qui ne correspond à aucun scénario atteignable et ne somme pas au nombre de
+  sièges, le médoïde est une réalisation effective, cohérente entre partis. Les intentions
+  de vote rapportées décrivent l'état de l'opinion à la date du calcul; la simulation de
+  sièges porte sur le jour du scrutin, fixé par la loi au 7 octobre 2030. Chaque tirage portant à la fois une
+  composition nationale de votes et une allocation de sièges, la distorsion du mode de
+  scrutin est elle-même une distribution jointe : le panneau votes-sièges rapporte les
+  espérances des deux parts par parti et l'indice des moindres carrés de Gallagher,
+  √(½Σ(v−s)²), résumé en médiane et intervalle à 90 % sur les tirages.</p>
+  <p>Chaque tirage est classé dans un scénario de gouvernement unique : majoritaire lorsque le
+  premier parti atteint 64 sièges, minoritaire sinon. Pour un gouvernement minoritaire sont
+  énumérés les partis dont les sièges, ajoutés à ceux du premier parti, atteignent la
+  majorité (appuis suffisants). Le pouvoir de pivot de chaque parti est l'indice de Banzhaf
+  normalisé de la répartition des sièges de chaque tirage, moyenné sur les tirages : parmi
+  toutes les coalitions de partis atteignant la majorité, la part des cas où les sièges du
+  parti sont décisifs, la coalition perdant la majorité sans lui. Un parti majoritaire seul a
+  un indice de 1. Ces mesures sont arithmétiques et ne préjugent pas des alliances.</p>
+
+  <h4>7. Validation et limites</h4>
+  <p>Les validations hors échantillon des sections 4 à 6 portent sur les trois transitions
+  2014→2018, 2018→2022 et 2022→2026, chacune évaluée avec des paramètres estimés sans elle.
+  La prévision publiée la veille du scrutin du 5 octobre 2026 a désigné le gagnant de 104 des
+  127 circonscriptions (106 selon le favori par probabilité de victoire; score de Brier
+  multiparti moyen de 0,264). L'erreur absolue de sièges de son scénario médian est de 28
+  (PQ 49 contre 59 élus, CAQ 11 contre 0, QS 5 contre 9, PCQ 22 contre 19, PLQ 40 contre 40);
+  quatre des cinq intervalles à 90 % des sièges par parti contiennent le résultat, celui de la
+  CAQ (2 à 32) faisant exception. Le choc systémique est calibré sur les élections de 2018 et de 2022; son
+  isotropie en coordonnées ILR a été testée contre une alternative anisotrope (axe
+  principal des dérives observées, part directionnelle sur grille) et retenue par
+  validation leave-one-out sur les trois dérives disponibles. La participation
+  différentielle par âge n'est pas modélisée (poids optimal nul sur les sondages finaux
+  de 2022 et 2026 combinés). Ne sont pas modélisées non plus : la notoriété individuelle
+  des candidats (testée via la notoriété Wikipédia, sans gain hors échantillon) et la covariance entre partis dans la tendance. Cette dernière a été
+  évaluée deux fois : par injection de la corrélation empirique des résidus de sondages
+  (rejetée, l'effet sur les sièges restant dans le bruit de simulation), puis par
+  corégionalisation intrinsèque, la matrice de couplage B étant estimée conjointement par
+  vraisemblance marginale sur les coordonnées ILR empilées; le gain de vraisemblance
+  in-sample (+7 nats sur le modèle indépendant) ne survit pas à la validation croisée
+  (log-vraisemblance prédictive inférieure de 25 nats sur 1 355 observations, couverture
+  inchangée), signature d'un surajustement des hyperparamètres de couplage. Les effets de maison de sondage,
+  évalués par validation croisée temporelle, n'apportent aucun gain prédictif et ne sont pas
+  retenus. Le poids du signal des partielles demeure un a priori non
+  validable sur données historiques.</p>
+
+  <h4>8. Mise en œuvre et reproductibilité</h4>
+  <p>L'ensemble des estimations (transformations compositionnelles, régressions par
+  processus gaussien, sélection d'hyperparamètres et validation croisée) repose sur la
+  suite de calcul <a href="https://suite.tangent.to">tangent</a>. Le pipeline complet est
+  publié sous licence GPL-3 et reproductible depuis le dépôt
+  <a href="https://github.com/votoscope/quebec">github.com/votoscope/quebec</a>, les données
+  depuis <a href="https://github.com/votoscope/data">github.com/votoscope/data</a>. La prévision est recalculée intégralement à chaque nouveau sondage
+  détecté.</p>
+</details>

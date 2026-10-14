@@ -6,11 +6,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "npm run posts && astro dev",
+    "build": "npm run posts && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "donnees-locales": "node scripts/donnees-locales.mjs"
+    "local-data": "node scripts/local-data.mjs",
+    "posts": "node scripts/build-posts.mjs"
   },
   "dependencies": {
     "@observablehq/plot": "^0.6.17",
@@ -18,6 +19,9 @@
     "astro": "^7.3.8",
     "leaflet": "^1.9.4"
   },
-  "description": "Site Votoscope : projections électorales et billets",
-  "license": "GPL-3.0-only"
+  "description": "Votoscope site: election projections and posts",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@observablehq/notebook-kit": "^2.7.0"
+  }
 }

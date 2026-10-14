@@ -1,0 +1,71 @@
+---
+import Base from "../../layouts/Base.astro";
+import { listPosts } from "../../lib/posts.js";
+import { PAGES } from "../../i18n/routes.js";
+
+interface Props { lang: "fr" | "en" }
+const { lang } = Astro.props;
+const posts = listPosts(lang).slice(0, 3);
+const T = {
+  fr: {
+    headline: "Prévisions électorales",
+    intro: "Élections fédérales et provinciales au Canada : la probabilité de victoire de chaque parti dans chaque circonscription, calculée à partir des sondages et des résultats des élections précédentes. Modèles, code et données ouverts.",
+    qc: "Québec", ca: "Canada",
+    loading: "Chargement…", dashboard: "Tableau de bord", polls: "Derniers sondages",
+    posts: "Billets", noPosts: "Aucun billet publié.", allPosts: "Tous les billets",
+    method: "Méthode", methodLink: "La méthode",
+    methodSummary: "Moyenne des sondages par processus gaussien sur les log-ratios des parts, report par circonscription à partir du dernier scrutin, simulation de l'incertitude. Chaque ajustement est estimé des données et retenu seulement s'il améliore la prévision d'élections passées.",
+  },
+  en: {
+    headline: "Election forecasts",
+    intro: "Federal and provincial elections in Canada: each party's chance of winning every riding, built from polls and the results of previous elections. Open models, code and data.",
+    qc: "Quebec", ca: "Canada",
+    loading: "Loading…", dashboard: "Dashboard", polls: "Latest polls",
+    posts: "Posts", noPosts: "No posts yet.", allPosts: "All posts",
+    method: "Method", methodLink: "The method",
+    methodSummary: "Poll average by Gaussian process on the log-ratios of party shares, riding-level forecast from the last election, simulation of the uncertainty. Every adjustment is estimated from the data and kept only if it improves the forecast of past elections.",
+  },
+}[lang];
+---
+<Base title="Votoscope">
+  <header class="home">
+    <h1>{T.headline}</h1>
+    <p class="intro">{T.intro}</p>
+  </header>
+
+  <div class="election-tiles">
+    <a class="tile election" href={PAGES.quebec[lang]} data-election="qc">
+      <h2>{T.qc}</h2>
+      <div class="summary" aria-live="polite"><p class="pending">{T.loading}</p></div>
+      <span class="more">{T.dashboard}</span>
+    </a>
+    <a class="tile election" href={PAGES.canada[lang]} data-election="ca">
+      <h2>{T.ca}</h2>
+      <div class="summary" aria-live="polite"><p class="pending">{T.loading}</p></div>
+      <span class="more">{T.dashboard}</span>
+    </a>
+  </div>
+
+  <div class="secondary-tiles">
+    <section class="tile">
+      <h2>{T.polls}</h2>
+      <ol id="latest-polls" class="polls"><li class="pending">{T.loading}</li></ol>
+    </section>
+    <section class="tile">
+      <h2>{T.posts}</h2>
+      {posts.length === 0
+        ? <p class="pending">{T.noPosts}</p>
+        : <ul class="post-list">
+            {posts.map((p) => <li><a href={p.href}>{p.title}</a>{p.dateText && <span class="date">{p.dateText}</span>}</li>)}
+          </ul>}
+      <a class="more" href={PAGES.posts[lang]}>{T.allPosts}</a>
+    </section>
+    <section class="tile">
+      <h2>{T.method}</h2>
+      <p>{T.methodSummary}</p>
+      <a class="more" href={PAGES.method[lang]}>{T.methodLink}</a>
+    </section>
+  </div>
+
+  <script>import "../../scripts/home.js";</script>
+</Base>

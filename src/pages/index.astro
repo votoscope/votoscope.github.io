@@ -1,20 +1,20 @@
 ---
-import Base from "../layouts/Base.astro";
+// Root: sends the visitor to the site in their browser's language,
+// French by default (and without script).
 ---
-<Base titre="Votoscope">
-  <h1>Votoscope</h1>
-  <p class="intro">Votoscope estime l'évolution des intentions de vote et la répartition probable des sièges à
-  partir des sondages publiés, avec leur incertitude. Les modèles, le code et les données sont ouverts.</p>
-  <div class="cartes">
-    <a class="carte" href="/quebec/">
-      <h2>Québec</h2>
-      <p>Élections générales québécoises : tendance des intentions de vote, projection par circonscription,
-      distribution des sièges et scénarios de gouvernement.</p>
-    </a>
-    <a class="carte" href="/canada/">
-      <h2>Canada</h2>
-      <p>Élections fédérales : tendance nationale, cibles par région, projection des 343 circonscriptions,
-      distribution des sièges et scénarios de gouvernement.</p>
-    </a>
-  </div>
-</Base>
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Votoscope</title>
+    <link rel="alternate" hreflang="fr" href="/fr/" />
+    <link rel="alternate" hreflang="en" href="/en/" />
+    <script is:inline>
+      location.replace((navigator.languages ?? [navigator.language]).find((l) => /^(fr|en)/i.test(l))?.slice(0, 2).toLowerCase() === "en" ? "/en/" : "/fr/");
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=/fr/" /></noscript>
+  </head>
+  <body>
+    <p><a href="/fr/">Votoscope en français</a> · <a href="/en/">Votoscope in English</a></p>
+  </body>
+</html>

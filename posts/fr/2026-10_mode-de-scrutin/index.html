@@ -1,0 +1,237 @@
+<!doctype html>
+<notebook>
+  <title>Un mode de scrutin distordu</title>
+  <meta name="date" content="2026-10-07">
+  <script id="1" type="text/markdown">
+    *CAQ: 0*. Pas 0% du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont on élit nos gouvernements: le scrutin uninomal à un tour. Voici comment fonctionnent les élections au Québec.
+
+    1. tu votes dans ta circonscription, avec un x à côté du nom de la personne que tu choisis
+    1. c'est tout.
+
+    Ton vote ne dépasse pas ta circonscription. Chaque candidat.e est associé.e à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée inscrite à la direction des élections (DGEQ). Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu la dépenses. Une fois que les bulletins sont comptés et que le résultat est approuvé par sa majesté (permettez la minuscule), les élu.es du parti ayant le plus d'élu.es (le *caucus* gagnant) se réunissent, choisissent qui sera premier ministre, et puis le laissent choisir les ministres parmi elleux. Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription: ton vote s'arrête là. 
+
+    Un parti peut donc avoir 13% des votes exprimés, sans avoir de député, CAQ 0 avec 13%. Il peut aussi passer sur la fesse un peu partout, avoir 28% du vote exprimer, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72% des *sièges* avec 41% du vote: c'était le cas de la CAQ en 2022.
+  </script>
+  <script id="2" type="module">
+    const Plot = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm");
+    const d3 = await import("https://cdn.jsdelivr.net/npm/d3@7/+esm");
+
+    const TOTAL_SIEGES = 127;
+    const INSCRITS = 6495984;
+    const VOTES_EXERCES = 4345857;
+    const VOTES_VALIDES = 4282551;
+    const POPULATION = 9110000; // ISQ, estimation 2026
+
+    const partis = [
+      { parti: "PQ",  votesN: 1199925, sieges: 59, couleur: "#2B50C8" },
+      { parti: "PLQ", votesN: 1037051, sieges: 40, couleur: "#E01020" },
+      { parti: "PCQ", votesN: 885164,  sieges: 19, couleur: "#10275A" },
+      { parti: "CAQ", votesN: 571520,  sieges: 0,  couleur: "#6EC9F5" },
+      { parti: "QS",  votesN: 532176,  sieges: 9,  couleur: "#F28C28" },
+    ];
+    display(Inputs.table(partis.map(({ couleur, ...d }) => (
+      {
+        ...d,
+        "pourcentage des votes (%)": (d.votesN / VOTES_EXERCES) * 100,
+        "pourcentage des sièges (%)": (d.sieges / TOTAL_SIEGES) * 100,
+        "nombre de votes par siège": d.votesN / d.sieges,  }
+    ))));
+  </script>
+  <script id="3" type="text/markdown">
+    Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
+  </script>
+  <script id="4" type="module">
+    const sankeyMod = await import("https://cdn.jsdelivr.net/npm/d3-sankey@0.12/+esm");
+
+    // --- palette et typographie du graphique (hors couleurs de partis) ---
+    const ENCRE = "#2A2E24";        // encre teintée feuille, pas de noir pur
+    const GRIS = "#8B887A";         // texte secondaire, chaud
+    const GRIS_FONCE = "#5E5B50";   // nombres absolus posés sur les bandes
+    const VERT_NOEUD = "#9FBA85";   // entonnoir
+    const VERT_FLUX = "#E3EDD3";
+    const SORTIE_FLUX = "#ECE8E1";  // gris-papier des sorties
+    const SORTIE_NOEUD = "#C8C2B8";
+    const F_TEXTE = "'Inter Tight', 'Segoe UI', sans-serif";
+
+    // Réglage : position horizontale de la colonne des sièges
+    const X_SIEGES = 820;
+
+    const NON_INSCRITS = "Non inscrits";
+    const couleurParti = Object.fromEntries(partis.map((p) => [p.parti, p.couleur]));
+    const autresN = VOTES_VALIDES - partis.reduce((s, p) => s + p.votesN, 0);
+    const partisSankey = [...partis, { parti: "Autres", votesN: autresN, sieges: 0, couleur: GRIS }];
+
+    const noeudsSankey = [
+      "Pop. du Québec", "Électeurs inscrits", "Votes exercés", "Votes valides",
+      NON_INSCRITS, "Abstention", "Bulletins rejetés",
+      ...partisSankey.map((p) => p.parti),
+    ].map((name) => ({ name }));
+    const idxSankey = Object.fromEntries(noeudsSankey.map((n, i) => [n.name, i]));
+    const liensSankey = [
+      ["Pop. du Québec", "Électeurs inscrits", INSCRITS],
+      ["Pop. du Québec", NON_INSCRITS, POPULATION - INSCRITS],
+      ["Électeurs inscrits", "Votes exercés", VOTES_EXERCES],
+      ["Électeurs inscrits", "Abstention", INSCRITS - VOTES_EXERCES],
+      ["Votes exercés", "Votes valides", VOTES_VALIDES],
+      ["Votes exercés", "Bulletins rejetés", VOTES_EXERCES - VOTES_VALIDES],
+      ...partisSankey.map((p) => ["Votes valides", p.parti, p.votesN]),
+    ].map(([s, t, v]) => ({ source: idxSankey[s], target: idxSankey[t], value: v }));
+
+    const sankeyGen = sankeyMod.sankey().nodeWidth(8).nodePadding(16)
+      .nodeSort(null) // garde l'ordre déclaré : partis du plus fort au plus faible
+      .extent([[0, 30], [640, 470]]);
+    const sankeyLayout = sankeyGen({ nodes: noeudsSankey.map((d) => ({ ...d })), links: liensSankey });
+
+    // positions x des colonnes : les trois premières resserrées
+    const xColonnes = [0, 80, 160, 300, 640];
+    for (const n of sankeyLayout.nodes) {
+      n.x0 = xColonnes[n.layer];
+      n.x1 = n.x0 + sankeyGen.nodeWidth();
+    }
+
+    const gris = new Set([NON_INSCRITS, "Abstention", "Bulletins rejetés"]);
+    const couleurNoeud = (name) =>
+      gris.has(name) ? SORTIE_NOEUD : couleurParti[name] ?? (name === "Autres" ? SORTIE_NOEUD : VERT_NOEUD);
+    const valeurM = (v) => (v / 1e6).toFixed(2).replace(".", ",") + " M";
+
+    const svgSankey = d3.create("svg")
+      .attr("font-family", F_TEXTE).attr("font-size", 12);
+    svgSankey.append("style").text(
+      "@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600&display=swap');"
+    );
+
+    // flux
+    svgSankey.append("g").selectAll("path").data(sankeyLayout.links).join("path")
+      .attr("d", sankeyMod.sankeyLinkHorizontal())
+      .attr("fill", "none")
+      .attr("stroke", (d) => gris.has(d.target.name) ? SORTIE_FLUX
+        : couleurParti[d.target.name] ?? VERT_FLUX)
+      .attr("stroke-opacity", (d) => couleurParti[d.target.name] ? 0.5 : 1)
+      .attr("stroke-width", (d) => Math.max(1, d.width));
+
+    // nœuds
+    svgSankey.append("g").selectAll("rect").data(sankeyLayout.nodes).join("rect")
+      .attr("x", (d) => d.x0).attr("y", (d) => d.y0)
+      .attr("width", (d) => d.x1 - d.x0).attr("height", (d) => Math.max(1, d.y1 - d.y0))
+      .attr("fill", (d) => couleurNoeud(d.name));
+
+    // libellés des étapes (au-dessus) et des sorties (à droite)
+    svgSankey.append("g").selectAll("text")
+      .data(sankeyLayout.nodes.filter((d) => !couleurParti[d.name] && d.name !== "Autres" && d.name !== "Votes valides"))
+      .join("text")
+      .attr("x", (d) => gris.has(d.name) ? d.x1 + 8 : d.x0)
+      .attr("y", (d) => gris.has(d.name) ? (d.y0 + d.y1) / 2 : d.y0 - 6)
+      .attr("dy", (d) => gris.has(d.name) ? "0.35em" : null)
+      .attr("fill", (d) => gris.has(d.name) ? GRIS : ENCRE)
+      .text((d) => `${d.name} : ${valeurM(d.value)}`);
+
+    const pct = (x) => Math.round(x * 100) + " %";
+
+    // --- colonne des sièges : même échelle que les votes valides (100 % = 100 %) ---
+    const nVV = sankeyLayout.nodes.find((n) => n.name === "Votes valides");
+    const H = nVV.y1 - nVV.y0;
+    const PAD = sankeyGen.nodePadding();
+    let yS = sankeyLayout.nodes.find((n) => n.name === partis[0].parti).y0;
+
+    const gBandes = svgSankey.append("g");
+    const gLbl = svgSankey.append("g")  // au-dessus des bandes, avec halo
+      //.attr("paint-order", "stroke").attr("stroke", "white")
+      //.attr("stroke-width", 3).attr("stroke-linejoin", "round");
+
+    gLbl.append("text")
+      .attr("x", X_SIEGES).attr("y", yS - 10).attr("fill", ENCRE)
+      .text(`Sièges : ${TOTAL_SIEGES}`);
+
+    for (const p of partis) {
+      const n = sankeyLayout.nodes.find((nd) => nd.name === p.parti);
+      const h = p.sieges / TOTAL_SIEGES * H;
+      const s0 = yS, s1 = yS + h, xm = (n.x1 + X_SIEGES) / 2;
+      gBandes.append("path")
+        .attr("d", `M${n.x1},${n.y0}C${xm},${n.y0} ${xm},${s0} ${X_SIEGES},${s0}`
+                 + `L${X_SIEGES},${s1}C${xm},${s1} ${xm},${n.y1} ${n.x1},${n.y1}Z`)
+        .attr("fill", p.couleur).attr("fill-opacity", 0.3);
+      gBandes.append("rect")
+        .attr("x", X_SIEGES).attr("y", s0)
+        .attr("width", sankeyGen.nodeWidth()).attr("height", Math.max(1, h))
+        .attr("fill", p.couleur);
+
+      // colonne des votes : parti, % des votes, nombre de votes
+      const tv = gLbl.append("text")
+        .attr("x", n.x1 + 8).attr("y", (n.y0 + n.y1) / 2).attr("dy", "0.35em");
+      tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE).text(p.parti);
+      tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+        .text(`  ${pct(p.votesN / VOTES_VALIDES)}`);
+      tv.append("tspan").attr("fill", GRIS_FONCE).text(`  ${valeurM(p.votesN)}`);
+
+      // colonne des sièges : % des sièges, nombre de sièges
+      const ts = gLbl.append("text")
+        .attr("x", X_SIEGES + 16).attr("y", (s0 + s1) / 2).attr("dy", "0.35em");
+      ts.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+        .text(pct(p.sieges / TOTAL_SIEGES));
+      ts.append("tspan").attr("fill", GRIS)
+        .text(`  ${p.sieges} siège${p.sieges > 1 ? "s" : ""}`);
+
+      yS = s1 + PAD;
+    }
+
+    // « Autres », même format que les partis
+    const nAutres = sankeyLayout.nodes.find((n) => n.name === "Autres");
+    const lblAutres = gLbl.append("text")
+      .attr("x", nAutres.x1 + 8).attr("y", (nAutres.y0 + nAutres.y1) / 2).attr("dy", "0.35em");
+    lblAutres.append("tspan").attr("font-weight", 600).attr("fill", GRIS).text("Autres");
+    lblAutres.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+      .text(`  ${pct(autresN / VOTES_VALIDES)}`);
+    lblAutres.append("tspan").attr("fill", GRIS).text(`  ${valeurM(autresN)}`);
+
+    svgSankey.attr("viewBox", [0, 0, X_SIEGES + 130, Math.max(480, yS + 10)]);
+
+    display(svgSankey.node());
+  </script>
+  <script id="5" type="text/markdown">
+    Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas lui, l'autre), $\sqrt{½ Σ (vᵢ − sᵢ)²}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec?
+  </script>
+  <script id="6" type="module">
+    const gallagherMonde = [
+      { label: "Québec 2026",       g: 17.80, type: "qc" },
+      { label: "Québec 2022",       g: 25.19, type: "qc" },
+      { label: "Québec 2018",       g: 16.82, type: "qc" },
+      { label: "Sainte-Lucie 2025", g: 30.22, type: "monde" },
+      { label: "Royaume-Uni 2024",  g: 23.73, type: "monde" },
+      { label: "Australie 2025",    g: 23.11, type: "monde" },
+      { label: "France 2024",       g: 7.79,  type: "monde" },
+      { label: "Allemagne 2025",    g: 6.49,  type: "monde" },
+      { label: "Canada 2025",       g: 5.01,  type: "monde" },
+      { label: "N.-Zélande 2023",   g: 2.63,  type: "monde" },
+      { label: "États-Unis 2024",   g: 1.01,  type: "monde" },
+      { label: "Suède 2022",        g: 0.64,  type: "monde" },
+      { label: "Danemark 2026",     g: 0.42,  type: "monde" },
+    ];
+
+    display(Plot.plot({
+      height: 420,
+      width: 760,
+      marginLeft: 150,
+      marginBottom: 55,
+      style: { fontSize: "13px", fontFamily: "system-ui" },
+      x: { label: "indice de Gallagher", grid: true, domain: [0, 32], labelAnchor: "center", labelOffset: 45 },
+      y: {
+        label: null,
+        domain: gallagherMonde.slice().sort((a, b) => b.g - a.g).map((d) => d.label),
+      },
+      marks: [
+        Plot.barX(gallagherMonde, {
+          y: "label", x: "g",
+          fill: (d) => d.label === "Québec 2026" ? "#2B50C8" : d.type === "qc" ? "#8FA6E0" : "#c9c9c9",
+        }),
+        Plot.text(gallagherMonde, {
+          y: "label", x: "g", dx: 6, textAnchor: "start",
+          text: (d) => d.g.toFixed(1).replace(".", ","), fill: "#444", fontSize: 11,
+        }),
+      ],
+      //caption: "Le Québec vit dans la zone des scrutins majoritaires les plus distordants; les systèmes proportionnels sont sous 3.",
+    }));
+  </script>
+  <script id="7" type="text/markdown">
+    Alors que les systèmes proportionnels sont sous 3, le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ: 0* n'est toutefois pas un cas exceptionnel. Lors des élections de 2022, la CAQ a encore davantage été avantagée par la distorision que l'a été le PQ en 2026. Et si vous vous demandé pourquoi le mode de scrutin n'a pas été changé après 60 ans de promesses de réformes, et bien, on a là une partie de la réponse.
+  </script>
+</notebook>

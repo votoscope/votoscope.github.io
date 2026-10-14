@@ -1,0 +1,29 @@
+---
+import Base from "../../layouts/Base.astro";
+import { listPosts } from "../../lib/posts.js";
+
+// Each post is a Notebook Kit notebook (posts/<lang>/*.html) built by
+// "npm run posts"; each language lists only its own posts.
+interface Props { lang: "fr" | "en" }
+const { lang } = Astro.props;
+const posts = listPosts(lang);
+const T = {
+  fr: { title: "Billets", none: "Aucun billet publié." },
+  en: { title: "Posts", none: "No posts yet." },
+}[lang];
+---
+<Base title={T.title}>
+  <article class="prose">
+    <h1>{T.title}</h1>
+    {posts.length === 0 && <p>{T.none}</p>}
+    <ul class="posts">
+      {posts.map((p) => (
+        <li>
+          <a href={p.href}>{p.title}</a>
+          {p.dateText && <span class="date">{p.dateText}</span>}
+          {p.summary && <p>{p.summary}</p>}
+        </li>
+      ))}
+    </ul>
+  </article>
+</Base>

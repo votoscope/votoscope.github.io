@@ -1,24 +1,90 @@
-/* Habillage du site : navigation, pages de texte, cartes d'accueil.
-   Mêmes jetons que les tableaux de bord (dashboard.css). */
+/* Site chrome: navigation, text pages, home page tiles.
+   Same tokens as the dashboards (dashboard.css). */
 a { color: var(--heading); text-decoration: underline; text-decoration-color: rgba(28, 25, 23, 0.3); text-underline-offset: 2px; }
 a:hover { text-decoration-color: var(--heading); }
 
-nav.site { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
-nav.site .marque { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; color: var(--heading); text-decoration: none; }
-nav.site ul { list-style: none; display: flex; gap: 1.4rem; margin: 0; padding: 0; font-size: 0.92rem; }
+nav.site { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem 1.5rem; flex-wrap: wrap; margin-bottom: 3rem; }
+nav.site .brand { display: inline-flex; align-items: center; gap: 0.6rem; font-family: var(--serif); font-size: 1.35rem; font-weight: 600; color: var(--heading); text-decoration: none; }
+nav.site ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin: 0; padding: 0; font-size: 0.95rem; }
+nav.site ul a { white-space: nowrap; }
 nav.site ul a { text-decoration: none; color: var(--muted); }
 nav.site ul a:hover, nav.site ul a[aria-current="page"] { color: var(--heading); }
+/* Link to the other language: set apart from the sections. */
+nav.site ul li.language { margin-left: 0.8rem; }
+@media (max-width: 600px) { nav.site ul { gap: 0.4rem 1.1rem; } nav.site ul li.language { margin-left: 0; } }
+nav.site ul li.language a { color: var(--heading); font-weight: 500; }
 
-footer.site { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }
+footer.site { margin-top: 4rem; padding: 1.5rem 1.6rem; background: var(--tile); border-radius: 14px; font-size: 1rem; line-height: 1.55; color: var(--text); }
+footer.site p { margin: 0; max-width: 70ch; }
 
 .prose { font-family: var(--serif); font-size: 1.05rem; line-height: 1.7; max-width: 720px; color: var(--text); }
 .prose h1 { margin-bottom: 1.2rem; }
 .prose h2 { font-family: var(--sans); font-size: 1.05rem; margin: 2rem 0 0.5rem; }
 .prose p, .prose ul { margin: 0 0 1rem; }
 
-.cartes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-.carte { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem 1.75rem; text-decoration: none; color: var(--text); transition: border-color 0.2s; }
-.carte:hover { border-color: var(--heading); }
-.carte h2 { margin: 0 0 0.4rem; }
-.carte p { margin: 0; font-family: var(--serif); font-size: 0.95rem; color: var(--muted); }
-.intro { font-family: var(--serif); font-size: 1.15rem; line-height: 1.6; max-width: 720px; color: var(--text); }
+.intro { font-family: var(--serif); font-size: 1.2rem; line-height: 1.55; max-width: 60ch; color: var(--text); margin: 0; }
+
+.posts { list-style: none; padding: 0; }
+.posts li { margin: 0 0 1.6rem; }
+.posts a { font-family: var(--sans); font-size: 1.15rem; font-weight: 600; }
+.posts .date { display: block; margin-top: 0.2rem; font-family: var(--sans); font-size: 1rem; color: var(--muted); }
+.posts p { margin: 0.3rem 0 0; color: var(--text); max-width: 65ch; }
+
+/* Home page: filled tiles on a tinted ground, without borders. */
+header.home { margin: 0.5rem 0 2.25rem; }
+header.home h1 { font-size: clamp(1.85rem, 4.6vw, 4.4rem); line-height: 1.02; letter-spacing: -0.025em; max-width: 22ch; margin-bottom: 1rem; text-wrap: balance; }
+.tile { background: var(--tile); border-radius: 14px; padding: 1.5rem 1.6rem 1.4rem; color: var(--text); min-width: 0; border-top: none; }
+.tile h2 { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; margin: 0 0 0.8rem; }
+/* The action of each tile: a flat button, fully round like the dashboard controls. */
+.tile .more { display: inline-flex; align-items: center; align-self: flex-start; min-height: 44px; margin-top: 1rem; padding: 0 1.2rem; border-radius: 9999px; background: var(--heading); color: #fff; font-size: 0.95rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+.tile .more::after { content: "\00a0→"; }
+.tile .more:hover, a.tile.election:hover .more { background: #44403c; }
+.tile .pending { color: var(--muted); font-size: 1rem; }
+.tile p { font-size: 1rem; line-height: 1.55; max-width: 65ch; }
+
+.election-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+a.tile.election { display: flex; flex-direction: column; text-decoration: none; transition: background 0.2s; }
+a.tile.election:hover { background: #efeeeb; }
+.tile.election h2 { font-size: 1.75rem; margin-bottom: 1.1rem; }
+.tile.election .summary { flex: 1; }
+.tile.election .more { margin-top: 1.4rem; }
+
+.seat-frame { margin-bottom: 1.1rem; }
+.seat-bar { position: relative; display: flex; gap: 2px; height: 22px; }
+.seat-bar > span:not(.threshold) { display: block; min-width: 2px; }
+.seat-bar > span:first-child { border-radius: 4px 0 0 4px; }
+.seat-bar > span:nth-last-child(2) { border-radius: 0 4px 4px 0; }
+.seat-bar .threshold { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 1.5px dashed var(--heading); }
+.threshold-legend { font-size: 0.85rem !important; color: var(--muted); margin: 0.45rem 0 0; }
+
+.tile .tile-body { display: grid; grid-template-columns: minmax(190px, 1fr) 260px; gap: 2.75rem; align-items: start; }
+@media (max-width: 1100px) { .tile .tile-body { grid-template-columns: 1fr; } }
+table.seat-table { font-size: 1rem; }
+table.seat-table th, table.seat-table td { border-bottom-color: rgba(0, 0, 0, 0.07); padding: 0.32rem 0.4rem; }
+table.seat-table th:first-child, table.seat-table td:first-child { padding-left: 0; white-space: nowrap; }
+table.seat-table th { white-space: nowrap; font-size: 0.85rem; }
+table.seat-table th:not(:first-child), table.seat-table .n { text-align: right; }
+table.seat-table .muted { color: var(--muted); }
+figure.trend { margin: 0; }
+
+.facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin: 1rem 0 0; color: var(--heading); }
+.facts b { font-variant-numeric: tabular-nums; }
+.computed-on { font-size: 0.85rem !important; color: var(--muted); margin: 0.5rem 0 0; }
+
+.secondary-tiles { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 1.25rem; }
+.secondary-tiles h2 { font-size: 1.1rem; }
+@media (max-width: 900px) { .election-tiles, .secondary-tiles { grid-template-columns: 1fr; } }
+
+ol.polls { list-style: none; padding: 0; margin: 0; font-size: 1rem; font-variant-numeric: tabular-nums; display: grid; gap: 0.9rem; }
+ol.polls li { display: grid; grid-template-columns: 4.8rem minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 0.7rem; }
+ol.polls .jurisdiction { color: var(--muted); grid-row: 1 / 3; }
+ol.polls .firm { color: var(--heading); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ol.polls .leading { text-align: right; white-space: nowrap; }
+ol.polls .date { grid-column: 2 / 4; color: var(--muted); font-size: 0.85rem; }
+
+ul.post-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.9rem; }
+ul.post-list li { font-size: 1rem; }
+ul.post-list a { font-weight: 600; text-decoration: none; }
+ul.post-list a:hover { text-decoration: underline; }
+ul.post-list .date { display: block; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 600px) { ol.polls .firm { white-space: normal; } }

@@ -1,0 +1,187 @@
+<details class="methodology">
+  <summary>Methodology</summary>
+
+  <h4>1. Data</h4>
+  <p>Four sources feed the model. (i) Provincial voting-intention polls from 2014 to the present,
+  compiled from the public tables of Wikipedia (CC BY-SA), each entry linking to the polling firm's
+  original release; regional breakdowns (Montreal, Quebec City, rest of Quebec) come from the firms'
+  reports when published. (ii) The official results of the 2014, 2018, 2022 and 2026 general elections
+  (Élections Québec), expressed on the 2026 electoral map (127 ridings), earlier elections through a
+  geographic correspondence of polling divisions, as well as the by-elections held since the 2026
+  general election (DGEQ). (iii) The 2021 census (Statistics Canada), aggregated from dissemination areas
+  to ridings. (iv) The status of incumbent members, retirements and leaders' candidacies, collected from
+  the pages of the National Assembly.</p>
+
+  <h4>2. Compositional representation</h4>
+  <p>A vector of voting intentions is a composition: its shares are positive and sum to one, so the
+  analysis is carried out in the simplex rather than in the Euclidean space of percentages. All
+  compositional responses and predictors are transformed into isometric log-ratio (ILR) coordinates, an
+  orthonormal basis of dimension k−1 in which linear operations and distances are valid. Multiplicative
+  adjustments (local premiums and penalties) are applied as compositional perturbations, the internal
+  operation of the simplex. Parties not broken out in older polls are handled by amalgamation into the
+  residual share, with multiplicative replacement of zeros.</p>
+
+  <h4>3. National trend</h4>
+  <p>The trajectory of voting intentions is estimated by Gaussian process regression, one independent
+  process per ILR coordinate, Matérn kernel (ν = 3/2). The observation variance of each poll is computed
+  per coordinate: delta method applied to multinomial sampling, Var(ilr_c) = Σ_p M²_cp / (n x_p), where M
+  is the Jacobian of the ILR transformation. A multiplicative scale per coordinate, estimated on a grid,
+  absorbs overdispersion between polling firms. The hyperparameters (range, noise scale and
+  non-stationarity parameters) are marginalised: the prediction is the average of the grid models
+  weighted by their marginal likelihood, so that hyperparameter uncertainty is included in the
+  predictive intervals.</p>
+  <p>Two forms of non-stationarity are allowed, each containing the stationary model as a special case so
+  that selection rests on the likelihood rather than on a discretionary choice. First, breakpoints at
+  leadership changes (January 14 and April 12, 2026): the covariance between regimes is multiplied by
+  ρ<sup>|Δr|</sup>, ρ ∈ [0, 1] estimated by marginal likelihood, ρ = 1 restoring the stationary kernel; a
+  partial break is retained on one coordinate, the stationary model elsewhere. Second, a dilation of the
+  time axis during campaigns (from the writ to election day, 2014, 2018, 2022 and 2026 windows): one
+  campaign day counts as k days of kernel time, k shared across all campaigns (hence identified mainly by
+  past campaigns) and k = 1 restoring the uniform clock. The retained dilation is strong: effective range
+  of about 40 to 190 days during campaigns depending on the coordinate, against 300 to 1500 outside
+  campaigns. The calibration of the predictive intervals is measured by sequential validation: at each
+  monthly cutoff from 2016 to 2026, the model fitted on earlier polls only predicts the next poll. The
+  nominal 90% interval covers 79% of these 675 predictions (95% during campaigns, 78% outside). Random
+  k-fold cross-validation gives 90.5%, a figure that measures interpolation of the series, not
+  prediction.</p>
+
+  <h4>4. Regional polls</h4>
+  <p>The regional breakdowns published by polling firms (Montreal metropolitan area, Quebec City
+  metropolitan area, rest of Quebec), all firms, released since the previous election are pooled by
+  region as a weighted mean. The weight of a poll is its regional sample size multiplied by
+  exp(−age/τ), age being measured on the clock of the national trend (section 3): one campaign day
+  counts as D days. τ = 240 days and D = 16 are estimated by one-step-ahead forecasting of the
+  region-province gap of each of the 152 regionally broken-down polls published from 2018 to 2026, using
+  only earlier polls of the same cycle, on grids containing no decay and no dilation. The effective
+  constant is thus 15 days during campaigns and 240 days outside; the squared forecast error is 0.163,
+  against 0.216 for a fixed 14-day window and 0.262 without regional polls. For each region, the gap
+  between the region and the province in these polls, in centred log-ratios of the five main parties,
+  minus the same gap in the results of the previous election, shifts the ridings of the region,
+  multiplied by a coefficient estimated jointly with that of the mother-tongue swing (section 5) on the
+  2014→2018, 2018→2022 and 2022→2026 transitions: 0.75 for regions, 0.25 for language. With both
+  coefficients chosen on two transitions and evaluated on the third, at known provincial vote, the root
+  mean squared error of riding shares falls from 5.66 to 5.44 points and the number of correct winners
+  rises from 309 to 316 out of 348 ridings evaluated. On the eve of the three elections, national trend
+  included, the absolute seat error of the central riding-level scenario falls from 36 to 30 over the
+  three combined.</p>
+
+  <h4>5. Riding model</h4>
+  <p>The starting point of each riding is its result at the general election of October 5, 2026. No
+  differential-turnout correction is applied: the shrinkage weight of that correction, estimated on a
+  grid against the final polls of 2022 and 2026 combined, is zero (mean absolute error of 1.89 points
+  without correction, 2.06 with). The estimated provincial swing (section 3) is applied in log-ratios.
+  Four estimated adjustments are layered on top, all as compositional perturbations:</p>
+  <ul>
+    <li>Incumbency premium: a seat whose member elected in 2026 does not run again or now sits under
+    another banner loses the personal premium, estimated by comparing incumbent and new candidates from
+    2018 to 2022 (factor 1.125 on the holding party's share). Evaluated on the 2014→2018, 2018→2022 and
+    2022→2026 transitions, each predicted from the other two (incumbents identified by matching the names
+    of members and candidates), the chosen penalty corresponds to a factor of 1.11 to 1.16 and reduces
+    the eve absolute seat error, national trend included, from 32 to 26 over the three elections.</li>
+    <li>Leader effect: estimated on 37 leader candidacies at general elections from 1976 to 2026,
+    classified as arrival (leader in a riding that is not their own, 8 cases), continuation (same leader,
+    same riding, 14 cases) or departure (riding of the previous leader without them, 15 cases). Each case
+    is the log gap between the share obtained and the share predicted by uniform provincial swing. A
+    constant mean per type and a Gaussian process over the year are compared in sequential forecasting
+    (each election predicted from earlier elections only); the constant mean prevails for all three
+    types: arrival ×1.39, continuation ×1.14, departure ×0.90.</li>
+    <li>Mother-tongue swing: the francophone and non-francophone breakdowns of the two latest Léger polls
+    give, for each group, the log-ratio change in its voting intentions since the end of the previous
+    campaign (mean weighted by sample sizes). Each riding receives the mixture of these changes according
+    to its language composition (2021 census, mother tongue, aggregated from dissemination areas),
+    centred on the mean of the ridings, multiplied by a coefficient of 0.25 estimated jointly with that
+    of the regional polls (section 4). On its own, this swing reduces the root mean squared error of
+    riding shares on each of the three transitions predicted from the other two at known provincial vote:
+    from 5.51 to 5.39, from 7.43 to 7.14 and from 5.23 to 4.83 points. The same construction by age group
+    (18-34, 35-54, 55 and over) brings no gain: level differences between groups are marked, but their
+    changes from one election to the next are similar and the age composition varies little from one
+    riding to another.</li>
+    <li>By-elections: each by-election held since the 2026 general election provides a direct local
+    measurement. The gap between its result and the contemporaneous provincial swing, net of the
+    withdrawn incumbency premium, enters the local deviation with a weight of 0.5. This weight is a
+    documented prior and not an estimated parameter: no historical series of by-elections is available to
+    fit it, and these contests differ from general elections in turnout and context. A sensitivity
+    analysis of the weight is provided with the code.</li>
+  </ul>
+  <p>No local deviation is predicted from the demographic profile. A multivariate Gaussian process
+  regression (Matérn kernel, one process per ILR coordinate) of each riding's change on its census profile
+  (language, education, immigration, employment structure, age, income, density) and on its previous
+  deviation reaches an R² of 0.44 within a transition, but −0.16 from one transition to the next (training
+  on 2018→2022, predicting 2022→2026). Evaluated in seats on the three transitions 2014→2018, 2018→2022 and
+  2022→2026, each predicted from the other two, it accumulates 221 seats of error against 40 for carrying
+  results forward without local deviation; on 2026, at known provincial vote, it raises the root mean
+  squared error of riding shares from 4.95 to 5.92 points.</p>
+  <p>The regional (section 4) and mother-tongue adjustments bear on the gap between the polls published
+  since the 2026 election and the results of that election; they apply as soon as regional or language
+  breakdowns are published after election day. The displayed forecast includes the adjustments for
+  which such breakdowns exist on the date of computation.</p>
+
+  <h4>6. Simulation and uncertainty quantification</h4>
+  <p>The seat distribution is obtained by Monte Carlo simulation (5,000 draws) propagating four sources
+  of uncertainty: (i) the posterior distribution of the national trend; (ii) a systemic shock common to
+  all ridings (collective bias of polling firms and drift of opinion until election day), calibrated on
+  the gap between the last polls and the actual results of 2018 and 2022, isotropic in ILR; (iii) a
+  regional shock, local deviations being spatially correlated; (iv) the idiosyncratic deviation of each
+  riding, resampled from the errors of the riding model (provincial swing and mother-tongue swing) in
+  previous general transitions, 2014→2018, 2018→2022 and 2022→2026 pooled (whole ILR vectors, net of their
+  regional mean). These errors are scaled party by party in centred log-ratios: CAQ ×0.75, QLP ×0.75,
+  CPQ ×0.5, PQ ×1, QS ×0.75. The factors are chosen on a grid containing 1 by maximising the out-of-sample
+  log-score of win probabilities, the errors of each transition predicting the others (log-score from
+  0.824 to 0.772). Evaluated on the three transitions, each predicted from the other two at known
+  provincial vote, this scaling reduces the total log-score from 0.889 to 0.809 (riding model without
+  regional polls) and improves each of the three. Each component is then bounded at ±0.75 standard
+  deviation of its part in the pool. This threshold is chosen on a grid containing no bound, evaluating
+  each election from the other two, on the eve and national trend included: it is retained in two of the
+  three cases (1 in the third), and reduces the total log-score from 0.964 to 0.915, improving it on each
+  of the three elections. Each draw assigns a winner per riding; all 127 seats are thus allocated in
+  every draw.</p>
+  <p>Two statistics summarise the joint distribution. The win probability of a riding is the frequency of
+  wins over the draws; by linearity of expectation, its sum over ridings equals the party's expected seat
+  count, and these expectations sum exactly to 127, the only additive riding-level decomposition. The
+  reported central scenario is the medoid of the joint distribution: the draw minimising the mean L1
+  distance to the other draws. Unlike the vector of marginal medians, which matches no attainable
+  scenario and does not sum to the number of seats, the medoid is an actual realisation, consistent
+  across parties. The reported voting intentions describe the state of opinion on the date of
+  computation; the seat simulation bears on election day, set by law on October 7, 2030. Since each draw
+  carries both a national vote composition and a seat allocation, the distortion of the electoral system
+  is itself a joint distribution: the votes-seats panel reports the expected shares of both per party and
+  the Gallagher least-squares index, √(½Σ(v−s)²), summarised as a median and 90% interval over the
+  draws.</p>
+  <p>Each draw is assigned to a single government scenario: majority when the first party reaches 64
+  seats, minority otherwise. For a minority government, the parties whose seats, added to those of the
+  first party, reach a majority are listed (sufficient supports). The pivot power of each party is the
+  normalised Banzhaf index of the seat allocation of each draw, averaged over draws: among all coalitions
+  of parties reaching a majority, the share of cases in which the party's seats are decisive, the
+  coalition losing its majority without it. A party holding a majority alone has an index of 1. These
+  measures are arithmetic and imply nothing about alliances.</p>
+
+  <h4>7. Validation and limitations</h4>
+  <p>The out-of-sample validations of sections 4 to 6 bear on the three transitions 2014→2018, 2018→2022
+  and 2022→2026, each evaluated with parameters estimated without it. The forecast published on the eve
+  of the October 5, 2026 election identified the winner in 104 of the 127 ridings (106 according to the
+  favourite by win probability; mean multiparty Brier score of 0.264). The absolute seat error of its
+  median scenario is 28 (PQ 49 against 59 elected, CAQ 11 against 0, QS 5 against 9, CPQ 22 against 19,
+  QLP 40 against 40); four of the five per-party 90% seat intervals contain the result, the CAQ's (2 to
+  32) being the exception. The systemic shock is calibrated on the 2018 and 2022 elections; its isotropy
+  in ILR coordinates was tested against an anisotropic alternative (principal axis of observed drifts,
+  directional share on a grid) and retained by leave-one-out validation on the three available drifts.
+  Differential turnout by age is not modelled (optimal weight of zero on the final polls of 2022 and 2026
+  combined). Also not modelled: the individual name recognition of candidates (tested through Wikipedia
+  notability, with no out-of-sample gain) and the covariance between parties in the trend. The latter was
+  evaluated twice: by injecting the empirical correlation of poll residuals (rejected, the effect on seats
+  remaining within simulation noise), then by intrinsic coregionalisation, the coupling matrix B being
+  estimated jointly by marginal likelihood on the stacked ILR coordinates; the in-sample likelihood gain
+  (+7 nats over the independent model) does not survive cross-validation (predictive log-likelihood
+  lower by 25 nats over 1,355 observations, coverage unchanged), the signature of overfitting of the
+  coupling hyperparameters. House effects, evaluated by temporal cross-validation, bring no predictive
+  gain and are not retained. The weight of the by-election signal remains a prior that cannot be
+  validated on historical data.</p>
+
+  <h4>8. Implementation and reproducibility</h4>
+  <p>All estimations (compositional transformations, Gaussian process regressions, hyperparameter
+  selection and cross-validation) rely on the <a href="https://suite.tangent.to">tangent</a> computing
+  suite. The complete pipeline is released under the GPL-3 licence and reproducible from the
+  <a href="https://github.com/votoscope/quebec">github.com/votoscope/quebec</a> repository, the data from
+  <a href="https://github.com/votoscope/data">github.com/votoscope/data</a>. The forecast is fully
+  recomputed with each newly detected poll.</p>
+</details>
