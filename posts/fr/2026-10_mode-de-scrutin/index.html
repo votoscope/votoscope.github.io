@@ -1,917 +1,569 @@
+<!doctype html>
+<notebook>
+  <title>La distorsion électorale de 2026</title>
+  <meta name="date" content="2026-10-14">
+  <script id="1" type="text/markdown">
+    *CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont on élit nos gouvernements : le *scrutin uninominal majoritaire à un tour*. Voici comment fonctionnent les élections au Québec.
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La distorsion électorale de 2026</title>
-    <style>
-        
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+    1. tu votes dans ta circonscription, avec un *x* à côté du nom de la personne que tu choisis
+    1. c'est tout.
 
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        line-height: 1.6;
-        color: #374151;
-        background-color: #ffffff;
-      }
+    Ton vote ne dépasse pas ta circonscription. La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu la dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté (permettez la minuscule), invite à former le gouvernement la personne qui a l'appui de la majorité des élu.es. C'est normalement la cheffe ou le chef du parti qui a le plus d'élu.es (le *caucus* gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que ses élu.es l'appuient, et choisit ses ministres parmi elleux. Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.
 
-      .notebook-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-      }
+    Un parti peut donc avoir 13 % des votes exprimés, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote exprimé, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
 
-      .notebook-header {
-        border-bottom: 2px solid #e5e7eb;
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-      }
+    Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
+  </script>
+  <script id="2" type="module">
+    // charger les packages
+    const Plot = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm");
+    const d3 = await import("https://cdn.jsdelivr.net/npm/d3@7/+esm");
+    const sankeyMod = await import("https://cdn.jsdelivr.net/npm/d3-sankey@0.12/+esm");
 
-      .notebook-header h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-      }
+    // constantes
+    const TOTAL_SIEGES = 127;
+    const INSCRITS = 6495984;
+    const VOTES_EXERCES = 4345857;
+    const VOTES_VALIDES = 4282551;
+    const POPULATION = 9030000; // ISQ, population au 1er janvier 2026 (Le bilan démographique du Québec, édition 2026)
 
-      .notebook-meta {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
+    // résultats
+    const partis = [
+      { parti: "PQ",  votesN: 1199925, sieges: 59, couleur: "#2B50C8" },
+      { parti: "PLQ", votesN: 1037051, sieges: 40, couleur: "#E01020" },
+      { parti: "PCQ", votesN: 885164,  sieges: 19, couleur: "#10275A" },
+      { parti: "CAQ", votesN: 571520,  sieges: 0,  couleur: "#6EC9F5" },
+      { parti: "QS",  votesN: 532176,  sieges: 9,  couleur: "#F28C28" },
+    ];
 
-      .cell {
-        margin-bottom: 2rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        overflow: hidden;
-      }
+    // --- palette et typographie du graphique (hors couleurs de partis) ---
+    const ENCRE = "#2A2E24";        // encre teintée feuille, pas de noir pur
+    const GRIS = "#8B887A";         // texte secondaire, chaud
+    const GRIS_FONCE = "#5E5B50";   // nombres absolus posés sur les bandes
+    const VERT_NOEUD = "#9FBA85";   // entonnoir
+    const VERT_FLUX = "#E3EDD3";
+    const SORTIE_FLUX = "#ECE8E1";  // gris-papier des sorties
+    const SORTIE_NOEUD = "#C8C2B8";
+    const F_TEXTE = "'Inter Tight', 'Segoe UI', sans-serif";
 
-      .cell-input, .cell-output {
-        padding: 1rem;
-      }
+    // Réglage : position horizontale de la colonne des sièges
+    const X_SIEGES = 820;
 
-      .cell-input {
-        background-color: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-      }
+    const NON_INSCRITS = "Sans droit de vote ou non inscrits";
+    const couleurParti = Object.fromEntries(partis.map((p) => [p.parti, p.couleur]));
+    const autresN = VOTES_VALIDES - partis.reduce((s, p) => s + p.votesN, 0);
+    const partisSankey = [...partis, { parti: "Autres", votesN: autresN, sieges: 0, couleur: GRIS }];
 
-      .cell-output {
-        background-color: #ffffff;
-      }
+    const noeudsSankey = [
+      "Pop. du Québec", "Électeurs inscrits", "Votes exercés", "Votes valides",
+      NON_INSCRITS, "Abstention", "Bulletins rejetés",
+      ...partisSankey.map((p) => p.parti),
+    ].map((name) => ({ name }));
+    const idxSankey = Object.fromEntries(noeudsSankey.map((n, i) => [n.name, i]));
+    const liensSankey = [
+      ["Pop. du Québec", "Électeurs inscrits", INSCRITS],
+      ["Pop. du Québec", NON_INSCRITS, POPULATION - INSCRITS],
+      ["Électeurs inscrits", "Votes exercés", VOTES_EXERCES],
+      ["Électeurs inscrits", "Abstention", INSCRITS - VOTES_EXERCES],
+      ["Votes exercés", "Votes valides", VOTES_VALIDES],
+      ["Votes exercés", "Bulletins rejetés", VOTES_EXERCES - VOTES_VALIDES],
+      ...partisSankey.map((p) => ["Votes valides", p.parti, p.votesN]),
+    ].map(([s, t, v]) => ({ source: idxSankey[s], target: idxSankey[t], value: v }));
 
-      .cell-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #3b82f6;
-        margin-bottom: 0.5rem;
-      }
+    const sankeyGen = sankeyMod.sankey().nodeWidth(8).nodePadding(16)
+      .nodeSort(null) // garde l'ordre déclaré : partis du plus fort au plus faible
+      .extent([[0, 30], [640, 470]]);
+    const sankeyLayout = sankeyGen({ nodes: noeudsSankey.map((d) => ({ ...d })), links: liensSankey });
 
-      .cell-markdown {
-        padding: 1rem;
-        background-color: #ffffff;
-      }
-
-      pre {
-        background-color: #f1f5f9;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        overflow-x: auto;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 0.875rem;
-      }
-
-      code {
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 0.875rem;
-      }
-
-      .text-output {
-        color: #374151;
-      }
-
-      .error-output {
-        color: #dc2626;
-        background-color: #fef2f2;
-      }
-
-      .json-output {
-        color: #7c3aed;
-      }
-
-      /* What the cell printed, above the value it produced. */
-      .log-output {
-        display: flex;
-        flex-direction: column;
-        color: #6b7280;
-        border-left: 2px solid #d1d5db;
-        padding-left: 0.5rem;
-        margin-bottom: 0.35rem;
-      }
-
-      .log-warn { color: #b45309; }
-      .log-error { color: #b91c1c; }
-
-      .timestamp {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-top: 0.5rem;
-      }
-
-      .table-note {
-        margin-top: 0.35rem;
-        font-size: 0.75rem;
-        color: #6b7280;
-      }
-      table.tangent-table-output {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Fira Code', 'Fira Sans', sans-serif;
-        font-size: 0.75rem;
-        line-height: 1.45;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.375rem;
-        overflow: hidden;
-      }
-
-      table.tangent-table-output thead {
-        background-color: #f4f5f7;
-      }
-
-      table.tangent-table-output th,
-      table.tangent-table-output td {
-        border: 1px solid #eceef1;
-        padding: 0.35rem 0.6rem;
-        text-align: right;
-        white-space: nowrap;
-      }
-
-      table.tangent-table-output th {
-        font-weight: 600;
-        color: #1f2933;
-        letter-spacing: 0.01em;
-      }
-
-      table.tangent-table-output tbody tr:nth-child(even) {
-        background-color: #fafbfc;
-      }
-
-      .notebook-footer {
-        border-top: 1px solid #e5e7eb;
-        padding-top: 1rem;
-        margin-top: 2rem;
-        text-align: center;
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
-
-      @media print {
-        body { background: white; color: black; }
-        .cell { break-inside: avoid; }
-      }
-    
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet">
-</head>
-<body>
-    <div class="notebook-container">
-        <header class="notebook-header">
-            <h1>La distorsion électorale de 2026</h1>
-            <div class="notebook-meta">
-                <span>Created: 2026-10-14</span>
-                <span>Modified: 2026-10-14</span>
-                <span>Cells: 26</span>
-            </div>
-        </header>
-
-        <main class="notebook-content">
-            <div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <em>CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont on élit nos gouvernements : le *scrutin uninominal majoritaire à un tour</em>. Voici comment fonctionnent les élections au Québec.<br><br>1. tu votes dans ta circonscription, avec un <em>x</em> à côté du nom de la personne que tu choisis<br>1. c'est tout.<br><br>Ton vote ne dépasse pas ta circonscription. La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu la dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté (permettez la minuscule), invite à former le gouvernement la personne qui a l'appui de la majorité des élu.es. C'est normalement la cheffe ou le chef du parti qui a le plus d'élu.es (le <em>caucus</em> gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que ses élu.es l'appuient, et choisit ses ministres parmi elleux. Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.<br><br>Un parti peut donc avoir 13 % des votes exprimés, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote exprimé, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les <em>sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges</em> avec 41 % du vote : c'était le cas de la CAQ en 2022.<br><br>Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [2]:</div>
-            <pre><code class="language-javascript">// charger les packages
-const Plot = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm");
-const d3 = await import("https://cdn.jsdelivr.net/npm/d3@7/+esm");
-const sankeyMod = await import("https://cdn.jsdelivr.net/npm/d3-sankey@0.12/+esm");
-
-// constantes
-const TOTAL_SIEGES = 127;
-const INSCRITS = 6495984;
-const VOTES_EXERCES = 4345857;
-const VOTES_VALIDES = 4282551;
-const POPULATION = 9030000; // ISQ, population au 1er janvier 2026 (Le bilan démographique du Québec, édition 2026)
-
-// résultats
-const partis = [
-  { parti: "PQ",  votesN: 1199925, sieges: 59, couleur: "#2B50C8" },
-  { parti: "PLQ", votesN: 1037051, sieges: 40, couleur: "#E01020" },
-  { parti: "PCQ", votesN: 885164,  sieges: 19, couleur: "#10275A" },
-  { parti: "CAQ", votesN: 571520,  sieges: 0,  couleur: "#6EC9F5" },
-  { parti: "QS",  votesN: 532176,  sieges: 9,  couleur: "#F28C28" },
-];
-
-// --- palette et typographie du graphique (hors couleurs de partis) ---
-const ENCRE = "#2A2E24";        // encre teintée feuille, pas de noir pur
-const GRIS = "#8B887A";         // texte secondaire, chaud
-const GRIS_FONCE = "#5E5B50";   // nombres absolus posés sur les bandes
-const VERT_NOEUD = "#9FBA85";   // entonnoir
-const VERT_FLUX = "#E3EDD3";
-const SORTIE_FLUX = "#ECE8E1";  // gris-papier des sorties
-const SORTIE_NOEUD = "#C8C2B8";
-const F_TEXTE = "'Inter Tight', 'Segoe UI', sans-serif";
-
-// Réglage : position horizontale de la colonne des sièges
-const X_SIEGES = 820;
-
-const NON_INSCRITS = "Sans droit de vote ou non inscrits";
-const couleurParti = Object.fromEntries(partis.map((p) =&gt; [p.parti, p.couleur]));
-const autresN = VOTES_VALIDES - partis.reduce((s, p) =&gt; s + p.votesN, 0);
-const partisSankey = [...partis, { parti: "Autres", votesN: autresN, sieges: 0, couleur: GRIS }];
-
-const noeudsSankey = [
-  "Pop. du Québec", "Électeurs inscrits", "Votes exercés", "Votes valides",
-  NON_INSCRITS, "Abstention", "Bulletins rejetés",
-  ...partisSankey.map((p) =&gt; p.parti),
-].map((name) =&gt; ({ name }));
-const idxSankey = Object.fromEntries(noeudsSankey.map((n, i) =&gt; [n.name, i]));
-const liensSankey = [
-  ["Pop. du Québec", "Électeurs inscrits", INSCRITS],
-  ["Pop. du Québec", NON_INSCRITS, POPULATION - INSCRITS],
-  ["Électeurs inscrits", "Votes exercés", VOTES_EXERCES],
-  ["Électeurs inscrits", "Abstention", INSCRITS - VOTES_EXERCES],
-  ["Votes exercés", "Votes valides", VOTES_VALIDES],
-  ["Votes exercés", "Bulletins rejetés", VOTES_EXERCES - VOTES_VALIDES],
-  ...partisSankey.map((p) =&gt; ["Votes valides", p.parti, p.votesN]),
-].map(([s, t, v]) =&gt; ({ source: idxSankey[s], target: idxSankey[t], value: v }));
-
-const sankeyGen = sankeyMod.sankey().nodeWidth(8).nodePadding(16)
-  .nodeSort(null) // garde l'ordre déclaré : partis du plus fort au plus faible
-  .extent([[0, 30], [640, 470]]);
-const sankeyLayout = sankeyGen({ nodes: noeudsSankey.map((d) =&gt; ({ ...d })), links: liensSankey });
-
-// positions x des colonnes : les trois premières resserrées
-const xColonnes = [0, 80, 160, 300, 640];
-for (const n of sankeyLayout.nodes) {
-  n.x0 = xColonnes[n.layer];
-  n.x1 = n.x0 + sankeyGen.nodeWidth();
-}
-
-const gris = new Set([NON_INSCRITS, "Abstention", "Bulletins rejetés"]);
-const couleurNoeud = (name) =&gt;
-  gris.has(name) ? SORTIE_NOEUD : couleurParti[name] ?? (name === "Autres" ? SORTIE_NOEUD : VERT_NOEUD);
-const valeurM = (v) =&gt; (v / 1e6).toFixed(2).replace(".", ",") + " M";
-
-const svgSankey = d3.create("svg")
-  .attr("font-family", F_TEXTE).attr("font-size", 12);
-svgSankey.append("style").text(
-  "@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600&amp;display=swap');"
-);
-
-// flux
-svgSankey.append("g").selectAll("path").data(sankeyLayout.links).join("path")
-  .attr("d", sankeyMod.sankeyLinkHorizontal())
-  .attr("fill", "none")
-  .attr("stroke", (d) =&gt; gris.has(d.target.name) ? SORTIE_FLUX
-    : couleurParti[d.target.name] ?? VERT_FLUX)
-  .attr("stroke-opacity", (d) =&gt; couleurParti[d.target.name] ? 0.5 : 1)
-  .attr("stroke-width", (d) =&gt; Math.max(1, d.width));
-
-// nœuds
-svgSankey.append("g").selectAll("rect").data(sankeyLayout.nodes).join("rect")
-  .attr("x", (d) =&gt; d.x0).attr("y", (d) =&gt; d.y0)
-  .attr("width", (d) =&gt; d.x1 - d.x0).attr("height", (d) =&gt; Math.max(1, d.y1 - d.y0))
-  .attr("fill", (d) =&gt; couleurNoeud(d.name));
-
-// libellés des étapes (au-dessus) et des sorties (à droite)
-svgSankey.append("g").selectAll("text")
-  .data(sankeyLayout.nodes.filter((d) =&gt; !couleurParti[d.name] &amp;&amp; d.name !== "Autres" &amp;&amp; d.name !== "Votes valides"))
-  .join("text")
-  .attr("x", (d) =&gt; gris.has(d.name) ? d.x1 + 8 : d.x0)
-  .attr("y", (d) =&gt; gris.has(d.name) ? (d.y0 + d.y1) / 2 : d.y0 - 6)
-  .attr("dy", (d) =&gt; gris.has(d.name) ? "0.35em" : null)
-  .attr("fill", (d) =&gt; gris.has(d.name) ? GRIS : ENCRE)
-  .text((d) =&gt; `${d.name} : ${valeurM(d.value)}`);
-
-const pct = (x) =&gt; Math.round(x * 100) + " %";
-
-// --- colonne des sièges : même échelle que les votes valides (100 % = 100 %) ---
-const nVV = sankeyLayout.nodes.find((n) =&gt; n.name === "Votes valides");
-const H = nVV.y1 - nVV.y0;
-const PAD = sankeyGen.nodePadding();
-let yS = sankeyLayout.nodes.find((n) =&gt; n.name === partis[0].parti).y0;
-
-const gBandes = svgSankey.append("g");
-const gLbl = svgSankey.append("g")  // au-dessus des bandes, avec halo
-  //.attr("paint-order", "stroke").attr("stroke", "white")
-  //.attr("stroke-width", 3).attr("stroke-linejoin", "round");
-
-gLbl.append("text")
-  .attr("x", X_SIEGES).attr("y", yS - 10).attr("fill", ENCRE)
-  .text(`Sièges : ${TOTAL_SIEGES}`);
-
-for (const p of partis) {
-  const n = sankeyLayout.nodes.find((nd) =&gt; nd.name === p.parti);
-  const h = p.sieges / TOTAL_SIEGES * H;
-  const s0 = yS, s1 = yS + h, xm = (n.x1 + X_SIEGES) / 2;
-  gBandes.append("path")
-    .attr("d", `M${n.x1},${n.y0}C${xm},${n.y0} ${xm},${s0} ${X_SIEGES},${s0}`
-             + `L${X_SIEGES},${s1}C${xm},${s1} ${xm},${n.y1} ${n.x1},${n.y1}Z`)
-    .attr("fill", p.couleur).attr("fill-opacity", 0.3);
-  gBandes.append("rect")
-    .attr("x", X_SIEGES).attr("y", s0)
-    .attr("width", sankeyGen.nodeWidth()).attr("height", Math.max(1, h))
-    .attr("fill", p.couleur);
-
-  // colonne des votes : parti, % des votes, nombre de votes
-  const tv = gLbl.append("text")
-    .attr("x", n.x1 + 8).attr("y", (n.y0 + n.y1) / 2).attr("dy", "0.35em");
-  tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE).text(p.parti);
-  tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
-    .text(`  ${pct(p.votesN / VOTES_VALIDES)}`);
-  tv.append("tspan").attr("fill", GRIS_FONCE).text(`  ${valeurM(p.votesN)}`);
-
-  // colonne des sièges : % des sièges, nombre de sièges
-  const ts = gLbl.append("text")
-    .attr("x", X_SIEGES + 16).attr("y", (s0 + s1) / 2).attr("dy", "0.35em");
-  ts.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
-    .text(pct(p.sieges / TOTAL_SIEGES));
-  ts.append("tspan").attr("fill", GRIS)
-    .text(`  ${p.sieges} siège${p.sieges &gt; 1 ? "s" : ""}`);
-
-  yS = s1 + PAD;
-}
-
-// « Autres », même format que les partis
-const nAutres = sankeyLayout.nodes.find((n) =&gt; n.name === "Autres");
-const lblAutres = gLbl.append("text")
-  .attr("x", nAutres.x1 + 8).attr("y", (nAutres.y0 + nAutres.y1) / 2).attr("dy", "0.35em");
-lblAutres.append("tspan").attr("font-weight", 600).attr("fill", GRIS).text("Autres");
-lblAutres.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
-  .text(`  ${pct(autresN / VOTES_VALIDES)}`);
-lblAutres.append("tspan").attr("fill", GRIS).text(`  ${valeurM(autresN)}`);
-
-svgSankey.attr("viewBox", [0, 0, X_SIEGES + 130, Math.max(480, yS + 10)]);
-
-svgSankey.node();</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [2]:</div>
-            <div class="output-content html">
-              <svg viewBox="0,0,950,480.00000000000006" font-size="12" font-family="'Inter Tight', 'Segoe UI', sans-serif"><style>@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600&amp;display=swap');</style><g><path stroke-width="224.4459588039867" stroke-opacity="1" stroke="#E3EDD3" fill="none" d="M8,229.77702059800663C44,229.77702059800663,44,237.9090479855588,80,237.9090479855588" /><path stroke-width="87.55404119601329" stroke-opacity="1" stroke="#ECE8E1" fill="none" d="M8,73.77702059800664C324,73.77702059800664,324,73.77702059800664,640,73.77702059800664" /><path stroke-width="150.1558564784053" stroke-opacity="1" stroke="#E3EDD3" fill="none" d="M88,275.05409914834945C124,275.05409914834945,124,283.7912421270636,160,283.7912421270636" /><path stroke-width="74.29010232558139" stroke-opacity="1" stroke="#ECE8E1" fill="none" d="M88,162.83111974635614C364,162.83111974635614,364,170.69909235880397,640,170.69909235880397" /><path stroke-width="147.96853953488372" stroke-opacity="1" stroke="#E3EDD3" fill="none" d="M168,284.8849005988244C234,284.8849005988244,234,293.2750666564599,300,293.2750666564599" /><path stroke-width="2.1873169435215947" stroke-opacity="1" stroke="#ECE8E1" fill="none" d="M168,209.80697235962174C404,209.80697235962174,404,224.93780199335546,640,224.93780199335546" /><path stroke-width="41.45920265780731" stroke-opacity="0.5" stroke="#2B50C8" fill="none" d="M308,240.0203982179217C474,240.0203982179217,474,262.76106179401995,640,262.76106179401995" /><path stroke-width="35.83166245847176" stroke-opacity="0.5" stroke="#E01020" fill="none" d="M308,278.6658307760612C474,278.6658307760612,474,317.4064943521595,640,317.4064943521595" /><path stroke-width="30.58373953488372" stroke-opacity="0.5" stroke="#10275A" fill="none" d="M308,311.873531772739C474,311.873531772739,474,366.61419534883714,640,366.61419534883714" /><path stroke-width="19.746870431893687" stroke-opacity="0.5" stroke="#6EC9F5" fill="none" d="M308,337.0388367561277C474,337.0388367561277,474,407.7795003322259,640,407.7795003322259" /><path stroke-width="18.387476411960133" stroke-opacity="0.5" stroke="#F28C28" fill="none" d="M308,356.1060101780546C474,356.1060101780546,474,442.84667375415273,640,442.84667375415273" /><path stroke-width="1.9595880398671095" stroke-opacity="1" stroke="#E3EDD3" fill="none" d="M308,366.27954240396815C474,366.27954240396815,474,469.02020598006635,640,469.02020598006635" /></g><g><rect fill="#9FBA85" height="312" width="8" y="30" x="0" /><rect fill="#9FBA85" height="224.4459588039868" width="8" y="125.68606858356543" x="80" /><rect fill="#9FBA85" height="150.15585647840524" width="8" y="208.71331388786095" x="160" /><rect fill="#9FBA85" height="147.96853953488372" width="8" y="219.29079688901803" x="300" /><rect fill="#C8C2B8" height="87.55404119601327" width="8" y="30.000000000000004" x="640" /><rect fill="#C8C2B8" height="74.29010232558142" width="8" y="133.55404119601326" x="640" /><rect fill="#C8C2B8" height="2.187316943521637" width="8" y="223.84414352159467" x="640" /><rect fill="#2B50C8" height="41.45920265780728" width="8" y="242.0314604651163" x="640" /><rect fill="#E01020" height="35.83166245847167" width="8" y="299.4906631229236" x="640" /><rect fill="#10275A" height="30.58373953488376" width="8" y="351.32232558139526" x="640" /><rect fill="#6EC9F5" height="19.746870431893626" width="8" y="397.906065116279" x="640" /><rect fill="#F28C28" height="18.387476411960165" width="8" y="433.65293554817265" x="640" /><rect fill="#C8C2B8" height="1.9595880398671852" width="8" y="468.0404119601328" x="640" /></g><g><text fill="#2A2E24" y="24" x="0">Pop. du Québec : 9,03 M</text><text fill="#2A2E24" y="119.68606858356543" x="80">Électeurs inscrits : 6,50 M</text><text fill="#2A2E24" y="202.71331388786095" x="160">Votes exercés : 4,35 M</text><text fill="#8B887A" dy="0.35em" y="73.77702059800664" x="656">Sans droit de vote ou non inscrits : 2,53 M</text><text fill="#8B887A" dy="0.35em" y="170.69909235880397" x="656">Abstention : 2,15 M</text><text fill="#8B887A" dy="0.35em" y="224.9378019933555" x="656">Bulletins rejetés : 0,06 M</text></g><g><path fill-opacity="0.3" fill="#2B50C8" d="M648,242.0314604651163C734,242.0314604651163 734,242.0314604651163 820,242.0314604651163L820,310.77275048525917C734,310.77275048525917 734,283.4906631229236 648,283.4906631229236Z" /><rect fill="#2B50C8" height="68.74129002014283" width="8" y="242.0314604651163" x="820" /><path fill-opacity="0.3" fill="#E01020" d="M648,299.4906631229236C734,299.4906631229236 734,326.77275048525917 820,326.77275048525917L820,373.377014905695C734,373.377014905695 734,335.32232558139526 648,335.32232558139526Z" /><rect fill="#E01020" height="46.60426442043582" width="8" y="326.77275048525917" x="820" /><path fill-opacity="0.3" fill="#10275A" d="M648,351.32232558139526C734,351.32232558139526 734,389.377014905695 820,389.377014905695L820,411.514040505402C734,411.514040505402 734,381.906065116279 648,381.906065116279Z" /><rect fill="#10275A" height="22.137025599707016" width="8" y="389.377014905695" x="820" /><path fill-opacity="0.3" fill="#6EC9F5" d="M648,397.906065116279C734,397.906065116279 734,427.514040505402 820,427.514040505402L820,427.514040505402C734,427.514040505402 734,417.65293554817265 648,417.65293554817265Z" /><rect fill="#6EC9F5" height="1" width="8" y="427.514040505402" x="820" /><path fill-opacity="0.3" fill="#F28C28" d="M648,433.65293554817265C734,433.65293554817265 734,443.514040505402 820,443.514040505402L820,454.00000000000006C734,454.00000000000006 734,452.0404119601328 648,452.0404119601328Z" /><rect fill="#F28C28" height="10.485959494598058" width="8" y="443.514040505402" x="820" /></g><g><text fill="#2A2E24" y="232.0314604651163" x="820">Sièges : 127</text><text dy="0.35em" y="262.76106179401995" x="656"><tspan fill="#2A2E24" font-weight="600">PQ</tspan><tspan fill="#2A2E24" font-weight="600">  28 %</tspan><tspan fill="#5E5B50">  1,20 M</tspan></text><text dy="0.35em" y="276.40210547518774" x="836"><tspan fill="#2A2E24" font-weight="600">46 %</tspan><tspan fill="#8B887A">  59 sièges</tspan></text><text dy="0.35em" y="317.4064943521594" x="656"><tspan fill="#2A2E24" font-weight="600">PLQ</tspan><tspan fill="#2A2E24" font-weight="600">  24 %</tspan><tspan fill="#5E5B50">  1,04 M</tspan></text><text dy="0.35em" y="350.0748826954771" x="836"><tspan fill="#2A2E24" font-weight="600">31 %</tspan><tspan fill="#8B887A">  40 sièges</tspan></text><text dy="0.35em" y="366.61419534883714" x="656"><tspan fill="#2A2E24" font-weight="600">PCQ</tspan><tspan fill="#2A2E24" font-weight="600">  21 %</tspan><tspan fill="#5E5B50">  0,89 M</tspan></text><text dy="0.35em" y="400.4455277055485" x="836"><tspan fill="#2A2E24" font-weight="600">15 %</tspan><tspan fill="#8B887A">  19 sièges</tspan></text><text dy="0.35em" y="407.77950033222584" x="656"><tspan fill="#2A2E24" font-weight="600">CAQ</tspan><tspan fill="#2A2E24" font-weight="600">  13 %</tspan><tspan fill="#5E5B50">  0,57 M</tspan></text><text dy="0.35em" y="427.514040505402" x="836"><tspan fill="#2A2E24" font-weight="600">0 %</tspan><tspan fill="#8B887A">  0 siège</tspan></text><text dy="0.35em" y="442.84667375415273" x="656"><tspan fill="#2A2E24" font-weight="600">QS</tspan><tspan fill="#2A2E24" font-weight="600">  12 %</tspan><tspan fill="#5E5B50">  0,53 M</tspan></text><text dy="0.35em" y="448.75702025270107" x="836"><tspan fill="#2A2E24" font-weight="600">7 %</tspan><tspan fill="#8B887A">  9 sièges</tspan></text><text dy="0.35em" y="469.0202059800664" x="656"><tspan fill="#8B887A" font-weight="600">Autres</tspan><tspan fill="#2A2E24" font-weight="600">  1 %</tspan><tspan fill="#8B887A">  0,06 M</tspan></text></g></svg>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>Voter dans le vide</h2><br><br>Dans chaque circonscription, seuls les votes pour la personne gagnante servent à élire quelqu'un. Les autres votes n'ont aucun effet sur la composition de l'Assemblée nationale. En 2026, c'est le cas de 58 % des votes. Aucun des 572 000 votes de la CAQ n'a élu de député.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [4]:</div>
-            <pre><code class="language-javascript">const aq = await import("https://cdn.jsdelivr.net/npm/arquero@8/+esm");
-const op = aq.op;
-const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
-const prevision = await (await fetch("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
-
-const COULEURS = { PQ: "#1d4ed8", PLQ: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", Autres: "#a8a29e" };
-// Sigles des partis. Avant 2012, les données nomment les partis au long.
-const SIGLES = {
-  LIB: "PLQ", AUTRES: "Autres", Parti_liberal: "PLQ", Parti_quebecois: "PQ", Union_nationale: "UN",
-  Action_democratique_du_quebec: "ADQ", Coalition_avenir_quebec: "CAQ", Quebec_solidaire: "QS",
-  Ralliement_creditiste: "RC", Parti_egalite: "PÉ",
-};
-const sigle = (p) =&gt; SIGLES[p] ?? p;
-const nombre = (x, d = 0) =&gt; x.toLocaleString("fr-CA", { minimumFractionDigits: d, maximumFractionDigits: d });
-// Arrondi à deux chiffres significatifs : 33 736 devient 34 000.
-const arrondi = (x) =&gt; { const pas = 10 ** (Math.floor(Math.log10(x)) - 1); return Math.round(x / pas) * pas; };
-// Date d'élection au format AAAA-MM-JJ.
-const jour = (x) =&gt; (x instanceof Date ? x.toISOString() : String(x)).slice(0, 10);
-
-// Votes de chaque parti dans chaque circonscription, avec son rang et le total de la circonscription.
-const votesCirc = resultats
-  .derive({ election: aq.escape((d) =&gt; jour(d.election)) })
-  .groupby("election", "circonscription", "parti")
-  .rollup({ votes: op.sum("votes") })
-  .groupby("election", "circonscription")
-  .orderby(aq.desc("votes"))
-  .derive({ rang: op.row_number(), total: op.sum("votes") })
-  .ungroup();
-// Une ligne par circonscription : gagnant et écart avec le deuxième.
-const cles = ["election", "circonscription"];
-const luttes = votesCirc.filter((d) =&gt; d.rang === 1)
-  .select(...cles, { parti: "gagnant" }, { votes: "v1" }, "total")
-  .join_left(votesCirc.filter((d) =&gt; d.rang === 2).select(...cles, { votes: "v2" }), [cles, cles], [aq.all(), ["v2"]])
-  .derive({ ecart: (d) =&gt; (d.v2 == null ? d.v1 : d.v1 - d.v2), annee: (d) =&gt; op.parse_int(op.substring(d.election, 0, 4)) });
-
-// Votes qui ont élu quelqu'un et votes qui n'ont élu personne, par parti, en 2026.
-const votesCirc2026 = votesCirc.filter((d) =&gt; d.election === "2026-10-05");
-const elus2026 = votesCirc2026
-  .filter(aq.escape((d) =&gt; ["PQ", "LIB", "PCQ", "CAQ", "QS"].includes(d.parti)))
-  .groupby("parti")
-  .rollup({ total: op.sum("votes"), utiles: (d) =&gt; op.sum(d.rang === 1 ? d.votes : 0) })
-  .derive({ perdus: (d) =&gt; d.total - d.utiles, parti: aq.escape((d) =&gt; sigle(d.parti)) })
-  .orderby(aq.desc("total"))
-  .objects();
-const bilan2026 = votesCirc2026.rollup({ utiles: (d) =&gt; op.sum(d.rang === 1 ? d.votes : 0), total: op.sum("votes") }).object();
-const partPerdue = 1 - bilan2026.utiles / bilan2026.total;
-
-Plot.plot({
-  width: 760, height: 230, marginLeft: 50, marginRight: 100,
-  x: { label: "votes (millions)", transform: (x) =&gt; x / 1e6, grid: true },
-  y: { label: null, domain: elus2026.map((d) =&gt; d.parti) },
-  color: { domain: ["a élu une ou un député", "n'a élu personne"], range: ["#44403c", "#d6d3d1"], legend: true },
-  marks: [
-    Plot.barX(elus2026.flatMap((d) =&gt; [
-      { parti: d.parti, type: "a élu une ou un député", votes: d.utiles },
-      { parti: d.parti, type: "n'a élu personne", votes: d.perdus },
-    ]), Plot.stackX({ y: "parti", x: "votes", fill: "type", inset: 1 })),
-    Plot.text(elus2026, { y: "parti", x: "total", text: (d) =&gt; `${nombre(100 * d.perdus / d.total)} % sans élu`, dx: 6, textAnchor: "start", fontSize: 12 }),
-  ],
-  //caption: `Gris&nbsp;: votes pour une personne qui n'a pas été élue, soit environ ${nombre(100 * partPerdue)}&nbsp;% des votes de 2026.`,
-})</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [4]:</div>
-            <div class="output-content html">
-              <figure style="max-width:initial" class="plot-d6a7b5-figure"><div class="plot-d6a7b5-swatches plot-d6a7b5-swatches-wrap"><style>:where(.plot-d6a7b5-swatches) {
-  font-family: system-ui, sans-serif;
-  font-size: 10px;
-  margin-bottom: 0.5em;
-}
-:where(.plot-d6a7b5-swatch > svg) {
-  margin-right: 0.5em;
-  overflow: visible;
-}
-:where(.plot-d6a7b5-swatches-wrap) {
-  display: flex;
-  align-items: center;
-  min-height: 33px;
-  flex-wrap: wrap;
-}
-:where(.plot-d6a7b5-swatches-wrap .plot-d6a7b5-swatch) {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 1em;
-}</style><span class="plot-d6a7b5-swatch"><svg fill="#44403c" height="15" width="15"><rect height="100%" width="100%" /></svg>a élu une ou un député</span><span class="plot-d6a7b5-swatch"><svg fill="#d6d3d1" height="15" width="15"><rect height="100%" width="100%" /></svg>n'a élu personne</span></div><svg viewBox="0 0 760 230" height="230" width="760" text-anchor="middle" font-size="10" font-family="system-ui, sans-serif" fill="currentColor" class="plot-d6a7b5"><style>:where(.plot-d6a7b5) {
-  --plot-background: white;
-  display: block;
-  height: auto;
-  height: intrinsic;
-  max-width: 100%;
-}
-:where(.plot-d6a7b5 text),
-:where(.plot-d6a7b5 tspan) {
-  white-space: pre;
-}</style><g transform="translate(0,16.5)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="y-axis tick"><path d="M0,0L-6,0" transform="translate(50,24)" /><path d="M0,0L-6,0" transform="translate(50,59)" /><path d="M0,0L-6,0" transform="translate(50,94)" /><path d="M0,0L-6,0" transform="translate(50,129)" /><path d="M0,0L-6,0" transform="translate(50,164)" /></g><g transform="translate(-8.5,16.5)" text-anchor="end" aria-label="y-axis tick label"><text transform="translate(50,24)" y="0.32em">PQ</text><text transform="translate(50,59)" y="0.32em">PLQ</text><text transform="translate(50,94)" y="0.32em">PCQ</text><text transform="translate(50,129)" y="0.32em">CAQ</text><text transform="translate(50,164)" y="0.32em">QS</text></g><g transform="translate(0.5,0)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="x-grid"><line y2="200" y1="20" x2="50" x1="50" /><line y2="200" y1="20" x2="151.63329706746288" x1="151.63329706746288" /><line y2="200" y1="20" x2="253.26659413492573" x1="253.26659413492573" /><line y2="200" y1="20" x2="354.8998912023885" x1="354.8998912023885" /><line y2="200" y1="20" x2="456.53318826985145" x1="456.53318826985145" /><line y2="200" y1="20" x2="558.1664853373143" x1="558.1664853373143" /><line y2="200" y1="20" x2="659.799782404777" x1="659.799782404777" /></g><g transform="translate(0.5,0)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="x-axis tick"><path d="M0,0L0,6" transform="translate(50,200)" /><path d="M0,0L0,6" transform="translate(151.63329706746288,200)" /><path d="M0,0L0,6" transform="translate(253.26659413492573,200)" /><path d="M0,0L0,6" transform="translate(354.8998912023885,200)" /><path d="M0,0L0,6" transform="translate(456.53318826985145,200)" /><path d="M0,0L0,6" transform="translate(558.1664853373143,200)" /><path d="M0,0L0,6" transform="translate(659.799782404777,200)" /></g><g transform="translate(0.5,9.5)" font-variant="tabular-nums" aria-label="x-axis tick label"><text transform="translate(50,200)" y="0.71em">0.0</text><text transform="translate(151.63329706746288,200)" y="0.71em">0.2</text><text transform="translate(253.26659413492573,200)" y="0.71em">0.4</text><text transform="translate(354.8998912023885,200)" y="0.71em">0.6</text><text transform="translate(456.53318826985145,200)" y="0.71em">0.8</text><text transform="translate(558.1664853373143,200)" y="0.71em">1.0</text><text transform="translate(659.799782404777,200)" y="0.71em">1.2</text></g><g transform="translate(97.5,27.5)" text-anchor="end" aria-label="x-axis label"><text transform="translate(660,200)">votes (millions) →</text></g><g aria-label="bar"><rect fill="#44403c" height="30" y="25" width="373.63310879594536" x="51" /><rect fill="#d6d3d1" height="30" y="25" width="232.36689120405464" x="426.63310879594536" /><rect fill="#44403c" height="30" y="60" width="290.59921325831357" x="51" /><rect fill="#d6d3d1" height="30" y="60" width="232.87709035533322" x="343.59921325831357" /><rect fill="#44403c" height="30" y="95" width="173.83068559156408" x="51" /><rect fill="#d6d3d1" height="30" y="95" width="272.0892490299019" x="226.83068559156408" /><rect fill="#44403c" height="30" y="130" width="0" x="51" /><rect fill="#d6d3d1" height="30" y="130" width="288.69003177290125" x="51" /><rect fill="#44403c" height="30" y="165" width="62.46549216340634" x="51" /><rect fill="#d6d3d1" height="30" y="165" width="203.92633751918123" x="115.46549216340634" /></g><g transform="translate(6.5,16.5)" font-size="12" text-anchor="start" aria-label="text"><text transform="translate(660,24)" y="0.32em">38 % sans élu</text><text transform="translate(577.4763036136468,59)" y="0.32em">45 % sans élu</text><text transform="translate(499.919934621466,94)" y="0.32em">61 % sans élu</text><text transform="translate(340.69003177290125,129)" y="0.32em">100 % sans élu</text><text transform="translate(320.39182968258757,164)" y="0.32em">76 % sans élu</text></g></svg></figure>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Un parti perd d'autant plus de votes qu'il arrive deuxième ou troisième dans beaucoup de circonscriptions. Les trois quarts des votes de Québec solidaire n'ont élu personne, contre un peu plus du tiers de ceux du PQ.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>Le Québec parmi d'autres pays</h2>
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{½ Σ (vᵢ − sᵢ)²}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [8]:</div>
-            <pre><code class="language-javascript">const gallagherMonde = [ // de Wikipedia
-  { label: "Québec 2026",       g: 17.80, type: "qc" },
-  { label: "Québec 2022",       g: 25.80, type: "qc" },
-  { label: "Québec 2018",       g: 17.93, type: "qc" },
-  { label: "Sainte-Lucie 2025", g: 30.22, type: "monde" },
-  { label: "Royaume-Uni 2024",  g: 23.73, type: "monde" },
-  { label: "Australie 2025",    g: 23.11, type: "monde" },
-  { label: "France 2024",       g: 7.79,  type: "monde" },
-  { label: "Allemagne 2025",    g: 6.49,  type: "monde" },
-  { label: "Canada 2025",       g: 5.01,  type: "monde" },
-  { label: "N.-Zélande 2023",   g: 2.63,  type: "monde" },
-  { label: "États-Unis 2024",   g: 1.01,  type: "monde" },
-  { label: "Suède 2022",        g: 0.64,  type: "monde" },
-  { label: "Danemark 2026",     g: 0.42,  type: "monde" },
-];
-
-Plot.plot({
-  height: 420,
-  width: 760,
-  marginLeft: 150,
-  marginBottom: 55,
-  style: { fontSize: "13px", fontFamily: "system-ui" },
-  x: { label: "indice de Gallagher", grid: true, domain: [0, 32], labelAnchor: "center", labelOffset: 45 },
-  y: {
-    label: null,
-    domain: gallagherMonde.slice().sort((a, b) =&gt; b.g - a.g).map((d) =&gt; d.label),
-  },
-  marks: [
-    Plot.barX(gallagherMonde, {
-      y: "label", x: "g",
-      fill: (d) =&gt; d.label === "Québec 2026" ? "#2B50C8" : d.type === "qc" ? "#8FA6E0" : "#c9c9c9",
-    }),
-    Plot.text(gallagherMonde, {
-      y: "label", x: "g", dx: 6, textAnchor: "start",
-      text: (d) =&gt; d.g.toFixed(1).replace(".", ","), fill: "#444", fontSize: 11,
-    }),
-  ]
-});</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [8]:</div>
-            <div class="output-content html">
-              <svg style="font-size:13px;font-family:system-ui" viewBox="0 0 760 420" height="420" width="760" text-anchor="middle" font-size="10" font-family="system-ui, sans-serif" fill="currentColor" class="plot-d6a7b5"><style>:where(.plot-d6a7b5) {
-  --plot-background: white;
-  display: block;
-  height: auto;
-  height: intrinsic;
-  max-width: 100%;
-}
-:where(.plot-d6a7b5 text),
-:where(.plot-d6a7b5 tspan) {
-  white-space: pre;
-}</style><g transform="translate(0,12)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="y-axis tick"><path d="M0,0L-6,0" transform="translate(150,25)" /><path d="M0,0L-6,0" transform="translate(150,51)" /><path d="M0,0L-6,0" transform="translate(150,77)" /><path d="M0,0L-6,0" transform="translate(150,103)" /><path d="M0,0L-6,0" transform="translate(150,129)" /><path d="M0,0L-6,0" transform="translate(150,155)" /><path d="M0,0L-6,0" transform="translate(150,181)" /><path d="M0,0L-6,0" transform="translate(150,207)" /><path d="M0,0L-6,0" transform="translate(150,233)" /><path d="M0,0L-6,0" transform="translate(150,259)" /><path d="M0,0L-6,0" transform="translate(150,285)" /><path d="M0,0L-6,0" transform="translate(150,311)" /><path d="M0,0L-6,0" transform="translate(150,337)" /></g><g transform="translate(-8.5,12)" text-anchor="end" aria-label="y-axis tick label"><text transform="translate(150,25)" y="0.32em">Sainte-Lucie 2025</text><text transform="translate(150,51)" y="0.32em">Québec 2022</text><text transform="translate(150,77)" y="0.32em">Royaume-Uni 2024</text><text transform="translate(150,103)" y="0.32em">Australie 2025</text><text transform="translate(150,129)" y="0.32em">Québec 2018</text><text transform="translate(150,155)" y="0.32em">Québec 2026</text><text transform="translate(150,181)" y="0.32em">France 2024</text><text transform="translate(150,207)" y="0.32em">Allemagne 2025</text><text transform="translate(150,233)" y="0.32em">Canada 2025</text><text transform="translate(150,259)" y="0.32em">N.-Zélande 2023</text><text transform="translate(150,285)" y="0.32em">États-Unis 2024</text><text transform="translate(150,311)" y="0.32em">Suède 2022</text><text transform="translate(150,337)" y="0.32em">Danemark 2026</text></g><g transform="translate(0.5,0)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="x-grid"><line y2="365" y1="20" x2="150" x1="150" /><line y2="365" y1="20" x2="242.1875" x1="242.1875" /><line y2="365" y1="20" x2="334.375" x1="334.375" /><line y2="365" y1="20" x2="426.5625" x1="426.5625" /><line y2="365" y1="20" x2="518.75" x1="518.75" /><line y2="365" y1="20" x2="610.9375" x1="610.9375" /><line y2="365" y1="20" x2="703.125" x1="703.125" /></g><g transform="translate(0.5,0)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="x-axis tick"><path d="M0,0L0,6" transform="translate(150,365)" /><path d="M0,0L0,6" transform="translate(242.1875,365)" /><path d="M0,0L0,6" transform="translate(334.375,365)" /><path d="M0,0L0,6" transform="translate(426.5625,365)" /><path d="M0,0L0,6" transform="translate(518.75,365)" /><path d="M0,0L0,6" transform="translate(610.9375,365)" /><path d="M0,0L0,6" transform="translate(703.125,365)" /></g><g transform="translate(0.5,9.5)" font-variant="tabular-nums" aria-label="x-axis tick label"><text transform="translate(150,365)" y="0.71em">0</text><text transform="translate(242.1875,365)" y="0.71em">5</text><text transform="translate(334.375,365)" y="0.71em">10</text><text transform="translate(426.5625,365)" y="0.71em">15</text><text transform="translate(518.75,365)" y="0.71em">20</text><text transform="translate(610.9375,365)" y="0.71em">25</text><text transform="translate(703.125,365)" y="0.71em">30</text></g><g transform="translate(0.5,45.5)" aria-label="x-axis label"><text transform="translate(445,365)">indice de Gallagher →</text></g><g aria-label="bar"><rect fill="#2B50C8" height="23" y="155" width="328.1875" x="150" /><rect fill="#8FA6E0" height="23" y="51" width="475.6875" x="150" /><rect fill="#8FA6E0" height="23" y="129" width="330.58437499999997" x="150" /><rect fill="#c9c9c9" height="23" y="25" width="557.18125" x="150" /><rect fill="#c9c9c9" height="23" y="77" width="437.521875" x="150" /><rect fill="#c9c9c9" height="23" y="103" width="426.09062499999993" x="150" /><rect fill="#c9c9c9" height="23" y="181" width="143.628125" x="150" /><rect fill="#c9c9c9" height="23" y="207" width="119.65937500000001" x="150" /><rect fill="#c9c9c9" height="23" y="233" width="92.37187499999999" x="150" /><rect fill="#c9c9c9" height="23" y="259" width="48.490624999999994" x="150" /><rect fill="#c9c9c9" height="23" y="285" width="18.62187499999999" x="150" /><rect fill="#c9c9c9" height="23" y="311" width="11.800000000000011" x="150" /><rect fill="#c9c9c9" height="23" y="337" width="7.743750000000006" x="150" /></g><g transform="translate(6.5,12)" font-size="11" text-anchor="start" fill="#444" aria-label="text"><text transform="translate(478.1875,155)" y="0.32em">17,8</text><text transform="translate(625.6875,51)" y="0.32em">25,8</text><text transform="translate(480.58437499999997,129)" y="0.32em">17,9</text><text transform="translate(707.18125,25)" y="0.32em">30,2</text><text transform="translate(587.521875,77)" y="0.32em">23,7</text><text transform="translate(576.0906249999999,103)" y="0.32em">23,1</text><text transform="translate(293.628125,181)" y="0.32em">7,8</text><text transform="translate(269.659375,207)" y="0.32em">6,5</text><text transform="translate(242.371875,233)" y="0.32em">5,0</text><text transform="translate(198.490625,259)" y="0.32em">2,6</text><text transform="translate(168.621875,285)" y="0.32em">1,0</text><text transform="translate(161.8,311)" y="0.32em">0,6</text><text transform="translate(157.74375,337)" y="0.32em">0,4</text></g></svg>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Les pays qui votent à la proportionnelle ont des indices plus faibles. En Allemagne, un parti n'obtient de sièges au <em>Bundestag* que s'il recueille au moins 5 % des votes, (sauf exceptions, me dit-on). En 2025, environ 14 % des votes sont allés à des partis sous ce seuil, d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0</em> n'est toutefois pas un cas exceptionnel : en 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Inversement, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>L'élection de 2026 à la proportionnelle</h2><br><br>À la proportionnelle, chaque parti reçoit une part des sièges égale à sa part des votes [1]. La figure suivante montre ce qu'auraient donné les votes de 2026.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [11]:</div>
-            <pre><code class="language-javascript">// Répartition des 127 sièges à la proportionnelle selon les votes de 2026 (méthode de Sainte-Laguë, sans seuil).
-function sainteLague(votes, sieges) {
-  const s = Object.fromEntries(Object.keys(votes).map((p) =&gt; [p, 0]));
-  for (let i = 0; i &lt; sieges; i++) {
-    let meilleur = null, quotient = -1;
-    for (const p in votes) {
-      const q = votes[p] / (2 * s[p] + 1);
-      if (q &gt; quotient) { quotient = q; meilleur = p; }
+    // positions x des colonnes : les trois premières resserrées
+    const xColonnes = [0, 80, 160, 300, 640];
+    for (const n of sankeyLayout.nodes) {
+      n.x0 = xColonnes[n.layer];
+      n.x1 = n.x0 + sankeyGen.nodeWidth();
     }
-    s[meilleur]++;
-  }
-  return s;
-}
-// Pouvoir de pivot : part des combinaisons majoritaires où le parti est indispensable.
-function banzhaf(sieges, majorite) {
-  const partis = Object.keys(sieges).filter((p) =&gt; sieges[p] &gt; 0);
-  const pivots = partis.map(() =&gt; 0);
-  for (let m = 1; m &lt; 1 &lt;&lt; partis.length; m++) {
-    let t = 0;
-    partis.forEach((p, i) =&gt; { if (m &gt;&gt; i &amp; 1) t += sieges[p]; });
-    if (t &lt; majorite) continue;
-    partis.forEach((p, i) =&gt; { if (m &gt;&gt; i &amp; 1 &amp;&amp; t - sieges[p] &lt; majorite) pivots[i]++; });
-  }
-  const total = pivots.reduce((a, b) =&gt; a + b, 0);
-  return Object.fromEntries(partis.map((p, i) =&gt; [p, pivots[i] / total]));
-}
-const SIEGES = 127, MAJORITE = 64;
-const votesParParti = Object.fromEntries(elus2026.map((d) =&gt; [d.parti, d.total]));
-const siegesActuels = Object.fromEntries(luttes.filter((d) =&gt; d.election === "2026-10-05").groupby("gagnant").count().objects().map((d) =&gt; [sigle(d.gagnant), d.count]));
-const siegesProportionnels = sainteLague(votesParParti, SIEGES);
-const pivotActuel = banzhaf(siegesActuels, MAJORITE);
-const pivotProportionnel = banzhaf(siegesProportionnels, MAJORITE);
-const comparaison = Object.keys(votesParParti).map((p) =&gt; ({
-  parti: p,
-  "votes (%)": 100 * votesParParti[p] / bilan2026.total,
-  "sièges actuels": siegesActuels[p] ?? 0,
-  "sièges à la proportionnelle": siegesProportionnels[p],
-  "pouvoir de pivot actuel (%)": 100 * (pivotActuel[p] ?? 0),
-  "pouvoir de pivot à la proportionnelle (%)": 100 * (pivotProportionnel[p] ?? 0),
-}));
 
-Plot.plot({
-  width: 760,
-  height: 46 * comparaison.length + 50,
-  marginLeft: 62,
-  marginRight: 62,
-  x: { label: "sièges", domain: [0, 70], grid: true },
-  y: { domain: comparaison.map((d) =&gt; d.parti), label: null },
-  marks: [
-    Plot.ruleX([MAJORITE], { stroke: "#000", strokeDasharray: "3,3" }),
-    Plot.arrow(comparaison, {
-      x1: "sièges actuels", x2: "sièges à la proportionnelle", y1: "parti", y2: "parti",
-      stroke: (d) =&gt; COULEURS[d.parti], strokeWidth: 2, headLength: 5,
-    }),
-    Plot.dot(comparaison, { x: "sièges actuels", y: "parti", fill: (d) =&gt; COULEURS[d.parti], r: 4 }),
-    // Étiquettes : sièges actuels près du point, sièges à la proportionnelle après la pointe.
-    ...(() =&gt; {
-      const actuel = (r) =&gt; `${r["sièges actuels"]} sièges`;
-      const prop = (r) =&gt; `${r["sièges à la proportionnelle"]} à la proportionnelle`;
-      const ecart = (r) =&gt; r["sièges à la proportionnelle"] - r["sièges actuels"];
-      const wide = comparaison.filter((r) =&gt; Math.abs(ecart(r)) &gt;= 3);
-      const tight = comparaison.filter((r) =&gt; Math.abs(ecart(r)) &lt; 3);
-      const right = wide.filter((r) =&gt; ecart(r) &gt; 0);
-      const left = wide.filter((r) =&gt; ecart(r) &lt; 0);
-      const rightFar = right.filter((r) =&gt; r["sièges actuels"] &gt;= 12);
-      const rightEdge = right.filter((r) =&gt; r["sièges actuels"] &lt; 12);
-      const leftFar = left.filter((r) =&gt; r["sièges à la proportionnelle"] &gt;= 8);
-      const leftEdge = left.filter((r) =&gt; r["sièges à la proportionnelle"] &lt; 8);
-      const TXT = { fontSize: 11, fill: "#333", y: "parti" };
-      return [
-        Plot.text(rightFar, { ...TXT, x: "sièges actuels", text: actuel, dx: -9, textAnchor: "end" }),
-        Plot.text(rightEdge, { ...TXT, x: "sièges actuels", text: actuel, dx: -4, dy: -12, textAnchor: "start" }),
-        Plot.text(right, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: 11, textAnchor: "start" }),
-        Plot.text(left, { ...TXT, x: "sièges actuels", text: actuel, dx: 9, textAnchor: "start" }),
-        Plot.text(leftFar, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -11, textAnchor: "end" }),
-        Plot.text(leftEdge, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -4, dy: -12, textAnchor: "start" }),
-        Plot.text(tight, { ...TXT, x: (r) =&gt; Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: prop, dx: 10, dy: -7, textAnchor: "start" }),
-        Plot.text(tight, { ...TXT, x: (r) =&gt; Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: actuel, dx: 10, dy: 7, textAnchor: "start" }),
-      ];
-    })(),
-  ],
-  //caption: "Point&nbsp;: sièges obtenus en 2026. Pointe de la flèche&nbsp;: sièges avec les mêmes votes répartis à la proportionnelle. Pointillé&nbsp;: majorité de 64 sièges.",
-})</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [11]:</div>
-            <div class="output-content html">
-              <svg viewBox="0 0 760 280" height="280" width="760" text-anchor="middle" font-size="10" font-family="system-ui, sans-serif" fill="currentColor" class="plot-d6a7b5"><style>:where(.plot-d6a7b5) {
-  --plot-background: white;
-  display: block;
-  height: auto;
-  height: intrinsic;
-  max-width: 100%;
-}
-:where(.plot-d6a7b5 text),
-:where(.plot-d6a7b5 tspan) {
-  white-space: pre;
-}</style><g transform="translate(0,0.5)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="y-axis tick"><path d="M0,0L-6,0" transform="translate(62,43)" /><path d="M0,0L-6,0" transform="translate(62,89)" /><path d="M0,0L-6,0" transform="translate(62,135)" /><path d="M0,0L-6,0" transform="translate(62,181)" /><path d="M0,0L-6,0" transform="translate(62,227)" /></g><g transform="translate(-8.5,0.5)" text-anchor="end" aria-label="y-axis tick label"><text transform="translate(62,43)" y="0.32em">PQ</text><text transform="translate(62,89)" y="0.32em">PLQ</text><text transform="translate(62,135)" y="0.32em">PCQ</text><text transform="translate(62,181)" y="0.32em">CAQ</text><text transform="translate(62,227)" y="0.32em">QS</text></g><g transform="translate(0.5,0)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="x-grid"><line y2="250" y1="20" x2="62" x1="62" /><line y2="250" y1="20" x2="152.85714285714286" x1="152.85714285714286" /><line y2="250" y1="20" x2="243.7142857142857" x1="243.7142857142857" /><line y2="250" y1="20" x2="334.57142857142856" x1="334.57142857142856" /><line y2="250" y1="20" x2="425.4285714285714" x1="425.4285714285714" /><line y2="250" y1="20" x2="516.2857142857142" x1="516.2857142857142" /><line y2="250" y1="20" x2="607.1428571428571" x1="607.1428571428571" /><line y2="250" y1="20" x2="698" x1="698" /></g><g transform="translate(0.5,0)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="x-axis tick"><path d="M0,0L0,6" transform="translate(62,250)" /><path d="M0,0L0,6" transform="translate(152.85714285714286,250)" /><path d="M0,0L0,6" transform="translate(243.7142857142857,250)" /><path d="M0,0L0,6" transform="translate(334.57142857142856,250)" /><path d="M0,0L0,6" transform="translate(425.4285714285714,250)" /><path d="M0,0L0,6" transform="translate(516.2857142857142,250)" /><path d="M0,0L0,6" transform="translate(607.1428571428571,250)" /><path d="M0,0L0,6" transform="translate(698,250)" /></g><g transform="translate(0.5,9.5)" font-variant="tabular-nums" aria-label="x-axis tick label"><text transform="translate(62,250)" y="0.71em">0</text><text transform="translate(152.85714285714286,250)" y="0.71em">10</text><text transform="translate(243.7142857142857,250)" y="0.71em">20</text><text transform="translate(334.57142857142856,250)" y="0.71em">30</text><text transform="translate(425.4285714285714,250)" y="0.71em">40</text><text transform="translate(516.2857142857142,250)" y="0.71em">50</text><text transform="translate(607.1428571428571,250)" y="0.71em">60</text><text transform="translate(698,250)" y="0.71em">70</text></g><g transform="translate(59.5,27.5)" text-anchor="end" aria-label="x-axis label"><text transform="translate(698,250)">sièges →</text></g><g transform="translate(0.5,0)" stroke-dasharray="3,3" stroke="#000" aria-label="rule"><line y2="250" y1="20" x2="643.4857142857143" x1="643.4857142857143" /></g><g transform="translate(0.5,0.5)" stroke-miterlimit="1" stroke-linecap="round" stroke-width="2" fill="none" aria-label="arrow"><path stroke="#1d4ed8" d="M598.0571428571428,43L389.08571428571423,43M394.8592169776105,46.33333333333333L389.08571428571423,43L394.8592169776105,39.666666666666664" /><path stroke="#d62728" d="M425.4285714285714,89L343.65714285714284,89M349.4306455490391,92.33333333333333L343.65714285714284,89L349.4306455490391,85.66666666666667" /><path stroke="#8b5cf6" d="M234.62857142857143,135L307.31428571428575,135M301.54078302238946,131.66666666666666L307.31428571428575,135L301.54078302238946,138.33333333333334" /><path stroke="#0891b2" d="M62,181L216.45714285714286,181M210.6836401652466,177.66666666666666L216.45714285714286,181L210.6836401652466,184.33333333333334" /><path stroke="#ea7c0c" d="M143.77142857142857,227L207.37142857142857,227M201.5979258795323,223.66666666666666L207.37142857142857,227L201.5979258795323,230.33333333333334" /></g><g transform="translate(0.5,0.5)" aria-label="dot"><circle fill="#1d4ed8" r="4" cy="43" cx="598.0571428571428" /><circle fill="#d62728" r="4" cy="89" cx="425.4285714285714" /><circle fill="#8b5cf6" r="4" cy="135" cx="234.62857142857143" /><circle fill="#0891b2" r="4" cy="181" cx="62" /><circle fill="#ea7c0c" r="4" cy="227" cx="143.77142857142857" /></g><g transform="translate(-8.5,0.5)" font-size="11" text-anchor="end" fill="#333" aria-label="text"><text transform="translate(234.62857142857143,135)" y="0.32em">19 sièges</text></g><g transform="translate(-3.5,-11.5)" font-size="11" text-anchor="start" fill="#333" aria-label="text"><text transform="translate(62,181)" y="0.32em">0 sièges</text><text transform="translate(143.77142857142857,227)" y="0.32em">9 sièges</text></g><g transform="translate(11.5,0.5)" font-size="11" text-anchor="start" fill="#333" aria-label="text"><text transform="translate(307.31428571428575,135)" y="0.32em">27 à la proportionnelle</text><text transform="translate(216.45714285714286,181)" y="0.32em">17 à la proportionnelle</text><text transform="translate(207.37142857142857,227)" y="0.32em">16 à la proportionnelle</text></g><g transform="translate(9.5,0.5)" font-size="11" text-anchor="start" fill="#333" aria-label="text"><text transform="translate(598.0571428571428,43)" y="0.32em">59 sièges</text><text transform="translate(425.4285714285714,89)" y="0.32em">40 sièges</text></g><g transform="translate(-10.5,0.5)" font-size="11" text-anchor="end" fill="#333" aria-label="text"><text transform="translate(389.08571428571423,43)" y="0.32em">36 à la proportionnelle</text><text transform="translate(343.65714285714284,89)" y="0.32em">31 à la proportionnelle</text></g></svg>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [12]:</div>
-            <pre><code class="language-javascript">["votes (%)", "sièges actuels", "sièges à la proportionnelle", "pouvoir de pivot actuel (%)", "pouvoir de pivot à la proportionnelle (%)"]
-  .map((mesure) =&gt; ({ mesure, ...Object.fromEntries(comparaison.map((d) =&gt; [d.parti, Math.round(d[mesure] * 10) / 10])) }))</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [12]:</div>
-            <div class="output-content table">
-              <table class="tangent-table-output"><thead><tr><th>mesure</th><th>PQ</th><th>PLQ</th><th>PCQ</th><th>CAQ</th><th>QS</th></tr></thead><tbody><tr><td>votes (%)</td><td>28</td><td>24.2</td><td>20.7</td><td>13.4</td><td>12.4</td></tr><tr><td>sièges actuels</td><td>59</td><td>40</td><td>19</td><td>0</td><td>9</td></tr><tr><td>sièges à la proportionnelle</td><td>36</td><td>31</td><td>27</td><td>17</td><td>16</td></tr><tr><td>pouvoir de pivot actuel (%)</td><td>50</td><td>16.7</td><td>16.7</td><td>0</td><td>16.7</td></tr><tr><td>pouvoir de pivot à la proportionnelle (%)</td><td>28.6</td><td>28.6</td><td>14.3</td><td>14.3</td><td>14.3</td></tr></tbody></table><div class="table-note">5 rows · 6 columns</div>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres combinaisons demanderaient trois partis.<br><br>Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PQ atteint la majorité avec l'appui du PLQ, du PCQ ou de QS. Le pouvoir de pivot mesure la part de cette balance que détient chaque parti [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>Ton vote change-t-il quelque chose ?</h2><br><br>Un vote change le résultat d'une circonscription seulement s'il brise une égalité. Depuis 1970, l'élection la plus serrée a été celle de Hull, en 1976, gagnée par 2 voix. En 2026, Vachon a été gagnée par 10 voix.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [15]:</div>
-            <pre><code class="language-javascript">// Écart entre les deux premiers dans chaque circonscription, de 1970 à 2026.
-// Chance d'une égalité parfaite : la part des écarts de moins de 100 voix, divisée par 100.
-const nLuttes = luttes.numRows();
-const nSerrees = luttes.filter((d) =&gt; d.ecart &lt; 100).numRows();
-const probabiliteEgalite = nSerrees / (100 * nLuttes);
+    const gris = new Set([NON_INSCRITS, "Abstention", "Bulletins rejetés"]);
+    const couleurNoeud = (name) =>
+      gris.has(name) ? SORTIE_NOEUD : couleurParti[name] ?? (name === "Autres" ? SORTIE_NOEUD : VERT_NOEUD);
+    const valeurM = (v) => (v / 1e6).toFixed(2).replace(".", ",") + " M";
 
-luttes.orderby("ecart").slice(0, 10)
-  .derive({ annee: aq.escape((d) =&gt; String(d.annee)), gagnant: aq.escape((d) =&gt; sigle(d.gagnant)) })
-  .select({ annee: "année", circonscription: "circonscription", gagnant: "gagnant", ecart: "écart (voix)", total: "votes valides" })
-  .objects()</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [15]:</div>
-            <div class="output-content table">
-              <table class="tangent-table-output"><thead><tr><th>année</th><th>circonscription</th><th>gagnant</th><th>écart (voix)</th><th>votes valides</th></tr></thead><tbody><tr><td>1976</td><td>Hull</td><td>PQ</td><td>2</td><td>29655</td></tr><tr><td>2026</td><td>Vachon</td><td>PLQ</td><td>10</td><td>36562</td></tr><tr><td>1970</td><td>Gouin</td><td>PQ</td><td>12</td><td>34423</td></tr><tr><td>2018</td><td>Îles-de-la-Madeleine</td><td>PQ</td><td>15</td><td>6931</td></tr><tr><td>1994</td><td>Jean-Talon</td><td>PLQ</td><td>25</td><td>27857</td></tr><tr><td>1998</td><td>Charlesbourg</td><td>PQ</td><td>33</td><td>38985</td></tr><tr><td>2003</td><td>Matane</td><td>PLQ</td><td>33</td><td>18613</td></tr><tr><td>1970</td><td>Montmorency</td><td>PLQ</td><td>41</td><td>29753</td></tr><tr><td>2018</td><td>Gaspé</td><td>PQ</td><td>41</td><td>17968</td></tr><tr><td>2003</td><td>Dubuc</td><td>PQ</td><td>44</td><td>25109</td></tr></tbody></table><div class="table-note">10 rows · 5 columns</div>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [16]:</div>
-            <pre><code class="language-javascript">Plot.plot({
-  width: 640, height: 240,
-  x: { type: "log", domain: [1, 50000], label: "écart entre les deux premiers (voix, échelle logarithmique)", grid: true, ticks: [1, 10, 100, 1000, 10000], tickFormat: (x) =&gt; nombre(x) },
-  y: { label: "circonscriptions", grid: true },
-  marks: [
-    Plot.rectY(luttes.filter((d) =&gt; d.ecart &gt;= 1).objects(), Plot.binX({ y: "count" }, {
-      x: "ecart", thresholds: Array.from({ length: 48 }, (_, i) =&gt; 10 ** (i / 10)), fill: "#a8a29e", inset: 0.5,
-    })),
-    Plot.ruleX([100], { stroke: "#1c1917", strokeDasharray: "3,3" }),
-    Plot.text([100], { x: (d) =&gt; d, frameAnchor: "top", dx: 6, textAnchor: "start", text: () =&gt; "100 voix", fontSize: 11 }),
-    Plot.ruleY([0]),
-  ],
-  //caption: `Écart entre les deux premiers dans ${nombre(nLuttes)} circonscriptions, élections de 1970 à 2026. À gauche du pointillé, les ${nSerrees} gagnées par moins de 100 voix.`,
-})</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [16]:</div>
-            <div class="output-content html">
-              <svg viewBox="0 0 640 240" height="240" width="640" text-anchor="middle" font-size="10" font-family="system-ui, sans-serif" fill="currentColor" class="plot-d6a7b5"><style>:where(.plot-d6a7b5) {
-  --plot-background: white;
-  display: block;
-  height: auto;
-  height: intrinsic;
-  max-width: 100%;
-}
-:where(.plot-d6a7b5 text),
-:where(.plot-d6a7b5 tspan) {
-  white-space: pre;
-}</style><g transform="translate(0,0.5)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="y-grid"><line y2="210" y1="210" x2="620" x1="40" /><line y2="162.7363184079602" y1="162.7363184079602" x2="620" x1="40" /><line y2="115.47263681592041" y1="115.47263681592041" x2="620" x1="40" /><line y2="68.20895522388058" y1="68.20895522388058" x2="620" x1="40" /><line y2="20.94527363184079" y1="20.94527363184079" x2="620" x1="40" /></g><g transform="translate(0,0.5)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="y-axis tick"><path d="M0,0L-6,0" transform="translate(40,210)" /><path d="M0,0L-6,0" transform="translate(40,162.7363184079602)" /><path d="M0,0L-6,0" transform="translate(40,115.47263681592041)" /><path d="M0,0L-6,0" transform="translate(40,68.20895522388058)" /><path d="M0,0L-6,0" transform="translate(40,20.94527363184079)" /></g><g transform="translate(-8.5,0.5)" font-variant="tabular-nums" text-anchor="end" aria-label="y-axis tick label"><text transform="translate(40,210)" y="0.32em">0</text><text transform="translate(40,162.7363184079602)" y="0.32em">50</text><text transform="translate(40,115.47263681592041)" y="0.32em">100</text><text transform="translate(40,68.20895522388058)" y="0.32em">150</text><text transform="translate(40,20.94527363184079)" y="0.32em">200</text></g><g transform="translate(-36.5,-16.5)" text-anchor="start" aria-label="y-axis label"><text transform="translate(40,20)" y="0.71em">↑ circonscriptions</text></g><g transform="translate(0.5,0)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="x-grid"><line y2="210" y1="20" x2="40" x1="40" /><line y2="210" y1="20" x2="163.4313050444671" x1="163.4313050444671" /><line y2="210" y1="20" x2="286.8626100889342" x1="286.8626100889342" /><line y2="210" y1="20" x2="410.29391513340124" x1="410.29391513340124" /><line y2="210" y1="20" x2="533.7252201778684" x1="533.7252201778684" /></g><g transform="translate(0.5,0)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="x-axis tick"><path d="M0,0L0,6" transform="translate(40,210)" /><path d="M0,0L0,6" transform="translate(163.4313050444671,210)" /><path d="M0,0L0,6" transform="translate(286.8626100889342,210)" /><path d="M0,0L0,6" transform="translate(410.29391513340124,210)" /><path d="M0,0L0,6" transform="translate(533.7252201778684,210)" /></g><g transform="translate(0.5,9.5)" font-variant="tabular-nums" aria-label="x-axis tick label"><text transform="translate(40,210)" y="0.71em">1</text><text transform="translate(163.4313050444671,210)" y="0.71em">10</text><text transform="translate(286.8626100889342,210)" y="0.71em">100</text><text transform="translate(410.29391513340124,210)" y="0.71em">1&#160;000</text><text transform="translate(533.7252201778684,210)" y="0.71em">10&#160;000</text></g><g transform="translate(17.5,27.5)" text-anchor="end" aria-label="x-axis label"><text transform="translate(620,210)">écart entre les deux premiers (voix, échelle logarithmique) →</text></g><g fill="#a8a29e" aria-label="rect"><rect height="0" width="11.34313050444672" y="209.5547263681592" x="77.52939151334013" /><rect height="0.890547263681583" width="11.343130504446691" y="208.60945273631842" x="163.9313050444671" /><rect height="0" width="11.34313050444672" y="209.5547263681592" x="176.2744355489138" /><rect height="0" width="11.343130504446691" y="209.5547263681592" x="200.9606965578072" /><rect height="0.890547263681583" width="11.343130504446776" y="208.60945273631842" x="225.64695756670062" /><rect height="2.7810945273631944" width="11.343130504446663" y="206.7189054726368" x="237.9900880711474" /><rect height="1.835820895522403" width="11.343130504446663" y="207.6641791044776" x="250.33321857559406" /><rect height="5.616915422885569" width="11.34313050444672" y="203.88308457711443" x="262.6763490800407" /><rect height="2.7810945273631944" width="11.343130504446776" y="206.7189054726368" x="275.01947958448744" /><rect height="1.835820895522403" width="11.34313050444672" y="207.6641791044776" x="287.3626100889342" /><rect height="6.562189054726389" width="11.343130504446663" y="202.9378109452736" x="299.70574059338094" /><rect height="12.233830845771138" width="11.343130504446663" y="197.26616915422886" x="312.0488710978276" /><rect height="12.233830845771138" width="11.343130504446776" y="197.26616915422886" x="324.39200160227426" /><rect height="20.741293532338318" width="11.343130504446663" y="188.75870646766168" x="336.73513210672104" /><rect height="12.233830845771138" width="11.34313050444672" y="197.26616915422886" x="349.0782626111677" /><rect height="26.412935323383067" width="11.34313050444672" y="183.08706467661693" x="361.4213931156144" /><rect height="30.19402985074629" width="11.34313050444672" y="179.3059701492537" x="373.76452362006114" /><rect height="35.86567164179104" width="11.343130504446663" y="173.63432835820896" x="386.10765412450786" /><rect height="46.2636815920398" width="11.34313050444672" y="163.2363184079602" x="398.4507846289545" /><rect height="48.154228855721385" width="11.343130504446833" y="161.34577114427861" x="410.79391513340124" /><rect height="63.278606965174134" width="11.34313050444672" y="146.22139303482587" x="423.1370456378481" /><rect height="77.45771144278606" width="11.343130504446606" y="132.04228855721394" x="435.4801761422948" /><rect height="127.55721393034827" width="11.34313050444672" y="81.94278606965173" x="447.8233066467414" /><rect height="107.70646766169153" width="11.34313050444672" y="101.79353233830847" x="460.1664371511881" /><rect height="137.00995024875624" width="11.343130504446663" y="72.49004975124377" x="472.50956765563484" /><rect height="159.69651741293532" width="11.34313050444672" y="49.80348258706467" x="484.8526981600815" /><rect height="189" width="11.343130504446663" y="20.5" x="497.1958286645282" /><rect height="182.38308457711443" width="11.343130504446776" y="27.116915422885562" x="509.5389591689749" /><rect height="162.5323383084577" width="11.343130504446776" y="46.9676616915423" x="521.8820896734217" /><rect height="134.1741293532338" width="11.343130504446663" y="75.32587064676618" x="534.2252201778684" /><rect height="95.4179104477612" width="11.343130504446663" y="114.0820895522388" x="546.5683506823151" /><rect height="54.771144278606954" width="11.343130504446663" y="154.72885572139305" x="558.9114811867618" /><rect height="29.24875621890547" width="11.343130504446776" y="180.25124378109453" x="571.2546116912084" /><rect height="14.12437810945272" width="11.343130504446663" y="195.37562189054728" x="583.5977421956552" /><rect height="1.835820895522403" width="11.343130504446663" y="207.6641791044776" x="595.9408727001019" /><rect height="0" width="11.34313050444689" y="209.5547263681592" x="608.2840032045485" /></g><g transform="translate(0.5,0)" stroke-dasharray="3,3" stroke="#1c1917" aria-label="rule"><line y2="210" y1="20" x2="286.8626100889342" x1="286.8626100889342" /></g><g transform="translate(6.5,0.5)" font-size="11" text-anchor="start" aria-label="text"><text transform="translate(286.8626100889342,20)" y="0.71em">100 voix</text></g><g transform="translate(0,0.5)" stroke="currentColor" aria-label="rule"><line y2="210" y1="210" x2="620" x1="40" /></g></svg>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 élections [3].<br><br>La prévision Votoscope pour 2030 permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [18]:</div>
-            <pre><code class="language-javascript">// Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
-// Méthode : note [4] à la fin du billet.
-const { normal } = await import("https://cdn.jsdelivr.net/npm/@tangent.to/proba@0.2/+esm");
-const deuxPremiers = prevision.circonscriptions.map((c) =&gt; {
-  const [[p1], [p2]] = Object.entries(c.parts).sort((a, b) =&gt; b[1] - a[1]);
-  const m = c.parts[p1] - c.parts[p2];
-  const p = c.victoire[p1] / Math.max(c.victoire[p1] + c.victoire[p2], 1e-9);
-  const z = normal.quantile(p, { mu: 0, sigma: 1 });
-  const mesurable = p &gt; 0.02 &amp;&amp; p &lt; 0.98 &amp;&amp; Math.abs(z) &gt; 0.05;
-  return { nom: c.nom, p1, p2, m, electeurs: c.votes2026, s: mesurable ? m / z : null };
-});
-const ecartTypeMedian = aq.from(deuxPremiers).filter((d) =&gt; d.s &gt; 0).rollup({ s: op.median("s") }).get("s", 0);
-const decisif = deuxPremiers.map(({ nom, p1, p2, m, s, electeurs }) =&gt; ({
-  nom, premier: sigle(p1), deuxieme: sigle(p2), electeurs,
-  probabilite: normal.pdf(m, { mu: 0, sigma: s &gt; 0 ? s : ecartTypeMedian }) / electeurs,
-}));
-const tableDecisif = aq.from(decisif);
-const resume = tableDecisif.rollup({
-  max: op.max("probabilite"),
-  mediane: op.median("probabilite"),
-  moyenne: (d) =&gt; op.sum(d.probabilite * d.electeurs) / op.sum(d.electeurs),
-}).object();
-const plusSerree = tableDecisif.orderby(aq.desc("probabilite")).get("nom", 0);
-// À la proportionnelle, un siège pour environ 34 000 votes : la même chance pour tout le monde.
-const proportionnel = SIEGES / aq.from(prevision.circonscriptions).rollup({ n: op.sum("votes2026") }).get("n", 0);
-const unSur = (p) =&gt; `1 sur ${nombre(arrondi(1 / p))}`;
-// Sous ce seuil, la circonscription est considérée comme sûre.
-const PLANCHER = 1e-7;
-const sures = decisif.filter((d) =&gt; d.probabilite &lt; PLANCHER).length;
+    const svgSankey = d3.create("svg")
+      .attr("font-family", F_TEXTE).attr("font-size", 12);
+    svgSankey.append("style").text(
+      "@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600&display=swap');"
+    );
 
-Plot.plot({
-  width: 640, height: 300, marginTop: 30, marginLeft: 20, marginRight: 20,
-  x: {
-    type: "log", domain: [PLANCHER, 1e-3], label: "chance qu'un vote décide du gagnant (échelle logarithmique)",
-    grid: true, ticks: [1e-7, 1e-6, 1e-5, 1e-4, 1e-3], tickFormat: (p) =&gt; (p === PLANCHER ? "&lt; 1/10 M" : `1/${nombre(1 / p)}`),
-  },
-  y: { axis: null },
-  marks: [
-    Plot.ruleX([proportionnel], { stroke: "#1c1917", strokeDasharray: "3,3" }),
-    Plot.text([proportionnel], { x: (d) =&gt; d, frameAnchor: "top", dy: -18, text: () =&gt; "proportionnelle", fontSize: 11 }),
-    Plot.dot(decisif, Plot.dodgeY({
-      x: (d) =&gt; Math.max(d.probabilite, PLANCHER), r: 3.5, fill: (d) =&gt; COULEURS[d.premier],
-      title: (d) =&gt; `${d.nom} : ${unSur(d.probabilite)} (${d.premier} devant ${d.deuxieme})`,
-    })),
-  ],
-  //caption: `Un point par circonscription, coloré selon le parti en tête dans la prévision pour 2030. Plus le point est à droite, plus un vote compte. La plus serrée&nbsp;: ${plusSerree}, environ ${unSur(resume.max)}. À gauche, les ${sures} circonscriptions sûres. Pointillé&nbsp;: à la proportionnelle, environ ${unSur(proportionnel)} pour tout le monde.`,
-})</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [18]:</div>
-            <div class="output-content html">
-              <svg viewBox="0 0 640 300" height="300" width="640" text-anchor="middle" font-size="10" font-family="system-ui, sans-serif" fill="currentColor" class="plot-d6a7b5"><style>:where(.plot-d6a7b5) {
-  --plot-background: white;
-  display: block;
-  height: auto;
-  height: intrinsic;
-  max-width: 100%;
-}
-:where(.plot-d6a7b5 text),
-:where(.plot-d6a7b5 tspan) {
-  white-space: pre;
-}</style><g transform="translate(0.5,0)" stroke-opacity="0.1" stroke="currentColor" aria-hidden="true" aria-label="x-grid"><line y2="270" y1="30" x2="20" x1="20" /><line y2="270" y1="30" x2="170.00000000000006" x1="170.00000000000006" /><line y2="270" y1="30" x2="320" x1="320" /><line y2="270" y1="30" x2="470.00000000000006" x1="470.00000000000006" /><line y2="270" y1="30" x2="620" x1="620" /></g><g transform="translate(0.5,0)" stroke="currentColor" fill="none" aria-hidden="true" aria-label="x-axis tick"><path d="M0,0L0,6" transform="translate(20,270)" /><path d="M0,0L0,6" transform="translate(170.00000000000006,270)" /><path d="M0,0L0,6" transform="translate(320,270)" /><path d="M0,0L0,6" transform="translate(470.00000000000006,270)" /><path d="M0,0L0,6" transform="translate(620,270)" /></g><g transform="translate(0.5,9.5)" font-variant="tabular-nums" aria-label="x-axis tick label"><text transform="translate(20,270)" y="0.71em">&lt; 1/10 M</text><text transform="translate(170.00000000000006,270)" y="0.71em">1/1&#160;000&#160;000</text><text transform="translate(320,270)" y="0.71em">1/100&#160;000</text><text transform="translate(470.00000000000006,270)" y="0.71em">1/10&#160;000</text><text transform="translate(620,270)" y="0.71em">1/1&#160;000</text></g><g transform="translate(17.5,27.5)" text-anchor="end" aria-label="x-axis label"><text transform="translate(620,270)">chance qu'un vote décide du gagnant (échelle logarithmique) →</text></g><g transform="translate(0.5,0)" stroke-dasharray="3,3" stroke="#1c1917" aria-label="rule"><line y2="270" y1="30" x2="390.78611384629846" x1="390.78611384629846" /></g><g transform="translate(0.5,-17.5)" font-size="11" aria-label="text"><text transform="translate(390.78611384629846,30)" y="0.71em">proportionnelle</text></g><g transform="translate(0.5,0.5)" aria-label="dot"><circle fill="#8b5cf6" r="3.5" cy="265.5" cx="452.75218180208225"><title>Mégantic : 1 sur 13&#160;000 (PCQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="467.0838993167862"><title>Saint-François : 1 sur 10&#160;000 (PQ devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="489.4384790418272"><title>Sherbrooke : 1 sur 7&#160;400 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="409.41493678901884"><title>Orford : 1 sur 25&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="441.73425224574714"><title>Daniel-Johnson : 1 sur 15&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="257.90419680221527" cx="444.24498396787976"><title>Richmond : 1 sur 15&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="252.13822802385337" cx="449.79057717753335"><title>Marie-Lacoste-Gérin-Lajoie : 1 sur 14&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="257.5417969271937" cx="466.26719627897114"><title>Drummond–Bois-Francs : 1 sur 11&#160;000 (PQ devant PCQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="265.5" cx="429.73461942277623"><title>Arthabaska-L'Érable : 1 sur 19&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="244.96416830806692" cx="446.25039819980776"><title>Nicolet-Bécancour : 1 sur 14&#160;000 (PCQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="237.49693485059902" cx="443.379784242538"><title>Brome-Missisquoi : 1 sur 15&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="252.1047545761127" cx="438.734405970419"><title>Granby : 1 sur 16&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="260.8126640152929" cx="423.251650861502"><title>Iberville : 1 sur 20&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="396.11110880489747"><title>Saint-Jean : 1 sur 31&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="249.84074586606107" cx="464.10067543812335"><title>Huntingdon : 1 sur 11&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="368.1590824056908"><title>Beauharnois : 1 sur 48&#160;000 (PQ devant CAQ)</title></circle><circle fill="#d62728" r="3.5" cy="257.91136191090874" cx="432.2669250822087"><title>Soulanges : 1 sur 18&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="333.96559620890616"><title>Vaudreuil : 1 sur 81&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="230.50233583136117" cx="447.2625132518917"><title>Châteauguay : 1 sur 14&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="262.056270688898" cx="375.37993612473656"><title>Sanguinet : 1 sur 43&#160;000 (PQ devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="259.9733886230848" cx="458.53634696989616"><title>La Prairie : 1 sur 12&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="227.51936653869348"><title>La Pinière : 1 sur 410&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="252.8478593354897" cx="422.50206003139215"><title>Chambly : 1 sur 21&#160;000 (PQ devant CAQ)</title></circle><circle fill="#d62728" r="3.5" cy="245.86879927078883" cx="457.1563511193501"><title>Vachon : 1 sur 12&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="387.6146057452093"><title>Pierre-Laporte : 1 sur 35&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="223.60179277391714" cx="443.2149824598703"><title>Marie-Victorin : 1 sur 15&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="238.08061402564158" cx="455.3276437651595"><title>Taillon : 1 sur 13&#160;000 (PQ devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="476.41390338780457"><title>Montarville : 1 sur 9&#160;100 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="254.18082092577828" cx="376.7860979321321"><title>Verchères : 1 sur 42&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="249.8578804876484" cx="431.0564142518387"><title>Borduas : 1 sur 18&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="248.80720674721928" cx="382.7126711966746"><title>Saint-Hyacinthe : 1 sur 38&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="257.59210148838395" cx="410.62536693156363"><title>Richelieu : 1 sur 25&#160;000 (PQ devant CAQ)</title></circle><circle fill="#d62728" r="3.5" cy="220.22058972144873" cx="450.46532492888366"><title>Verdun : 1 sur 13&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="214.15816526220232"><title>Marguerite-Bourgeoys : 1 sur 510&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="173.87106563941433"><title>Marquette : 1 sur 940&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="20"><title>Jacques-Cartier : 1 sur 710&#160;000&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="257.5" cx="20"><title>Nelligan : 1 sur 13&#160;000&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="249.5" cx="20"><title>Robert-Baldwin : 1 sur 15&#160;000&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="257.50120423963097" cx="174.00986903959813"><title>Saint-Laurent : 1 sur 940&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="147.4592403862505"><title>D'Arcy-McGee : 1 sur 1&#160;400&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="96.14117478865049"><title>Notre-Dame-de-Grâce : 1 sur 3&#160;100&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="213.56748803527023" cx="446.0227763412632"><title>Saint-Henri–Sainte-Anne : 1 sur 14&#160;000 (PLQ devant QS)</title></circle><circle fill="#ea7c0c" r="3.5" cy="205.61327591009808" cx="446.87747480725244"><title>Sainte-Marie–Saint-Jacques : 1 sur 14&#160;000 (QS devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="85.63407250319074"><title>Westmount–Saint-Louis : 1 sur 3&#160;700&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="266.92482412976284"><title>Mont-Royal–Outremont : 1 sur 230&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="286.83929100382596"><title>Acadie : 1 sur 170&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="253.6469600135944" cx="473.2550604316622"><title>Maurice-Richard : 1 sur 9&#160;500 (PLQ devant QS)</title></circle><circle fill="#ea7c0c" r="3.5" cy="245.21428261561053" cx="420.1086301782903"><title>Laurier-Dorion : 1 sur 22&#160;000 (QS devant PLQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="265.5" cx="138.6839012673236"><title>Gouin : 1 sur 1&#160;600&#160;000 (QS devant PQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="249.65651526193818" cx="175.57858024414313"><title>Mercier : 1 sur 920&#160;000 (QS devant PLQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="253.06141587832326" cx="404.03196963557207"><title>Hochelaga-Maisonneuve : 1 sur 28&#160;000 (QS devant PQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="244.1390302881738" cx="437.994651572973"><title>Rosemont : 1 sur 16&#160;000 (QS devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="198.6330520362722" cx="442.9689617048986"><title>Viau : 1 sur 15&#160;000 (PLQ devant QS)</title></circle><circle fill="#d62728" r="3.5" cy="265.5" cx="309.0038617947786"><title>Bourassa-Sauvé : 1 sur 120&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="241.5" cx="20"><title>Jeanne-Mance–Viger : 1 sur 31&#160;000&#160;000 (PLQ devant QS)</title></circle><circle fill="#1d4ed8" r="3.5" cy="257.86023254279803" cx="385.2410107502959"><title>Camille-Laurin : 1 sur 37&#160;000 (PQ devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="257.87744102889667" cx="88.06236299900291"><title>LaFontaine : 1 sur 3&#160;500&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="242.5066982348323" cx="427.90044855400834"><title>Pointe-aux-Trembles : 1 sur 19&#160;000 (PQ devant CAQ)</title></circle><circle fill="#d62728" r="3.5" cy="234.54299893756613" cx="428.6616932602112"><title>Laval-des-Rapides : 1 sur 19&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="258.0122490452618" cx="331.14893406377456"><title>Chomedey : 1 sur 84&#160;000 (PLQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="257.72433545222657" cx="366.27784854449783"><title>Fabre : 1 sur 49&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="237.22570048426164" cx="420.535895354373"><title>Sainte-Rose : 1 sur 21&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="242.46913085993526" cx="387.5941457737905"><title>Vimont-Auteuil : 1 sur 35&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="239.33815190276368" cx="380.2322865813209"><title>Mille-Îles : 1 sur 40&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="191.35820987389098" cx="446.2971250891753"><title>Groulx : 1 sur 14&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="227.34449506154868" cx="425.17148668366565"><title>Deux-Montagnes : 1 sur 20&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="232.7020945966009" cx="375.7643179792241"><title>Mirabel : 1 sur 42&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="242.02544069966964" cx="465.80977027346034"><title>Argenteuil : 1 sur 11&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="245.76611076971867" cx="400.74890348144606"><title>Bellefeuille : 1 sur 29&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="234.477825871457" cx="387.967032594585"><title>Saint-Jérôme : 1 sur 35&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="251.96362493357066" cx="390.647490076327"><title>Les Plaines : 1 sur 34&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="226.0036910714771" cx="433.0583266503575"><title>Blainville : 1 sur 18&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="228.23319593321798" cx="382.96657292226996"><title>Terrebonne : 1 sur 38&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="252.03375905424468" cx="360.6549186802072"><title>Masson : 1 sur 54&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="219.39731690782145" cx="428.54658414775577"><title>Repentigny : 1 sur 19&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="244.82442096337547" cx="364.12269091776005"><title>L'Assomption : 1 sur 51&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="236.88269657665842" cx="365.08654451941527"><title>Berthier : 1 sur 50&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="345.1355461173082"><title>Joliette : 1 sur 68&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="230.06656998806875" cx="416.96562218016334"><title>Rousseau : 1 sur 23&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="223.34317368659413" cx="389.29805635251944"><title>Prévost : 1 sur 35&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="215.5360287067247" cx="391.04404812320433"><title>Bertrand : 1 sur 34&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="237.9557567865505" cx="402.48048387450007"><title>Labelle : 1 sur 28&#160;000 (PQ devant CAQ)</title></circle><circle fill="#d62728" r="3.5" cy="250.18879238829834" cx="329.4775496266645"><title>Hull : 1 sur 86&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="233.5" cx="20"><title>Pontiac : 1 sur 15&#160;000&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="207.54630152084508" cx="391.4493375200754"><title>Gatineau : 1 sur 33&#160;000 (PLQ devant PQ)</title></circle><circle fill="#d62728" r="3.5" cy="230.26614287283425" cx="400.2737129625154"><title>Chapleau : 1 sur 29&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="183.53299096383466" cx="447.9602393395192"><title>Papineau : 1 sur 14&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="211.97532709222997" cx="431.5322276591711"><title>Rouyn-Noranda–Témiscamingue : 1 sur 18&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="258.17790719386176" cx="305.78098157077113"><title>Abitibi-Ouest : 1 sur 120&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="230.95596198621715" cx="458.96623323322615"><title>Abitibi-Est : 1 sur 12&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="257.74245560389437" cx="491.3930902416443"><title>Trois-Rivières : 1 sur 7&#160;200 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="224.50565713827515" cx="463.69841744018765"><title>Maskinongé : 1 sur 11&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="200.12524080801188" cx="452.698254026418"><title>Laviolette–Saint-Maurice : 1 sur 13&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="175.5855752508927" cx="447.04449729850364"><title>Champlain : 1 sur 14&#160;000 (PQ devant PCQ)</title></circle><circle fill="#d62728" r="3.5" cy="214.85295098759502" cx="456.3973106354438"><title>Jean-Talon : 1 sur 12&#160;000 (PLQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="204.2436700349444" cx="429.47760381317744"><title>Louis-Hébert : 1 sur 19&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="252.03934055654022" cx="310.91108874695794"><title>Portneuf : 1 sur 110&#160;000 (PCQ devant CAQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="249.33806793065048" cx="303.38094092632264"><title>La Peltrie : 1 sur 130&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="220.84048493383904" cx="420.51339133699764"><title>Vanier-Les Rivières : 1 sur 21&#160;000 (PCQ devant PQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="196.78018786481678" cx="426.5972507278444"><title>Taschereau : 1 sur 19&#160;000 (QS devant PQ)</title></circle><circle fill="#ea7c0c" r="3.5" cy="193.05457011394344" cx="456.44066179896794"><title>Jean-Lesage : 1 sur 12&#160;000 (QS devant PCQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="247.47627044262197" cx="372.42158159938595"><title>Montmorency : 1 sur 45&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="213.2296417022581" cx="422.9781560933789"><title>Charlesbourg : 1 sur 21&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="265.5" cx="324.60528510181024"><title>Chauveau : 1 sur 93&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="188.91045497307" cx="425.15943842696555"><title>Charlevoix–Côte-de-Beaupré : 1 sur 20&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="254.18443387031948" cx="338.17373519878765"><title>Beauce-Sud : 1 sur 76&#160;000 (PCQ devant CAQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="249.95562955017076" cx="89.1781151648205"><title>Beauce-Nord : 1 sur 3&#160;500&#160;000 (PCQ devant PLQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="258.8603166337286" cx="231.98194480642823"><title>Lotbinière-Frontenac : 1 sur 390&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="265.5" cx="359.7358175079282"><title>Chutes-de-la-Chaudière : 1 sur 54&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="247.9697290703782" cx="410.20244169610345"><title>Lévis : 1 sur 25&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="225.5" cx="20"><title>Bellechasse : 1 sur 19&#160;000&#160;000 (PCQ devant PQ)</title></circle><circle fill="#8b5cf6" r="3.5" cy="226.13638141163972" cx="407.12536022967913"><title>Côte-du-Sud : 1 sur 26&#160;000 (PCQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="182.26012353955701" cx="429.60613290988533"><title>Rivière-du-Loup–Témiscouata–Les Basques : 1 sur 19&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="225.58148595994413" cx="372.11782203879454"><title>Rimouski : 1 sur 45&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="217.5" cx="20"><title>Matane-Matapédia-Mitis : 1 sur 50&#160;000&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="245.46080078270825" cx="168.76712078167986"><title>Gaspé : 1 sur 1&#160;000&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="239.66095232332202" cx="174.27727121956767"><title>Îles-de-la-Madeleine : 1 sur 940&#160;000 (PQ devant PLQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="174.27066085371519" cx="429.1956624584021"><title>Duplessis : 1 sur 19&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="232.4029146397521" cx="358.4584562733395"><title>René-Lévesque : 1 sur 55&#160;000 (PQ devant CAQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="168.25751435568858" cx="450.2537843713876"><title>Dubuc : 1 sur 14&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="200.55683466191627" cx="387.5573774704428"><title>Chicoutimi : 1 sur 35&#160;000 (PQ devant CAQ)</title></circle><circle fill="#0891b2" r="3.5" cy="161.05420199415812" cx="453.7340560593773"><title>Jonquière : 1 sur 13&#160;000 (CAQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="218.61959216163032" cx="368.1767517855512"><title>Lac-Saint-Jean : 1 sur 48&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="153.16742885970604" cx="452.39285900984095"><title>Roberval : 1 sur 13&#160;000 (PQ devant PCQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="265.5" cx="527.2993450266982"><title>Ungava : 1 sur 4&#160;100 (PQ devant PLQ)</title></circle><circle fill="#d62728" r="3.5" cy="240.3685450267399" cx="412.6968356374724"><title>Anjou–Louis-Riel : 1 sur 24&#160;000 (PLQ devant PQ)</title></circle><circle fill="#1d4ed8" r="3.5" cy="205.3722973474437" cx="421.47411497363987"><title>Bonaventure : 1 sur 21&#160;000 (PQ devant CAQ)</title></circle></g></svg>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          Dans Ungava, la circonscription la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions.<br><br>À la proportionnelle, un vote change la répartition des sièges environ une fois sur 34 000 [5], un peu moins qu'aujourd'hui en moyenne (environ 1 sur 24 000). Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>Pourquoi voter quand même</h2><br><br>Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangeurosité × la probabilité que ça arrive.<br><br>Donc une chance sur 26 000 de faire la différence, c'est négligeable. L'enjeu, par contre, touche tout le Québec : des budgets, des lois, tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabiilté d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets, multipliés font que voter reste un acte démocratique <em>rationnel</em> pour qui se soucie des autres et de la postérité ([Edlin, Gelman et Kaplan, 2007](https://www.nber.org/papers/w13562)).<br><br>Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. Un vote rapporte ainsi environ 3 $ par année à son parti, ou 12 $ sur quatre ans. Une personne peut donner au plus 100 $ par année à un parti.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [21]:</div>
-            <pre><code class="language-javascript">const ALLOCATION_PAR_INSCRIT = 1.99;
-const allocationTotale = ALLOCATION_PAR_INSCRIT * INSCRITS;
-const parVote = allocationTotale / VOTES_VALIDES;
-elus2026.map((d) =&gt; ({
-  parti: d.parti,
-  "votes 2026": d.total,
-  "élu.es": siegesActuels[d.parti] ?? 0,
-  "allocation annuelle ($)": Math.round(d.total * parVote),
-  "sur quatre ans ($)": Math.round(4 * d.total * parVote),
-}))</code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [21]:</div>
-            <div class="output-content table">
-              <table class="tangent-table-output"><thead><tr><th>parti</th><th>votes 2026</th><th>élu.es</th><th>allocation annuelle ($)</th><th>sur quatre ans ($)</th></tr></thead><tbody><tr><td>PQ</td><td>1200394</td><td>59</td><td>3623425</td><td>14493701</td></tr><tr><td>PLQ</td><td>1037999</td><td>40</td><td>3133231</td><td>12532924</td></tr><tr><td>PCQ</td><td>885379</td><td>19</td><td>2672543</td><td>10690172</td></tr><tr><td>CAQ</td><td>572037</td><td>0</td><td>1726711</td><td>6906843</td></tr><tr><td>QS</td><td>532093</td><td>9</td><td>1606139</td><td>6424554</td></tr></tbody></table><div class="table-note">5 rows · 5 columns</div>
-            </div>
-            
-          </div>
-        </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          La CAQ n'a aucun député, mais ses votes lui rapportent environ 1 700 000 $ par année. Le score d'un parti compte aussi en dehors de l'argent : il influence sa couverture médiatique et sa capacité de recruter des candidat.es.<br><br>Le vote stratégique consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd presque tout son sens, puisque presque aucun vote n'est perdu.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          <h2>Pourquoi le mode de scrutin ne change pas</h2><br><br>Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale, et c'est le gouvernement qui la propose. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque n'a jamais réussi à la faire adopter. En 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé le projet de loi 39 en 2019, puis l'a abandonné en décembre 2021. Aux élections suivantes, elle a obtenu 72 % des sièges avec 41 % des votes.<br><br>Le mode de scrutin actuel a de bons arguments. Chaque circonscription a sa députée ou son député, que l'électorat juge directement. Les régions peu peuplées gardent leurs élu.es, une crainte réelle avec une proportionnelle à listes. Un gouvernement qui perd l'appui de la population peut aussi perdre beaucoup de sièges d'un coup : la CAQ est passée de 90 sièges en 2022 à aucun en 2026.<br><br>D'autres arguments tiennent moins. On dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026. On dit qu'une réforme serait trop compliquée, mais les systèmes mixtes, qui gardent une personne élue par circonscription et ajoutent des sièges répartis selon les votes, fonctionnent en Allemagne, en Nouvelle-Zélande et en Écosse. Le projet de loi 39 en proposait un, avec 80 sièges de circonscription et 45 sièges régionaux. On dit enfin que la proportionnelle ouvrirait la porte aux petits partis extrêmes, mais un seuil, comme les 5 % allemands, limite l'entrée des très petits partis.<br><br>Lors du débat des chefs de Radio-Canada, le candidat du Parti québécois, maintenant premier ministre élu, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.<br><br>Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votoscope/votoscope.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          -----<br><br><h3>Notes</h3><br><br>[1] La répartition proportionnelle donne les 127 sièges aux cinq grands partis selon leurs votes de 2026, sans seuil (méthode de Sainte-Laguë). Les autres partis, environ 1 % des votes, n'ont aucun siège.<br><br>[2] Pouvoir de pivot (indice de Banzhaf normalisé) : pour chaque parti, on compte les combinaisons de partis de 64 sièges ou plus qui perdent leur majorité sans lui, puis on divise par la somme de ces comptes pour tous les partis.<br><br>[3] De 1970 à 2026, 25 circonscriptions sur 1 946 ont été gagnées par moins de 100 voix. Si ces écarts se répartissent également entre 0 et 100 voix, une égalité parfaite arrive environ une fois sur 7 800.<br><br>[4] La chance qu'un vote décide du gagnant en 2030 se calcule à partir de l'écart prévu entre les deux premiers et de l'incertitude sur cet écart, tirée de la probabilité de victoire. Quand la prévision est presque certaine, on prend l'incertitude typique des autres circonscriptions.<br><br>[5] À la proportionnelle, 4 282 551 votes valides pour 127 sièges donnent un siège par tranche d'environ 34 000 votes. Un vote change donc un siège environ une fois sur 34 000.
-        </div>
-      </div><div class="cell cell-markdown">
-        <div class="cell-markdown">
-          -----<br><br><h3>Sources</h3><br><br>- Résultats : Élections Québec, résultats officiels des élections générales de 2018, 2022 et 2026.<br>- Population : Institut de la statistique du Québec, <em>Le bilan démographique du Québec</em>, édition 2026.<br>- Indices de Gallagher hors Québec : Wikipédia.<br>- Allemagne 2025 : résultats officiels du Bundestag, environ 14 % des votes sans élu.<br>- Chance qu'un vote soit décisif : A. Gelman, N. Silver et A. Edlin, « What is the probability your vote will make a difference? », <em>Economic Inquiry</em>, 2012.<br>- Le vote comme choix rationnel pour le bien des autres : A. Edlin, A. Gelman et N. Kaplan, « Voting as a rational choice », <em>Rationality and Society</em>, 2007.<br>- Le paradoxe du vote : A. Downs, <em>An Economic Theory of Democracy*, 1957, et W. Riker et P. Ordeshook, *American Political Science Review</em>, 1968.<br>- Vote stratégique et mode de scrutin : M. Duverger, <em>Les partis politiques*, 1951, et G. Cox, *Making Votes Count</em>, 1997.<br>- Financement des partis : Élections Québec, allocation annuelle aux partis autorisés (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.<br>- Prévision 2030 : Votoscope, prévision du 13 octobre 2026.<br>- Projet de loi 39, <em>Loi établissant un nouveau mode de scrutin</em>, Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.<br>- Réforme du mode de scrutin : la proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné en décembre 2021. Voir J. Verville, <em>La réforme du mode de scrutin au Québec*, 2020, et *Options politiques</em>, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
-        </div>
-      </div><div class="cell cell-code">
-          <div class="cell-input">
-            <div class="cell-label">In [26]:</div>
-            <pre><code class="language-javascript"></code></pre>
-          </div>
-        
-          <div class="cell-output">
-            <div class="cell-label">Out [26]:</div>
-            <div class="output-content text">
-              <pre class="text-output">No code to execute</pre>
-            </div>
-            
-          </div>
-        </div>
-        </main>
+    // flux
+    svgSankey.append("g").selectAll("path").data(sankeyLayout.links).join("path")
+      .attr("d", sankeyMod.sankeyLinkHorizontal())
+      .attr("fill", "none")
+      .attr("stroke", (d) => gris.has(d.target.name) ? SORTIE_FLUX
+        : couleurParti[d.target.name] ?? VERT_FLUX)
+      .attr("stroke-opacity", (d) => couleurParti[d.target.name] ? 0.5 : 1)
+      .attr("stroke-width", (d) => Math.max(1, d.width));
 
-        <footer class="notebook-footer">
-            <p>Generated by Tangent Notebook on 2026-10-14 14:35</p>
-        </footer>
-    </div>
+    // nœuds
+    svgSankey.append("g").selectAll("rect").data(sankeyLayout.nodes).join("rect")
+      .attr("x", (d) => d.x0).attr("y", (d) => d.y0)
+      .attr("width", (d) => d.x1 - d.x0).attr("height", (d) => Math.max(1, d.y1 - d.y0))
+      .attr("fill", (d) => couleurNoeud(d.name));
 
-    <script>
-        // Initialize syntax highlighting
-        Prism.highlightAll();
+    // libellés des étapes (au-dessus) et des sorties (à droite)
+    svgSankey.append("g").selectAll("text")
+      .data(sankeyLayout.nodes.filter((d) => !couleurParti[d.name] && d.name !== "Autres" && d.name !== "Votes valides"))
+      .join("text")
+      .attr("x", (d) => gris.has(d.name) ? d.x1 + 8 : d.x0)
+      .attr("y", (d) => gris.has(d.name) ? (d.y0 + d.y1) / 2 : d.y0 - 6)
+      .attr("dy", (d) => gris.has(d.name) ? "0.35em" : null)
+      .attr("fill", (d) => gris.has(d.name) ? GRIS : ENCRE)
+      .text((d) => `${d.name} : ${valeurM(d.value)}`);
 
-        // Make exported notebook interactive (optional)
-        
-      // Add copy-to-clipboard functionality. The button is anchored to the <pre>
-      // itself. It used to be anchored to a <div> the <code> was moved into, which
-      // took the <code> out of its <pre>: Prism's stylesheet then matched it with
-      // its inline-code rule, ':not(pre) > code[class*="language-"] { white-space:
-      // normal }', every newline collapsed to a space, and each cell rendered as
-      // one wrapped paragraph. The <code> must stay a direct child of the <pre>.
-      document.querySelectorAll('pre code').forEach(block => {
-        const button = document.createElement('button');
-        button.textContent = 'Copy';
-        button.style.cssText = 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 0.25rem; cursor: pointer;';
+    const pct = (x) => Math.round(x * 100) + " %";
 
-        const pre = block.parentNode;
-        pre.style.position = 'relative';
-        pre.appendChild(button);
+    // --- colonne des sièges : même échelle que les votes valides (100 % = 100 %) ---
+    const nVV = sankeyLayout.nodes.find((n) => n.name === "Votes valides");
+    const H = nVV.y1 - nVV.y0;
+    const PAD = sankeyGen.nodePadding();
+    let yS = sankeyLayout.nodes.find((n) => n.name === partis[0].parti).y0;
 
-        button.addEventListener('click', () => {
-          navigator.clipboard.writeText(block.textContent).then(() => {
-            button.textContent = 'Copied!';
-            setTimeout(() => button.textContent = 'Copy', 2000);
-          });
-        });
-      });
-    
-    </script>
-</body>
-</html>
+    const gBandes = svgSankey.append("g");
+    const gLbl = svgSankey.append("g")  // au-dessus des bandes, avec halo
+      //.attr("paint-order", "stroke").attr("stroke", "white")
+      //.attr("stroke-width", 3).attr("stroke-linejoin", "round");
+
+    gLbl.append("text")
+      .attr("x", X_SIEGES).attr("y", yS - 10).attr("fill", ENCRE)
+      .text(`Sièges : ${TOTAL_SIEGES}`);
+
+    for (const p of partis) {
+      const n = sankeyLayout.nodes.find((nd) => nd.name === p.parti);
+      const h = p.sieges / TOTAL_SIEGES * H;
+      const s0 = yS, s1 = yS + h, xm = (n.x1 + X_SIEGES) / 2;
+      gBandes.append("path")
+        .attr("d", `M${n.x1},${n.y0}C${xm},${n.y0} ${xm},${s0} ${X_SIEGES},${s0}`
+                 + `L${X_SIEGES},${s1}C${xm},${s1} ${xm},${n.y1} ${n.x1},${n.y1}Z`)
+        .attr("fill", p.couleur).attr("fill-opacity", 0.3);
+      gBandes.append("rect")
+        .attr("x", X_SIEGES).attr("y", s0)
+        .attr("width", sankeyGen.nodeWidth()).attr("height", Math.max(1, h))
+        .attr("fill", p.couleur);
+
+      // colonne des votes : parti, % des votes, nombre de votes
+      const tv = gLbl.append("text")
+        .attr("x", n.x1 + 8).attr("y", (n.y0 + n.y1) / 2).attr("dy", "0.35em");
+      tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE).text(p.parti);
+      tv.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+        .text(`  ${pct(p.votesN / VOTES_VALIDES)}`);
+      tv.append("tspan").attr("fill", GRIS_FONCE).text(`  ${valeurM(p.votesN)}`);
+
+      // colonne des sièges : % des sièges, nombre de sièges
+      const ts = gLbl.append("text")
+        .attr("x", X_SIEGES + 16).attr("y", (s0 + s1) / 2).attr("dy", "0.35em");
+      ts.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+        .text(pct(p.sieges / TOTAL_SIEGES));
+      ts.append("tspan").attr("fill", GRIS)
+        .text(`  ${p.sieges} siège${p.sieges > 1 ? "s" : ""}`);
+
+      yS = s1 + PAD;
+    }
+
+    // « Autres », même format que les partis
+    const nAutres = sankeyLayout.nodes.find((n) => n.name === "Autres");
+    const lblAutres = gLbl.append("text")
+      .attr("x", nAutres.x1 + 8).attr("y", (nAutres.y0 + nAutres.y1) / 2).attr("dy", "0.35em");
+    lblAutres.append("tspan").attr("font-weight", 600).attr("fill", GRIS).text("Autres");
+    lblAutres.append("tspan").attr("font-weight", 600).attr("fill", ENCRE)
+      .text(`  ${pct(autresN / VOTES_VALIDES)}`);
+    lblAutres.append("tspan").attr("fill", GRIS).text(`  ${valeurM(autresN)}`);
+
+    svgSankey.attr("viewBox", [0, 0, X_SIEGES + 130, Math.max(480, yS + 10)]);
+
+    svgSankey.node();
+  </script>
+  <script id="3" type="text/markdown">
+    ## Voter dans le vide
+
+    Dans chaque circonscription, seuls les votes pour la personne gagnante servent à élire quelqu'un. Les autres votes n'ont aucun effet sur la composition de l'Assemblée nationale. En 2026, c'est le cas de 58 % des votes. Aucun des 572 000 votes de la CAQ n'a élu de député.
+  </script>
+  <script id="4" type="module">
+    const aq = await import("https://cdn.jsdelivr.net/npm/arquero@8/+esm");
+    const op = aq.op;
+    const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
+    const prevision = await (await fetch("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
+
+    const COULEURS = { PQ: "#1d4ed8", PLQ: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", Autres: "#a8a29e" };
+    // Sigles des partis. Avant 2012, les données nomment les partis au long.
+    const SIGLES = {
+      LIB: "PLQ", AUTRES: "Autres", Parti_liberal: "PLQ", Parti_quebecois: "PQ", Union_nationale: "UN",
+      Action_democratique_du_quebec: "ADQ", Coalition_avenir_quebec: "CAQ", Quebec_solidaire: "QS",
+      Ralliement_creditiste: "RC", Parti_egalite: "PÉ",
+    };
+    const sigle = (p) => SIGLES[p] ?? p;
+    const nombre = (x, d = 0) => x.toLocaleString("fr-CA", { minimumFractionDigits: d, maximumFractionDigits: d });
+    // Arrondi à deux chiffres significatifs : 33 736 devient 34 000.
+    const arrondi = (x) => { const pas = 10 ** (Math.floor(Math.log10(x)) - 1); return Math.round(x / pas) * pas; };
+    // Date d'élection au format AAAA-MM-JJ.
+    const jour = (x) => (x instanceof Date ? x.toISOString() : String(x)).slice(0, 10);
+
+    // Votes de chaque parti dans chaque circonscription, avec son rang et le total de la circonscription.
+    const votesCirc = resultats
+      .derive({ election: aq.escape((d) => jour(d.election)) })
+      .groupby("election", "circonscription", "parti")
+      .rollup({ votes: op.sum("votes") })
+      .groupby("election", "circonscription")
+      .orderby(aq.desc("votes"))
+      .derive({ rang: op.row_number(), total: op.sum("votes") })
+      .ungroup();
+    // Une ligne par circonscription : gagnant et écart avec le deuxième.
+    const cles = ["election", "circonscription"];
+    const luttes = votesCirc.filter((d) => d.rang === 1)
+      .select(...cles, { parti: "gagnant" }, { votes: "v1" }, "total")
+      .join_left(votesCirc.filter((d) => d.rang === 2).select(...cles, { votes: "v2" }), [cles, cles], [aq.all(), ["v2"]])
+      .derive({ ecart: (d) => (d.v2 == null ? d.v1 : d.v1 - d.v2), annee: (d) => op.parse_int(op.substring(d.election, 0, 4)) });
+
+    // Votes qui ont élu quelqu'un et votes qui n'ont élu personne, par parti, en 2026.
+    const votesCirc2026 = votesCirc.filter((d) => d.election === "2026-10-05");
+    const elus2026 = votesCirc2026
+      .filter(aq.escape((d) => ["PQ", "LIB", "PCQ", "CAQ", "QS"].includes(d.parti)))
+      .groupby("parti")
+      .rollup({ total: op.sum("votes"), utiles: (d) => op.sum(d.rang === 1 ? d.votes : 0) })
+      .derive({ perdus: (d) => d.total - d.utiles, parti: aq.escape((d) => sigle(d.parti)) })
+      .orderby(aq.desc("total"))
+      .objects();
+    const bilan2026 = votesCirc2026.rollup({ utiles: (d) => op.sum(d.rang === 1 ? d.votes : 0), total: op.sum("votes") }).object();
+    const partPerdue = 1 - bilan2026.utiles / bilan2026.total;
+
+    Plot.plot({
+      width: 760, height: 230, marginLeft: 50, marginRight: 100,
+      x: { label: "votes (millions)", transform: (x) => x / 1e6, grid: true },
+      y: { label: null, domain: elus2026.map((d) => d.parti) },
+      color: { domain: ["a élu une ou un député", "n'a élu personne"], range: ["#44403c", "#d6d3d1"], legend: true },
+      marks: [
+        Plot.barX(elus2026.flatMap((d) => [
+          { parti: d.parti, type: "a élu une ou un député", votes: d.utiles },
+          { parti: d.parti, type: "n'a élu personne", votes: d.perdus },
+        ]), Plot.stackX({ y: "parti", x: "votes", fill: "type", inset: 1 })),
+        Plot.text(elus2026, { y: "parti", x: "total", text: (d) => `${nombre(100 * d.perdus / d.total)} % sans élu`, dx: 6, textAnchor: "start", fontSize: 12 }),
+      ],
+      //caption: `Gris : votes pour une personne qui n'a pas été élue, soit environ ${nombre(100 * partPerdue)} % des votes de 2026.`,
+    })
+  </script>
+  <script id="5" type="text/markdown">
+    Un parti perd d'autant plus de votes qu'il arrive deuxième ou troisième dans beaucoup de circonscriptions. Les trois quarts des votes de Québec solidaire n'ont élu personne, contre un peu plus du tiers de ceux du PQ.
+  </script>
+  <script id="6" type="text/markdown">
+    ## Le Québec parmi d'autres pays
+  </script>
+  <script id="7" type="text/markdown">
+    Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{½ Σ (vᵢ − sᵢ)²}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
+  </script>
+  <script id="8" type="module">
+    const gallagherMonde = [ // de Wikipedia
+      { label: "Québec 2026",       g: 17.80, type: "qc" },
+      { label: "Québec 2022",       g: 25.80, type: "qc" },
+      { label: "Québec 2018",       g: 17.93, type: "qc" },
+      { label: "Sainte-Lucie 2025", g: 30.22, type: "monde" },
+      { label: "Royaume-Uni 2024",  g: 23.73, type: "monde" },
+      { label: "Australie 2025",    g: 23.11, type: "monde" },
+      { label: "France 2024",       g: 7.79,  type: "monde" },
+      { label: "Allemagne 2025",    g: 6.49,  type: "monde" },
+      { label: "Canada 2025",       g: 5.01,  type: "monde" },
+      { label: "N.-Zélande 2023",   g: 2.63,  type: "monde" },
+      { label: "États-Unis 2024",   g: 1.01,  type: "monde" },
+      { label: "Suède 2022",        g: 0.64,  type: "monde" },
+      { label: "Danemark 2026",     g: 0.42,  type: "monde" },
+    ];
+
+    Plot.plot({
+      height: 420,
+      width: 760,
+      marginLeft: 150,
+      marginBottom: 55,
+      style: { fontSize: "13px", fontFamily: "system-ui" },
+      x: { label: "indice de Gallagher", grid: true, domain: [0, 32], labelAnchor: "center", labelOffset: 45 },
+      y: {
+        label: null,
+        domain: gallagherMonde.slice().sort((a, b) => b.g - a.g).map((d) => d.label),
+      },
+      marks: [
+        Plot.barX(gallagherMonde, {
+          y: "label", x: "g",
+          fill: (d) => d.label === "Québec 2026" ? "#2B50C8" : d.type === "qc" ? "#8FA6E0" : "#c9c9c9",
+        }),
+        Plot.text(gallagherMonde, {
+          y: "label", x: "g", dx: 6, textAnchor: "start",
+          text: (d) => d.g.toFixed(1).replace(".", ","), fill: "#444", fontSize: 11,
+        }),
+      ]
+    });
+  </script>
+  <script id="9" type="text/markdown">
+    Les pays qui votent à la proportionnelle ont des indices plus faibles. En Allemagne, un parti n'obtient de sièges au *Bundestag* que s'il recueille au moins 5 % des votes, (sauf exceptions, me dit-on). En 2025, environ 14 % des votes sont allés à des partis sous ce seuil, d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0* n'est toutefois pas un cas exceptionnel : en 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Inversement, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
+  </script>
+  <script id="10" type="text/markdown">
+    ## L'élection de 2026 à la proportionnelle
+
+    À la proportionnelle, chaque parti reçoit une part des sièges égale à sa part des votes [1]. La figure suivante montre ce qu'auraient donné les votes de 2026.
+  </script>
+  <script id="11" type="module">
+    // Répartition des 127 sièges à la proportionnelle selon les votes de 2026 (méthode de Sainte-Laguë, sans seuil).
+    function sainteLague(votes, sieges) {
+      const s = Object.fromEntries(Object.keys(votes).map((p) => [p, 0]));
+      for (let i = 0; i < sieges; i++) {
+        let meilleur = null, quotient = -1;
+        for (const p in votes) {
+          const q = votes[p] / (2 * s[p] + 1);
+          if (q > quotient) { quotient = q; meilleur = p; }
+        }
+        s[meilleur]++;
+      }
+      return s;
+    }
+    // Pouvoir de pivot : part des combinaisons majoritaires où le parti est indispensable.
+    function banzhaf(sieges, majorite) {
+      const partis = Object.keys(sieges).filter((p) => sieges[p] > 0);
+      const pivots = partis.map(() => 0);
+      for (let m = 1; m < 1 << partis.length; m++) {
+        let t = 0;
+        partis.forEach((p, i) => { if (m >> i & 1) t += sieges[p]; });
+        if (t < majorite) continue;
+        partis.forEach((p, i) => { if (m >> i & 1 && t - sieges[p] < majorite) pivots[i]++; });
+      }
+      const total = pivots.reduce((a, b) => a + b, 0);
+      return Object.fromEntries(partis.map((p, i) => [p, pivots[i] / total]));
+    }
+    const SIEGES = 127, MAJORITE = 64;
+    const votesParParti = Object.fromEntries(elus2026.map((d) => [d.parti, d.total]));
+    const siegesActuels = Object.fromEntries(luttes.filter((d) => d.election === "2026-10-05").groupby("gagnant").count().objects().map((d) => [sigle(d.gagnant), d.count]));
+    const siegesProportionnels = sainteLague(votesParParti, SIEGES);
+    const pivotActuel = banzhaf(siegesActuels, MAJORITE);
+    const pivotProportionnel = banzhaf(siegesProportionnels, MAJORITE);
+    const comparaison = Object.keys(votesParParti).map((p) => ({
+      parti: p,
+      "votes (%)": 100 * votesParParti[p] / bilan2026.total,
+      "sièges actuels": siegesActuels[p] ?? 0,
+      "sièges à la proportionnelle": siegesProportionnels[p],
+      "pouvoir de pivot actuel (%)": 100 * (pivotActuel[p] ?? 0),
+      "pouvoir de pivot à la proportionnelle (%)": 100 * (pivotProportionnel[p] ?? 0),
+    }));
+
+    Plot.plot({
+      width: 760,
+      height: 46 * comparaison.length + 50,
+      marginLeft: 62,
+      marginRight: 62,
+      x: { label: "sièges", domain: [0, 70], grid: true },
+      y: { domain: comparaison.map((d) => d.parti), label: null },
+      marks: [
+        Plot.ruleX([MAJORITE], { stroke: "#000", strokeDasharray: "3,3" }),
+        Plot.arrow(comparaison, {
+          x1: "sièges actuels", x2: "sièges à la proportionnelle", y1: "parti", y2: "parti",
+          stroke: (d) => COULEURS[d.parti], strokeWidth: 2, headLength: 5,
+        }),
+        Plot.dot(comparaison, { x: "sièges actuels", y: "parti", fill: (d) => COULEURS[d.parti], r: 4 }),
+        // Étiquettes : sièges actuels près du point, sièges à la proportionnelle après la pointe.
+        ...(() => {
+          const actuel = (r) => `${r["sièges actuels"]} sièges`;
+          const prop = (r) => `${r["sièges à la proportionnelle"]} à la proportionnelle`;
+          const ecart = (r) => r["sièges à la proportionnelle"] - r["sièges actuels"];
+          const wide = comparaison.filter((r) => Math.abs(ecart(r)) >= 3);
+          const tight = comparaison.filter((r) => Math.abs(ecart(r)) < 3);
+          const right = wide.filter((r) => ecart(r) > 0);
+          const left = wide.filter((r) => ecart(r) < 0);
+          const rightFar = right.filter((r) => r["sièges actuels"] >= 12);
+          const rightEdge = right.filter((r) => r["sièges actuels"] < 12);
+          const leftFar = left.filter((r) => r["sièges à la proportionnelle"] >= 8);
+          const leftEdge = left.filter((r) => r["sièges à la proportionnelle"] < 8);
+          const TXT = { fontSize: 11, fill: "#333", y: "parti" };
+          return [
+            Plot.text(rightFar, { ...TXT, x: "sièges actuels", text: actuel, dx: -9, textAnchor: "end" }),
+            Plot.text(rightEdge, { ...TXT, x: "sièges actuels", text: actuel, dx: -4, dy: -12, textAnchor: "start" }),
+            Plot.text(right, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: 11, textAnchor: "start" }),
+            Plot.text(left, { ...TXT, x: "sièges actuels", text: actuel, dx: 9, textAnchor: "start" }),
+            Plot.text(leftFar, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -11, textAnchor: "end" }),
+            Plot.text(leftEdge, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -4, dy: -12, textAnchor: "start" }),
+            Plot.text(tight, { ...TXT, x: (r) => Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: prop, dx: 10, dy: -7, textAnchor: "start" }),
+            Plot.text(tight, { ...TXT, x: (r) => Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: actuel, dx: 10, dy: 7, textAnchor: "start" }),
+          ];
+        })(),
+      ],
+      //caption: "Point : sièges obtenus en 2026. Pointe de la flèche : sièges avec les mêmes votes répartis à la proportionnelle. Pointillé : majorité de 64 sièges.",
+    })
+  </script>
+  <script id="12" type="module">
+    ["votes (%)", "sièges actuels", "sièges à la proportionnelle", "pouvoir de pivot actuel (%)", "pouvoir de pivot à la proportionnelle (%)"]
+      .map((mesure) => ({ mesure, ...Object.fromEntries(comparaison.map((d) => [d.parti, Math.round(d[mesure] * 10) / 10])) }))
+  </script>
+  <script id="13" type="text/markdown">
+    Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres combinaisons demanderaient trois partis.
+
+    Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PQ atteint la majorité avec l'appui du PLQ, du PCQ ou de QS. Le pouvoir de pivot mesure la part de cette balance que détient chaque parti [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
+  </script>
+  <script id="14" type="text/markdown">
+    ## Ton vote change-t-il quelque chose ?
+
+    Un vote change le résultat d'une circonscription seulement s'il brise une égalité. Depuis 1970, l'élection la plus serrée a été celle de Hull, en 1976, gagnée par 2 voix. En 2026, Vachon a été gagnée par 10 voix.
+  </script>
+  <script id="15" type="module">
+    // Écart entre les deux premiers dans chaque circonscription, de 1970 à 2026.
+    // Chance d'une égalité parfaite : la part des écarts de moins de 100 voix, divisée par 100.
+    const nLuttes = luttes.numRows();
+    const nSerrees = luttes.filter((d) => d.ecart < 100).numRows();
+    const probabiliteEgalite = nSerrees / (100 * nLuttes);
+
+    luttes.orderby("ecart").slice(0, 10)
+      .derive({ annee: aq.escape((d) => String(d.annee)), gagnant: aq.escape((d) => sigle(d.gagnant)) })
+      .select({ annee: "année", circonscription: "circonscription", gagnant: "gagnant", ecart: "écart (voix)", total: "votes valides" })
+      .objects()
+  </script>
+  <script id="16" type="module">
+    Plot.plot({
+      width: 640, height: 240,
+      x: { type: "log", domain: [1, 50000], label: "écart entre les deux premiers (voix, échelle logarithmique)", grid: true, ticks: [1, 10, 100, 1000, 10000], tickFormat: (x) => nombre(x) },
+      y: { label: "circonscriptions", grid: true },
+      marks: [
+        Plot.rectY(luttes.filter((d) => d.ecart >= 1).objects(), Plot.binX({ y: "count" }, {
+          x: "ecart", thresholds: Array.from({ length: 48 }, (_, i) => 10 ** (i / 10)), fill: "#a8a29e", inset: 0.5,
+        })),
+        Plot.ruleX([100], { stroke: "#1c1917", strokeDasharray: "3,3" }),
+        Plot.text([100], { x: (d) => d, frameAnchor: "top", dx: 6, textAnchor: "start", text: () => "100 voix", fontSize: 11 }),
+        Plot.ruleY([0]),
+      ],
+      //caption: `Écart entre les deux premiers dans ${nombre(nLuttes)} circonscriptions, élections de 1970 à 2026. À gauche du pointillé, les ${nSerrees} gagnées par moins de 100 voix.`,
+    })
+  </script>
+  <script id="17" type="text/markdown">
+    Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 élections [3].
+
+    La prévision Votoscope pour 2030 permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
+  </script>
+  <script id="18" type="module">
+    // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
+    // Méthode : note [4] à la fin du billet.
+    const { normal } = await import("https://cdn.jsdelivr.net/npm/@tangent.to/proba@0.2/+esm");
+    const deuxPremiers = prevision.circonscriptions.map((c) => {
+      const [[p1], [p2]] = Object.entries(c.parts).sort((a, b) => b[1] - a[1]);
+      const m = c.parts[p1] - c.parts[p2];
+      const p = c.victoire[p1] / Math.max(c.victoire[p1] + c.victoire[p2], 1e-9);
+      const z = normal.quantile(p, { mu: 0, sigma: 1 });
+      const mesurable = p > 0.02 && p < 0.98 && Math.abs(z) > 0.05;
+      return { nom: c.nom, p1, p2, m, electeurs: c.votes2026, s: mesurable ? m / z : null };
+    });
+    const ecartTypeMedian = aq.from(deuxPremiers).filter((d) => d.s > 0).rollup({ s: op.median("s") }).get("s", 0);
+    const decisif = deuxPremiers.map(({ nom, p1, p2, m, s, electeurs }) => ({
+      nom, premier: sigle(p1), deuxieme: sigle(p2), electeurs,
+      probabilite: normal.pdf(m, { mu: 0, sigma: s > 0 ? s : ecartTypeMedian }) / electeurs,
+    }));
+    const tableDecisif = aq.from(decisif);
+    const resume = tableDecisif.rollup({
+      max: op.max("probabilite"),
+      mediane: op.median("probabilite"),
+      moyenne: (d) => op.sum(d.probabilite * d.electeurs) / op.sum(d.electeurs),
+    }).object();
+    const plusSerree = tableDecisif.orderby(aq.desc("probabilite")).get("nom", 0);
+    // À la proportionnelle, un siège pour environ 34 000 votes : la même chance pour tout le monde.
+    const proportionnel = SIEGES / aq.from(prevision.circonscriptions).rollup({ n: op.sum("votes2026") }).get("n", 0);
+    const unSur = (p) => `1 sur ${nombre(arrondi(1 / p))}`;
+    // Sous ce seuil, la circonscription est considérée comme sûre.
+    const PLANCHER = 1e-7;
+    const sures = decisif.filter((d) => d.probabilite < PLANCHER).length;
+
+    Plot.plot({
+      width: 640, height: 300, marginTop: 30, marginLeft: 20, marginRight: 20,
+      x: {
+        type: "log", domain: [PLANCHER, 1e-3], label: "chance qu'un vote décide du gagnant (échelle logarithmique)",
+        grid: true, ticks: [1e-7, 1e-6, 1e-5, 1e-4, 1e-3], tickFormat: (p) => (p === PLANCHER ? "< 1/10 M" : `1/${nombre(1 / p)}`),
+      },
+      y: { axis: null },
+      marks: [
+        Plot.ruleX([proportionnel], { stroke: "#1c1917", strokeDasharray: "3,3" }),
+        Plot.text([proportionnel], { x: (d) => d, frameAnchor: "top", dy: -18, text: () => "proportionnelle", fontSize: 11 }),
+        Plot.dot(decisif, Plot.dodgeY({
+          x: (d) => Math.max(d.probabilite, PLANCHER), r: 3.5, fill: (d) => COULEURS[d.premier],
+          title: (d) => `${d.nom} : ${unSur(d.probabilite)} (${d.premier} devant ${d.deuxieme})`,
+        })),
+      ],
+      //caption: `Un point par circonscription, coloré selon le parti en tête dans la prévision pour 2030. Plus le point est à droite, plus un vote compte. La plus serrée : ${plusSerree}, environ ${unSur(resume.max)}. À gauche, les ${sures} circonscriptions sûres. Pointillé : à la proportionnelle, environ ${unSur(proportionnel)} pour tout le monde.`,
+    })
+  </script>
+  <script id="19" type="text/markdown">
+    Dans Ungava, la circonscription la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions.
+
+    À la proportionnelle, un vote change la répartition des sièges environ une fois sur 34 000 [5], un peu moins qu'aujourd'hui en moyenne (environ 1 sur 24 000). Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
+  </script>
+  <script id="20" type="text/markdown">
+    ## Pourquoi voter quand même
+
+    Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangeurosité × la probabilité que ça arrive.
+
+    Donc une chance sur 26 000 de faire la différence, c'est négligeable. L'enjeu, par contre, touche tout le Québec : des budgets, des lois, tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabiilté d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets, multipliés font que voter reste un acte démocratique *rationnel* pour qui se soucie des autres et de la postérité ([Edlin, Gelman et Kaplan, 2007](https://www.nber.org/papers/w13562)).
+
+    Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. Un vote rapporte ainsi environ 3 $ par année à son parti, ou 12 $ sur quatre ans. Une personne peut donner au plus 100 $ par année à un parti.
+  </script>
+  <script id="21" type="module">
+    const ALLOCATION_PAR_INSCRIT = 1.99;
+    const allocationTotale = ALLOCATION_PAR_INSCRIT * INSCRITS;
+    const parVote = allocationTotale / VOTES_VALIDES;
+    elus2026.map((d) => ({
+      parti: d.parti,
+      "votes 2026": d.total,
+      "élu.es": siegesActuels[d.parti] ?? 0,
+      "allocation annuelle ($)": Math.round(d.total * parVote),
+      "sur quatre ans ($)": Math.round(4 * d.total * parVote),
+    }))
+  </script>
+  <script id="22" type="text/markdown">
+    La CAQ n'a aucun député, mais ses votes lui rapportent environ 1 700 000 $ par année. Le score d'un parti compte aussi en dehors de l'argent : il influence sa couverture médiatique et sa capacité de recruter des candidat.es.
+
+    Le vote stratégique consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd presque tout son sens, puisque presque aucun vote n'est perdu.
+  </script>
+  <script id="23" type="text/markdown">
+    ## Pourquoi le mode de scrutin ne change pas
+
+    Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale, et c'est le gouvernement qui la propose. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque n'a jamais réussi à la faire adopter. En 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé le projet de loi 39 en 2019, puis l'a abandonné en décembre 2021. Aux élections suivantes, elle a obtenu 72 % des sièges avec 41 % des votes.
+
+    Le mode de scrutin actuel a de bons arguments. Chaque circonscription a sa députée ou son député, que l'électorat juge directement. Les régions peu peuplées gardent leurs élu.es, une crainte réelle avec une proportionnelle à listes. Un gouvernement qui perd l'appui de la population peut aussi perdre beaucoup de sièges d'un coup : la CAQ est passée de 90 sièges en 2022 à aucun en 2026.
+
+    D'autres arguments tiennent moins. On dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026. On dit qu'une réforme serait trop compliquée, mais les systèmes mixtes, qui gardent une personne élue par circonscription et ajoutent des sièges répartis selon les votes, fonctionnent en Allemagne, en Nouvelle-Zélande et en Écosse. Le projet de loi 39 en proposait un, avec 80 sièges de circonscription et 45 sièges régionaux. On dit enfin que la proportionnelle ouvrirait la porte aux petits partis extrêmes, mais un seuil, comme les 5 % allemands, limite l'entrée des très petits partis.
+
+    Lors du débat des chefs de Radio-Canada, le candidat du Parti québécois, maintenant premier ministre élu, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
+
+    Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votoscope/votoscope.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
+  </script>
+  <script id="24" type="text/markdown">
+    -----
+
+    ### Notes
+
+    [1] La répartition proportionnelle donne les 127 sièges aux cinq grands partis selon leurs votes de 2026, sans seuil (méthode de Sainte-Laguë). Les autres partis, environ 1 % des votes, n'ont aucun siège.
+
+    [2] Pouvoir de pivot (indice de Banzhaf normalisé) : pour chaque parti, on compte les combinaisons de partis de 64 sièges ou plus qui perdent leur majorité sans lui, puis on divise par la somme de ces comptes pour tous les partis.
+
+    [3] De 1970 à 2026, 25 circonscriptions sur 1 946 ont été gagnées par moins de 100 voix. Si ces écarts se répartissent également entre 0 et 100 voix, une égalité parfaite arrive environ une fois sur 7 800.
+
+    [4] La chance qu'un vote décide du gagnant en 2030 se calcule à partir de l'écart prévu entre les deux premiers et de l'incertitude sur cet écart, tirée de la probabilité de victoire. Quand la prévision est presque certaine, on prend l'incertitude typique des autres circonscriptions.
+
+    [5] À la proportionnelle, 4 282 551 votes valides pour 127 sièges donnent un siège par tranche d'environ 34 000 votes. Un vote change donc un siège environ une fois sur 34 000.
+  </script>
+  <script id="25" type="text/markdown">
+    -----
+
+    ### Sources
+
+    - Résultats : Élections Québec, résultats officiels des élections générales de 2018, 2022 et 2026.
+    - Population : Institut de la statistique du Québec, *Le bilan démographique du Québec*, édition 2026.
+    - Indices de Gallagher hors Québec : Wikipédia.
+    - Allemagne 2025 : résultats officiels du Bundestag, environ 14 % des votes sans élu.
+    - Chance qu'un vote soit décisif : A. Gelman, N. Silver et A. Edlin, « What is the probability your vote will make a difference? », *Economic Inquiry*, 2012.
+    - Le vote comme choix rationnel pour le bien des autres : A. Edlin, A. Gelman et N. Kaplan, « Voting as a rational choice », *Rationality and Society*, 2007.
+    - Le paradoxe du vote : A. Downs, *An Economic Theory of Democracy*, 1957, et W. Riker et P. Ordeshook, *American Political Science Review*, 1968.
+    - Vote stratégique et mode de scrutin : M. Duverger, *Les partis politiques*, 1951, et G. Cox, *Making Votes Count*, 1997.
+    - Financement des partis : Élections Québec, allocation annuelle aux partis autorisés (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.
+    - Prévision 2030 : Votoscope, prévision du 13 octobre 2026.
+    - Projet de loi 39, *Loi établissant un nouveau mode de scrutin*, Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.
+    - Réforme du mode de scrutin : la proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné en décembre 2021. Voir J. Verville, *La réforme du mode de scrutin au Québec*, 2020, et *Options politiques*, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
+  </script>
+  <script id="26" type="module" pinned>
+
+  </script>
+</notebook>

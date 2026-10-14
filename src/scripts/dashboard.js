@@ -40,16 +40,15 @@ const T = {
       "Le scrutin uninominal amplifie le parti en tête et pénalise les appuis dispersés. " +
       `Indice de disproportion de Gallagher : ${g} [intervalle à 90 % : ${lo}–${hi}] ; repères : 4 à 6 sous un scrutin proportionnel, ${ref}.`,
     govLead: (a, b) => `<strong>${a} %</strong> de probabilité d'un gouvernement majoritaire, <strong>${b} %</strong> d'un gouvernement minoritaire.`,
-    govHead: "<th>Probabilité</th><th>Gouvernement</th><th>Opposition</th><th>Appuis suffisants</th>",
-    majority: "majoritaire", minority: "minoritaire", na: "sans objet", noneSuffices: "aucun parti seul ne suffit",
+    govHead: "<th>Probabilité</th><th>Gouvernement</th><th>Opposition officielle</th><th>Balance du pouvoir</th>",
+    majority: "majoritaire", minority: "minoritaire", na: "sans objet", noneSuffices: "aucun tiers parti seul",
     govNote: (t) => "Chaque simulation est classée dans un scénario unique; les probabilités somment à 100 % (scénarios sous 1 % omis). " +
-      `Appuis suffisants : partis dont les sièges, ajoutés à ceux du parti arrivé en tête, atteindraient la majorité de ${t} sièges, du plus petit au plus grand. ` +
-      "Il s'agit d'une possibilité arithmétique et non d'une entente anticipée.",
-    banzhafAxis: "Indice de Banzhaf moyen (%)",
-    banzhafTip: (p, b, q) => `${p}\nIndice de Banzhaf moyen : ${b} %\nDécisif dans au moins une coalition majoritaire : ${q} % des tirages sans majorité d'un seul parti`,
-    pivotNote: "Pour chaque simulation, parmi toutes les coalitions de partis qui atteignent la majorité, part des cas où les sièges du parti sont décisifs " +
-      "(la coalition perd la majorité sans lui) : indice de Banzhaf normalisé, moyenné sur les simulations. Un parti majoritaire seul vaut 100 %. " +
-      "Mesure arithmétique, indépendante des affinités entre partis.",
+      `Balance du pouvoir : partis autres que le gouvernement et l'opposition officielle dont les sièges, ajoutés à ceux du gouvernement, atteindraient la majorité de ${t} sièges, du plus petit au plus grand.`,
+    balanceAxis: "Probabilité de détenir la balance du pouvoir (%)",
+    balanceTip: (p, b) => `${p}\nBalance du pouvoir : ${b} % des simulations`,
+    balanceNote: "Part des simulations où le parti détient la balance du pouvoir : le gouvernement est minoritaire, le parti n'est ni le gouvernement " +
+      "ni l'opposition officielle, et ses sièges, ajoutés à ceux du gouvernement, atteignent la majorité. Plusieurs partis peuvent la détenir dans une même simulation.",
+    balanceNone: "Aucun parti ne détient la balance du pouvoir dans plus de 0,5 % des simulations.",
     loading: "Chargement des données…",
     status: (d, n, r, c) => `Intentions de vote au ${d} · ${n} sondages · ${r} circonscriptions · mis à jour le ${c}`,
     trendNote: (s) => "Courbes : moyenne des sondages. La prévision utilise les parts corrigées de l'écart historique " +
@@ -81,16 +80,15 @@ const T = {
       "First-past-the-post amplifies the leading party and penalises dispersed support. " +
       `Gallagher disproportionality index: ${g} [90% interval: ${lo}–${hi}]; benchmarks: 4 to 6 under proportional representation, ${ref}.`,
     govLead: (a, b) => `<strong>${a}%</strong> probability of a majority government, <strong>${b}%</strong> of a minority government.`,
-    govHead: "<th>Probability</th><th>Government</th><th>Opposition</th><th>Sufficient supports</th>",
-    majority: "majority", minority: "minority", na: "not applicable", noneSuffices: "no single party suffices",
+    govHead: "<th>Probability</th><th>Government</th><th>Official Opposition</th><th>Balance of power</th>",
+    majority: "majority", minority: "minority", na: "not applicable", noneSuffices: "no single third party",
     govNote: (t) => "Each simulation is assigned to a single scenario; probabilities sum to 100% (scenarios below 1% omitted). " +
-      `Sufficient supports: parties whose seats, added to those of the leading party, would reach the ${t}-seat majority, from smallest to largest. ` +
-      "This is an arithmetic possibility, not an anticipated agreement.",
-    banzhafAxis: "Mean Banzhaf index (%)",
-    banzhafTip: (p, b, q) => `${p}\nMean Banzhaf index: ${b}%\nDecisive in at least one majority coalition: ${q}% of draws without a single-party majority`,
-    pivotNote: "For each simulation, among all coalitions of parties reaching a majority, share of cases in which the party's seats are decisive " +
-      "(the coalition loses its majority without it): normalised Banzhaf index, averaged over simulations. A party holding a majority alone scores 100%. " +
-      "Arithmetic measure, independent of affinities between parties.",
+      `Balance of power: parties other than the government and the Official Opposition whose seats, added to the government's, would reach the ${t}-seat majority, from smallest to largest.`,
+    balanceAxis: "Probability of holding the balance of power (%)",
+    balanceTip: (p, b) => `${p}\nBalance of power: ${b}% of simulations`,
+    balanceNote: "Share of simulations in which the party holds the balance of power: the government is a minority, the party is neither the government " +
+      "nor the Official Opposition, and its seats, added to the government's, reach a majority. Several parties can hold it in the same simulation.",
+    balanceNone: "No party holds the balance of power in more than 0.5% of simulations.",
     loading: "Loading data…",
     status: (d, n, r, c) => `Voting intentions as of ${d} · ${n} polls · ${r} ridings · updated ${c}`,
     trendNote: (s) => "Lines: poll average. The forecast uses shares corrected for the historical gap " +
@@ -804,10 +802,13 @@ function renderDisproportion(d, partyCodes) {
 
 // ---- Government scenarios ---------------------------------------------------
 // Mutually exclusive by construction: every simulation lands in exactly one
-// row, so the probabilities partition to 100%. For a minority, every party
-// whose seats would lift the plurality winner to a majority is listed:
-// arithmetic only, whether such support would be given is a political
-// question this model cannot see.
+// row, so the probabilities partition to 100%. For a minority, the parties
+// holding the balance of power are listed: parties other than the government
+// and the Official Opposition whose seats would lift the government to a
+// majority.
+
+/** Parties holding the balance of power in a minority scenario. */
+const balanceHolders = (s) => (s.type === "minority" ? (s.supports ?? []).filter((p) => p !== s.opposition) : []);
 
 function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
   const host = document.getElementById("government-outcomes");
@@ -831,7 +832,7 @@ function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
     const kind = s.type === "majority" ? T.majority : T.minority;
     let supports;
     if (s.type === "majority") supports = `<span class="muted-cell">${T.na}</span>`;
-    else if (s.supports?.length) supports = s.supports.map(chip).join(" ");
+    else if (balanceHolders(s).length) supports = balanceHolders(s).map(chip).join(" ");
     else supports = `<span class="muted-cell">${T.noneSuffices}</span>`;
     tr.innerHTML =
       `<td>${formatPercent(s.probability)}</td>` +
@@ -850,44 +851,46 @@ function renderGovernmentScenarios(scenarios, totalSeats, partyCodes) {
   host.appendChild(note);
 }
 
-// ---- Pivot power --------------------------------------------------------------
-// Mean normalised Banzhaf index over the draws: the share of decisive
-// positions a party holds among all coalitions that reach a majority.
+// ---- Balance of power -------------------------------------------------------
+// Probability that each party holds the balance of power, summed over the
+// minority scenarios in which it does.
 
-function renderPivotPower(power, partyCodes) {
-  const host = document.getElementById("pivot-power");
-  if (!power) { host.closest("section")?.remove(); return; }
+function renderBalanceOfPower(scenarios, partyCodes) {
+  const host = document.getElementById("balance-of-power");
+  if (!scenarios) { host.closest("section")?.remove(); return; }
   host.innerHTML = "";
+  const probability = Object.fromEntries(partyCodes.map((p) => [p, 0]));
+  for (const s of scenarios) for (const p of balanceHolders(s)) probability[p] += s.probability;
   const rows = partyCodes
-    .filter((p) => (power[p]?.banzhaf ?? 0) >= 0.005 || (power[p]?.pPivotal ?? 0) >= 0.01)
-    .map((p) => ({ party: p, banzhaf: power[p].banzhaf, pPivotal: power[p].pPivotal }))
-    .sort((a, b) => b.banzhaf - a.banzhaf);
+    .filter((p) => probability[p] >= 0.005)
+    .map((p) => ({ party: p, probability: probability[p] }))
+    .sort((a, b) => b.probability - a.probability);
 
-  const plot = Plot.plot({
-    width: 560,
-    height: 40 * rows.length + 40,
-    marginLeft: 62,
-    marginRight: 60,
-    x: { label: T.banzhafAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, 100], percent: true, grid: true },
-    marginBottom: 44,
-    y: { domain: rows.map((r) => r.party), label: null, tickFormat: label },
-    color: colorScale(partyCodes),
-    marks: [
-      Plot.barX(rows, { x: "banzhaf", y: "party", fill: "party", rx: 4, insetTop: 6, insetBottom: 6 }),
-      Plot.text(rows, { x: "banzhaf", y: "party", text: (r) => formatPercent(r.banzhaf), dx: 6, textAnchor: "start", fill: "#333", fontSize: 11 }),
-      Plot.tip(rows, Plot.pointerY({
-        x: "banzhaf", y: "party",
-        title: (r) => T.banzhafTip(label(r.party), formatNumber(r.banzhaf * 100), formatNumber(r.pPivotal * 100)),
-      })),
-      Plot.ruleX([0]),
-    ],
-  });
-  host.appendChild(plot);
+  if (rows.length) {
+    host.appendChild(Plot.plot({
+      width: 560,
+      height: 40 * rows.length + 40,
+      marginLeft: 62,
+      marginRight: 60,
+      x: { label: T.balanceAxis, labelAnchor: "center", labelArrow: "none", labelOffset: 34, domain: [0, 100], percent: true, grid: true },
+      marginBottom: 44,
+      y: { domain: rows.map((r) => r.party), label: null, tickFormat: label },
+      color: colorScale(partyCodes),
+      marks: [
+        Plot.barX(rows, { x: "probability", y: "party", fill: "party", rx: 4, insetTop: 6, insetBottom: 6 }),
+        Plot.text(rows, { x: "probability", y: "party", text: (r) => formatPercent(r.probability), dx: 6, textAnchor: "start", fill: "#333", fontSize: 11 }),
+        Plot.tip(rows, Plot.pointerY({
+          x: "probability", y: "party",
+          title: (r) => T.balanceTip(label(r.party), formatNumber(r.probability * 100)),
+        })),
+        Plot.ruleX([0]),
+      ],
+    }));
+  }
 
   const note = document.createElement("p");
   note.className = "note";
-  note.textContent =
-    T.pivotNote;
+  note.textContent = rows.length ? T.balanceNote : T.balanceNone;
   host.appendChild(note);
 }
 
@@ -989,7 +992,7 @@ async function main() {
       projection.medoidCounts ?? projection.pointCounts));
   section("government-outcomes", () =>
     renderGovernmentScenarios(projection.scenarios, totalSeats, partyCodes));
-  section("pivot-power", () => renderPivotPower(projection.pivotPower, partyCodes));
+  section("balance-of-power", () => renderBalanceOfPower(projection.scenarios, partyCodes));
   section("disproportion", () =>
     renderDisproportion(projection.disproportion, partyCodes));
 

@@ -36,3 +36,5 @@ public/en/posts/
 # Third-party skills: reinstalled from skills-lock.json (npx skills experimental_install)
 .claude/skills/design-taste-frontend/
 .claude/skills/humanizer/
+# Notebooks adapted by "npm run posts"
+build/

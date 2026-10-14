@@ -36,6 +36,8 @@ h2 { font-size: 1rem; font-weight: 600; color: var(--heading); margin: 0 0 1rem;
 .row.explore { grid-template-columns: 1.4fr 1fr; align-items: stretch; }
 .row.explore .side { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 .row.explore > section { display: flex; flex-direction: column; }
+/* The map stays in view beside the taller side column instead of stretching to its height. */
+@media (min-width: 1101px) { body:not([data-election="ca"]) .row.explore:not(.nomap) > section { align-self: start; position: sticky; top: 1rem; } }
 .row.bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .row.bottom > section.wide { grid-column: 1 / -1; }
 @media (max-width: 1100px) { .row.explore, .row.bottom { grid-template-columns: 1fr; } }

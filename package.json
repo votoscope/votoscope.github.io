@@ -22,6 +22,7 @@
   "description": "Votoscope site: election projections and posts",
   "license": "GPL-3.0-only",
   "devDependencies": {
-    "@observablehq/notebook-kit": "^2.7.0"
+    "@observablehq/notebook-kit": "^2.7.0",
+    "acorn": "^8.19.0"
   }
 }
