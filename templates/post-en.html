@@ -12,7 +12,9 @@
       @import url("@fontsource-variable/source-serif-4/wght-italic.css");
       @import url("@fontsource-variable/spline-sans-mono/wght.css");
       :root { --theme-background: #ffffff; }
-      body { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem 3rem; background: #ffffff; color: #292524; }
+      body { box-sizing: border-box; max-width: 1200px; margin: 0 auto; padding: 40px 32px 64px; background: #ffffff; color: #292524; }
+      /* Same page width as the rest of the site; the post itself keeps a reading width. */
+      main { max-width: 760px; margin: 0; }
       nav.site { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; font-family: "Inter Variable", system-ui, sans-serif; }
       nav.site .brand { font-family: "Source Serif 4 Variable", Georgia, serif; font-size: 1.35rem; font-weight: 600; color: #1c1917; text-decoration: none; }
       nav.site { align-items: center; }

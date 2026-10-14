@@ -40,6 +40,10 @@ function displayLast(code, locale) {
 
 /** The notebook with every module cell adapted by displayLast and empty cells removed. */
 function adapt(notebook, locale) {
+  // Inclusive forms such as élu.es read as web addresses (.es domain) to the
+  // markdown renderer, which turns them into links; a span splits them.
+  notebook = notebook.replace(/(<script\b[^>]*\btype="text\/markdown"[^>]*>)([\s\S]*?)(<\/script>)/g,
+    (cell, open, text, close) => open + text.replace(/(\p{L})\.(es?)\b/gu, "$1<span>.</span>$2") + close);
   return notebook.replace(/\n?[ \t]*<script\b([^>]*)\btype="module"([^>]*)>([\s\S]*?)<\/script>/g, (cell, before, after, code) => {
     if (!code.trim()) return "";
     return cell.replace(code, () => displayLast(code, locale));
