@@ -1,5 +1,5 @@
 // ---
-// title: La distorsion électorale de 2026
+// title: Québec: la distorsion électorale de 2026
 // id: distorsion-scrutin
 // ---
 
@@ -256,7 +256,7 @@ Plot.plot({
 // ## Le Québec parmi d'autres pays
 
 // %% [markdown]
-// Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{½ Σ (vᵢ − sᵢ)²}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
+// Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
 
 // %% [javascript] #collapse-cell
 const gallagherMonde = [ // de Wikipedia
@@ -304,7 +304,7 @@ Plot.plot({
 // %% [markdown]
 // ## L'élection de 2026 à la proportionnelle
 //
-// À la proportionnelle, chaque parti reçoit une part des sièges égale à sa part des votes [1]. La figure suivante montre ce qu'auraient donné les votes de 2026.
+// La figure suivante répartit les 127 sièges entre les cinq grands partis selon leur part des votes de 2026, sans seuil [1]. C'est la forme la plus proportionnelle. Les systèmes en usage s'en écartent par un seuil, comme les 5 % du Bundestag, par des listes régionales, ou en combinant des sièges de circonscription et des sièges de liste, comme le proposait le projet de loi 39.
 
 // %% [javascript] #collapse-cell
 // Répartition des 127 sièges à la proportionnelle selon les votes de 2026 (méthode de Sainte-Laguë, sans seuil).
@@ -398,7 +398,7 @@ Plot.plot({
 // %% [markdown]
 // Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres combinaisons demanderaient trois partis.
 //
-// Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PQ atteint la majorité avec l'appui du PLQ, du PCQ ou de QS. Le pouvoir de pivot mesure la part de cette balance que détient chaque parti [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
+// Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PCQ et QS la détiennent tous les deux, puisque chacun peut donner la majorité au PQ. Le pouvoir de pivot en donne une mesure arithmétique, qui compte toutes les combinaisons de partis, opposition officielle comprise [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
 
 // %% [markdown]
 // ## Ton vote change-t-il quelque chose ?
