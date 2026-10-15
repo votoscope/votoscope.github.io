@@ -32,7 +32,7 @@ const otherLang = lang === "fr" ? "en" : "fr";
   </head>
   <body data-election={election}>
     <nav class="site">
-      <a class="brand" href={home}><img src="/logo.svg" alt="" width="31" height="34" />Votovision</a>
+      <a class="brand" href={home}><img src="/logo.svg" alt="" width="36" height="36" />Votovision</a>
       <ul>
         {items.map((it) => it.links
           ? <li class="menu"><details><summary class={it.links.some((l) => l.current) ? "current" : undefined}>{it.label}<span class="live-dot" hidden></span></summary>
