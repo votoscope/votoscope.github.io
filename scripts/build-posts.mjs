@@ -96,8 +96,11 @@ for (const [lang, other] of Object.entries(LANGUAGES)) {
     const dateText = date
       ? new Intl.DateTimeFormat(LOCALES[lang], { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(date))
       : "";
+    // Optional byline: <meta name="author" content="…">, shown before the date.
+    const author = /<meta\s+name="author"\s+content="([^"]+)"/.exec(notebook)?.[1]?.trim();
+    const byline = [author, dateText].filter(Boolean).join(" · ");
     if (title) {
-      html = html.replace("<main>", `<main><header class="post"><h1>${title}</h1>${dateText ? `<p class="date">${dateText}</p>` : ""}</header>`)
+      html = html.replace("<main>", `<main><header class="post"><h1>${title}</h1>${byline ? `<p class="date">${byline}</p>` : ""}</header>`)
         .replace(/<title>[^<]*<\/title>/, `<title>${title} · Votovision</title>`);
     }
     const translation = /<meta\s+name="translation"\s+content="([^"]+)"/.exec(notebook)?.[1];

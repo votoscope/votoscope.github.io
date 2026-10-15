@@ -33,7 +33,8 @@ const otherLang = lang === "fr" ? "en" : "fr";
   <body data-election={election}>
     <nav class="site">
       <a class="brand" href={home}><img src="/logo.svg" alt="" width="36" height="36" />Votovision</a>
-      <ul>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu"><span></span></button>
+      <ul id="nav-links">
         {items.map((it) => it.links
           ? <li class="menu"><details><summary class={it.links.some((l) => l.current) ? "current" : undefined}>{it.label}<span class="live-dot" hidden></span></summary>
               <ul>{it.links.map((l) => <li class={l.separator ? "separator" : undefined}><a href={l.href} aria-current={l.current ? "page" : undefined} data-election-date={l.date}>{l.name}<span class="live-dot" hidden></span></a></li>)}</ul>
@@ -56,6 +57,10 @@ const otherLang = lang === "fr" ? "en" : "fr";
       const menus = document.querySelectorAll("nav.site details");
       document.addEventListener("click", (e) => { for (const d of menus) if (!d.contains(e.target)) d.open = false; });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const d of menus) d.open = false; });
+      // Hamburger menu (small screens): open and close the links.
+      const nav = document.querySelector("nav.site"), burger = nav.querySelector(".burger");
+      burger.addEventListener("click", () => burger.setAttribute("aria-expanded", nav.classList.toggle("open")));
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") burger.setAttribute("aria-expanded", nav.classList.toggle("open", false)); });
     </script>
     <footer class="site">
       <p>{S.footer} <a href="https://github.com/votovision">github.com/votovision</a>.</p>

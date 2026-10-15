@@ -39,6 +39,24 @@
       nav.site li.menu li.separator { border-top: 1px solid #e8e8e8; margin-top: 0.35rem; padding-top: 0.35rem; }
       nav.site .live-dot { display: inline-block; width: 0.45rem; height: 0.45rem; margin-left: 0.4rem; border-radius: 50%; background: #ef4444; vertical-align: 0.1rem; }
       nav.site .live-dot[hidden] { display: none; }
+      /* Small screens: the links fold into a hamburger menu. */
+      nav.site .burger { display: none; }
+      @media (max-width: 640px) {
+        nav.site .burger { display: inline-flex; align-items: center; justify-content: center; width: 2.4rem; height: 2.4rem; padding: 0; border: 0; background: none; color: #1c1917; cursor: pointer; }
+        nav.site .burger span, nav.site .burger span::before, nav.site .burger span::after { display: block; position: relative; width: 1.3rem; height: 2px; background: currentColor; transition: transform 0.15s, top 0.15s; }
+        nav.site .burger span::before, nav.site .burger span::after { content: ""; position: absolute; left: 0; }
+        nav.site .burger span::before { top: -6px; }
+        nav.site .burger span::after { top: 6px; }
+        nav.site.open .burger span { background: transparent; }
+        nav.site.open .burger span::before { top: 0; transform: rotate(45deg); }
+        nav.site.open .burger span::after { top: 0; transform: rotate(-45deg); }
+        nav.site > ul { display: none; flex-basis: 100%; flex-direction: column; gap: 0; padding: 0.3rem 0; border-top: 1px solid #e8e8e8; }
+        nav.site.open > ul { display: flex; }
+        nav.site > ul > li > a, nav.site li.menu summary { display: block; padding: 0.55rem 0; }
+        nav.site li.menu ul { position: static; min-width: 0; padding: 0 0 0.3rem 1rem; background: none; border-radius: 0; box-shadow: none; }
+        nav.site li.menu ul a { padding: 0.45rem 0; }
+        nav.site ul li.language { margin-left: 0; }
+      }
       header.post { margin: 0 0 2rem; }
       header.post h1 { font-family: "Source Serif 4 Variable", Georgia, serif; font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; color: #1c1917; margin: 0 0 0.5rem; }
       header.post .date { font: 0.95rem "Inter Variable", system-ui, sans-serif; color: #6b6560; margin: 0; }
@@ -47,7 +65,8 @@
   <body>
     <nav class="site">
       <a class="brand" href="/fr/"><img src="/logo.svg" alt="" width="36" height="36">Votovision</a>
-      <ul>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu"><span></span></button>
+      <ul id="nav-links">
         <li class="menu"><details><summary>Prévisions<span class="live-dot" hidden></span></summary>
           <ul>
             <li><a href="/fr/british-columbia/" data-election-date="2026-10-24">Colombie-Britannique<span class="live-dot" hidden></span></a></li>
@@ -70,6 +89,10 @@
       const menus = document.querySelectorAll("nav.site details");
       document.addEventListener("click", (e) => { for (const d of menus) if (!d.contains(e.target)) d.open = false; });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const d of menus) d.open = false; });
+      // Hamburger menu (small screens): open and close the links.
+      const nav = document.querySelector("nav.site"), burger = nav.querySelector(".burger");
+      burger.addEventListener("click", () => burger.setAttribute("aria-expanded", nav.classList.toggle("open")));
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") burger.setAttribute("aria-expanded", nav.classList.toggle("open", false)); });
     </script>
     <footer class="site">
       <p>Votovision est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts&nbsp;: <a href="https://github.com/votovision">github.com/votovision</a>.</p>

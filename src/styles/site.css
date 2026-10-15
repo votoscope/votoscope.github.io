@@ -25,6 +25,24 @@ nav.site .live-dot[hidden] { display: none; }
 nav.site ul li.language { margin-left: 0.8rem; }
 @media (max-width: 600px) { nav.site ul { gap: 0.4rem 1.1rem; } nav.site ul li.language { margin-left: 0; } }
 nav.site ul li.language a { color: var(--heading); font-weight: 500; }
+/* Small screens: the links fold into a hamburger menu. */
+nav.site .burger { display: none; }
+@media (max-width: 640px) {
+  nav.site .burger { display: inline-flex; align-items: center; justify-content: center; width: 2.4rem; height: 2.4rem; padding: 0; border: 0; background: none; color: var(--heading); cursor: pointer; }
+  nav.site .burger span, nav.site .burger span::before, nav.site .burger span::after { display: block; position: relative; width: 1.3rem; height: 2px; background: currentColor; transition: transform 0.15s, top 0.15s; }
+  nav.site .burger span::before, nav.site .burger span::after { content: ""; position: absolute; left: 0; }
+  nav.site .burger span::before { top: -6px; }
+  nav.site .burger span::after { top: 6px; }
+  nav.site.open .burger span { background: transparent; }
+  nav.site.open .burger span::before { top: 0; transform: rotate(45deg); }
+  nav.site.open .burger span::after { top: 0; transform: rotate(-45deg); }
+  nav.site > ul { display: none; flex-basis: 100%; flex-direction: column; gap: 0; padding: 0.3rem 0; border-top: 1px solid var(--line); }
+  nav.site.open > ul { display: flex; }
+  nav.site > ul > li > a, nav.site li.menu summary { display: block; padding: 0.55rem 0; }
+  nav.site li.menu ul { position: static; min-width: 0; padding: 0 0 0.3rem 1rem; background: none; border-radius: 0; box-shadow: none; }
+  nav.site li.menu ul a { padding: 0.45rem 0; }
+  nav.site ul li.language { margin-left: 0; }
+}
 
 footer.site { margin-top: 4rem; padding: 1.5rem 1.6rem; background: var(--tile); border-radius: 14px; font-size: 1rem; line-height: 1.55; color: var(--text); }
 footer.site p { margin: 0; max-width: 70ch; }
@@ -33,6 +51,7 @@ footer.site p { margin: 0; max-width: 70ch; }
 .prose h1 { margin-bottom: 1.2rem; }
 .prose h2 { font-family: var(--sans); font-size: 1.05rem; margin: 2rem 0 0.5rem; }
 .prose p, .prose ul { margin: 0 0 1rem; }
+.prose img.portrait { display: block; width: 100%; max-width: 420px; height: auto; border-radius: 4px; margin: 0.5rem 0 1.5rem; }
 
 .intro { font-family: var(--serif); font-size: 1.2rem; line-height: 1.55; max-width: 60ch; color: var(--text); margin: 0; }
 

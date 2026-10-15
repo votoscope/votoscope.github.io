@@ -1,6 +1,6 @@
 // Renders a post's Notebook Kit notebook (index.html) from its tangent/note
 // source (source.js). The source starts with a front matter in comments
-// (// ---, // title: …, // date: …, // translation: …, // ---) and holds
+// (// ---, // title: …, // date: …, // author: …, // translation: …, // ---) and holds
 // cells introduced by // %% [markdown] or // %% [javascript] (options after
 // the kind, such as #collapse-cell, are ignored). Markdown lines lose their
 // leading "// "; cells are indented by four spaces; an empty pinned module
@@ -44,6 +44,7 @@ const indent = (lines) => lines.map((l) => (l.trim() ? `    ${l}` : "")).join("\
 
 const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const out = ["<!doctype html>", "<notebook>", `  <title>${escape(title)}</title>`, `  <meta name="date" content="${date}">`];
+if (meta.author) out.push(`  <meta name="author" content="${escape(meta.author)}">`);
 if (meta.translation) out.push(`  <meta name="translation" content="${meta.translation}">`);
 let id = 0;
 for (const cell of cells) {
