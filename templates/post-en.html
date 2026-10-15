@@ -57,6 +57,19 @@
         nav.site li.menu ul a { padding: 0.45rem 0; }
         nav.site ul li.language { margin-left: 0; }
       }
+      /* Sidenotes (scripts/build-posts.mjs): in the right margin on wide screens, under the paragraph on a tap otherwise. */
+      label.sidenote-number { font: 600 0.7em "Inter Variable", system-ui, sans-serif; vertical-align: super; line-height: 0; color: #1d4ed8; padding: 0 0.1em 0 0.15em; cursor: pointer; }
+      input.margin-toggle { display: none; }
+      .sidenote { font: 0.82rem/1.45 "Inter Variable", system-ui, sans-serif; color: #57534e; }
+      .sidenote-n { font-weight: 600; color: #1d4ed8; }
+      @media (min-width: 1150px) {
+        .sidenote { float: right; clear: right; position: relative; width: 280px; margin: 0.15rem -310px 1rem 0; }
+        label.sidenote-number { cursor: default; }
+      }
+      @media (max-width: 1149px) {
+        .sidenote { display: none; }
+        .margin-toggle:checked + .sidenote { display: block; margin: 0.5rem 0 0.75rem; padding: 0.5rem 0.75rem; border-left: 2px solid #d6d3d1; background: #fafaf9; }
+      }
       header.post { margin: 0 0 2rem; }
       header.post h1 { font-family: "Source Serif 4 Variable", Georgia, serif; font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; color: #1c1917; margin: 0 0 0.5rem; }
       header.post .date { font: 0.95rem "Inter Variable", system-ui, sans-serif; color: #6b6560; margin: 0; }

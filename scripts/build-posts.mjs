@@ -63,6 +63,51 @@ function adapt(notebook, locale) {
   });
 }
 
+/**
+ * Notes as sidenotes, in the style of Tufte. A post ends with a « Notes »
+ * section (### Notes, then one paragraph per note starting with [n]); each
+ * call [n] in the text becomes a superscript number followed by the note,
+ * which the template's CSS floats into the right margin on wide screens and
+ * shows under the paragraph when the number is tapped on small ones. Notes
+ * called in the text leave the Notes section, which disappears once empty.
+ */
+function sidenotes(html) {
+  const heading = /<h3 id="notes"[^>]*>[\s\S]*?<\/h3>\s*/.exec(html);
+  if (!heading) return html;
+  const start = heading.index, end = html.indexOf("</div>", start);
+  const notes = new Map();
+  for (const m of html.slice(start, end).matchAll(/<p>\[(\d+)\]\s*([\s\S]*?)<\/p>\s*/g)) notes.set(m[1], { html: m[2], block: m[0] });
+  if (notes.size === 0) return html;
+  // Calls: [n] in the post text (from <main> to the Notes section), outside tags, code and links.
+  const top = html.indexOf("<main>");
+  let body = html.slice(top, start), used = new Set(), skip = 0;
+  body = body.split(/(<[^>]+>)/).map((part) => {
+    if (part.startsWith("<")) {
+      if (/^<(pre|code|script|style|a)\b/i.test(part)) skip++;
+      else if (/^<\/(pre|code|script|style|a)>/i.test(part)) skip = Math.max(0, skip - 1);
+      return part;
+    }
+    if (skip) return part;
+    // Punctuation right after the call stays with the text, before the note (which opens as a block on small screens).
+    return part.replace(/\s?\[(\d+)\]([.,;:!?»)]*)/g, (call, n, punct) => {
+      const note = notes.get(n);
+      if (!note) return call;
+      used.add(n);
+      const id = `sn-${n}`;
+      return `<label for="${id}" class="sidenote-number">${n}</label>${punct}<input type="checkbox" id="${id}" class="margin-toggle">` +
+        `<span class="sidenote"><span class="sidenote-n">${n}</span> ${note.html}</span>`;
+    });
+  }).join("");
+  let section = html.slice(start, end);
+  for (const n of used) section = section.replace(notes.get(n).block, "");
+  if (used.size === notes.size) {
+    // Every note is in the margin: drop the heading and the rule above it.
+    body = body.replace(/<hr>\s*$/, "");
+    section = "";
+  }
+  return html.slice(0, top) + body + section + html.slice(end);
+}
+
 for (const [lang, other] of Object.entries(LANGUAGES)) {
   const output = `public/${lang}/posts`;
   rmSync(output, { recursive: true, force: true });
@@ -105,6 +150,7 @@ for (const [lang, other] of Object.entries(LANGUAGES)) {
     }
     const translation = /<meta\s+name="translation"\s+content="([^"]+)"/.exec(notebook)?.[1];
     if (translation) html = html.replace(`<a href="/${other}/posts/" hreflang="${other}"`, `<a href="${translation}" hreflang="${other}"`);
+    html = sidenotes(html);
     writeFileSync(page, html);
   }
 }

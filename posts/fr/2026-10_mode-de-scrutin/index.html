@@ -7,7 +7,7 @@
   <script id="1" type="text/markdown">
     > Les calculs de ce billet peuvent être [reproduits sur tangent/note](https://note.tangent.to/gh/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
 
-    *CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont les gouvernements sont élus au Québec_: le *scrutin uninominal majoritaire à un tour*. Voici comment fonctionnent les élections au Québec.
+    *CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont les gouvernements sont élus au Québec : le *scrutin uninominal majoritaire à un tour*. Voici comment fonctionnent les élections au Québec.
 
     1. tu votes dans ta circonscription, avec un *x* à côté du nom de la personne que tu choisis
     1. c'est tout.
@@ -459,13 +459,13 @@
     })
   </script>
   <script id="15" type="text/markdown">
-    Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 luttes de circonscription [3].
+    Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 luttes de circonscription [2].
 
-    La [prévision Votovision pour 2030](https://votovision.github.io/fr/quebec/) permet le même calcul pour chaque circonscription. [La chance qu'un vote décide du gagnant](https://doi.org/10.1111/j.1465-7295.2010.00272.x) dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
+    La [prévision Votovision pour 2030](https://votovision.github.io/fr/quebec/) permet le même calcul pour chaque circonscription. [La chance qu'un vote décide du gagnant](https://doi.org/10.1111/j.1465-7295.2010.00272.x) dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [3].
   </script>
   <script id="16" type="module">
     // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
-    // Méthode : note [4] à la fin du billet.
+    // Méthode : note [3] à la fin du billet.
     const { normal } = await import("https://cdn.jsdelivr.net/npm/@tangent.to/proba@0.2/+esm");
     const deuxPremiers = prevision.circonscriptions.map((c) => {
       const [[p1], [p2]] = Object.entries(c.parts).sort((a, b) => b[1] - a[1]);
@@ -515,7 +515,7 @@
   <script id="17" type="text/markdown">
     Dans la circonscription d'Ungava, la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions (moins que le gros lot du 6/49, environ 1 sur 14 millions).
 
-    À la proportionnelle, tous les votes comptent, mais un vote change la répartition des sièges environ une fois sur 34 000 [5], un peu moins que la médiane d'aujourd'hui. Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
+    À la proportionnelle, tous les votes comptent, mais un vote change la répartition des sièges environ une fois sur 34 000 [4], un peu moins que la médiane d'aujourd'hui. Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
   </script>
   <script id="18" type="text/markdown">
     ## Pourquoi voter quand même
@@ -557,21 +557,17 @@
     [Lors du débat des chefs de Radio-Canada](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription), le chef du Parti québécois, maintenant premier ministre, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
   </script>
   <script id="22" type="text/markdown">
-    -----
-
     ### Notes
 
     [1] La répartition proportionnelle donne les 127 sièges aux cinq grands partis selon leurs votes de 2026, sans seuil (méthode de Sainte-Laguë). Les autres partis, environ 1 % des votes, n'ont aucun siège.
 
-    [2] Pouvoir de pivot (indice de Banzhaf normalisé) : pour chaque parti, on compte les combinaisons de partis de 64 sièges ou plus qui perdent leur majorité sans lui, puis on divise par la somme de ces comptes pour tous les partis.
+    [2] De 1970 à 2026, 25 circonscriptions sur 1 946 ont été gagnées par moins de 100 voix. Si ces écarts se répartissent également entre 0 et 100 voix, une égalité parfaite arrive environ une fois sur 7 800.
 
-    [3] De 1970 à 2026, 25 circonscriptions sur 1 946 ont été gagnées par moins de 100 voix. Si ces écarts se répartissent également entre 0 et 100 voix, une égalité parfaite arrive environ une fois sur 7 800.
+    [3] La chance qu'un vote décide du gagnant en 2030 se calcule à partir de l'écart prévu entre les deux premiers et de l'incertitude sur cet écart, tirée de la probabilité de victoire. Quand la prévision est presque certaine, on prend l'incertitude typique des autres circonscriptions.
 
-    [4] La chance qu'un vote décide du gagnant en 2030 se calcule à partir de l'écart prévu entre les deux premiers et de l'incertitude sur cet écart, tirée de la probabilité de victoire. Quand la prévision est presque certaine, on prend l'incertitude typique des autres circonscriptions.
-
-    [5] À la proportionnelle, 4 282 551 votes valides pour 127 sièges donnent un siège par tranche d'environ 34 000 votes. Un vote change donc un siège environ une fois sur 34 000.
+    [4] À la proportionnelle, 4 282 551 votes valides pour 127 sièges donnent un siège par tranche d'environ 34 000 votes. Un vote change donc un siège environ une fois sur 34 000.
   </script>
-  <script id="24" type="module" pinned>
+  <script id="23" type="module" pinned>
 
   </script>
 </notebook>

@@ -1,6 +1,9 @@
 // ---
 // title: Quebec: the electoral distortion of 2026
 // id: electoral-distortion
+// date: 2026-10-15
+// author: Essi Parent
+// translation: /fr/posts/2026-10_mode-de-scrutin/
 // ---
 
 // %% [markdown]
@@ -459,13 +462,13 @@ Plot.plot({
 })
 
 // %% [markdown]
-// Over nearly 2,000 riding races since 1970, 25 were won by fewer than 100 votes. A perfect tie in a riding happens about once in 7,800 riding races [3].
+// Over nearly 2,000 riding races since 1970, 25 were won by fewer than 100 votes. A perfect tie in a riding happens about once in 7,800 riding races [2].
 //
-// The [Votovision forecast for 2030](https://votovision.github.io/en/quebec/) allows the same calculation for each riding. [The chance that one vote decides the winner](https://doi.org/10.1111/j.1465-7295.2010.00272.x) depends on the forecast margin between the top two and on the number of electors [4].
+// The [Votovision forecast for 2030](https://votovision.github.io/en/quebec/) allows the same calculation for each riding. [The chance that one vote decides the winner](https://doi.org/10.1111/j.1465-7295.2010.00272.x) depends on the forecast margin between the top two and on the number of electors [3].
 
 // %% [javascript] #collapse-cell
 // Chance that a single vote changes the winner of each riding in 2030.
-// Method: note [4] at the end of the post.
+// Method: note [3] at the end of the post.
 const { normal } = await import("https://cdn.jsdelivr.net/npm/@tangent.to/proba@0.2/+esm");
 const deuxPremiers = prevision.circonscriptions.map((c) => {
   const [[p1], [p2]] = Object.entries(c.parts).sort((a, b) => b[1] - a[1]);
@@ -515,7 +518,7 @@ Plot.plot({
 // %% [markdown]
 // In the riding of Ungava, the closest and one of the least populous, that chance is about 1 in 4,100. In the median riding, it is about 1 in 26,000. In 7 ridings, it is under 1 in 10 million (less than the Lotto 6/49 jackpot, about 1 in 14 million).
 //
-// Under proportional representation, every vote counts, but a vote changes the distribution of seats about once in 34,000 [5], a little less than today's median. That chance would be the same everywhere, though. Today, a vote weighs much more in a close riding than in a safe one.
+// Under proportional representation, every vote counts, but a vote changes the distribution of seats about once in 34,000 [4], a little less than today's median. That chance would be the same everywhere, though. Today, a vote weighs much more in a close riding than in a safe one.
 
 // %% [markdown]
 // ## Why vote anyway
@@ -557,18 +560,14 @@ elus2026.map((d) => ({
 // [At the Radio-Canada leaders' debate](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription), the leader of the Parti québécois, now premier, committed to reforming the electoral system, without giving details.
 
 // %% [markdown]
-// -----
-//
 // ### Notes
 //
 // [1] The proportional distribution gives the 127 seats to the five main parties according to their 2026 votes, with no threshold (Sainte-Laguë method). The other parties, about 1% of the votes, get no seat.
 //
-// [2] Pivotal power (normalized Banzhaf index): for each party, count the combinations of parties with 64 seats or more that lose their majority without it, then divide by the sum of these counts over all parties.
+// [2] From 1970 to 2026, 25 ridings out of 1,946 were won by fewer than 100 votes. If these margins are spread evenly between 0 and 100 votes, a perfect tie happens about once in 7,800.
 //
-// [3] From 1970 to 2026, 25 ridings out of 1,946 were won by fewer than 100 votes. If these margins are spread evenly between 0 and 100 votes, a perfect tie happens about once in 7,800.
+// [3] The chance that one vote decides the winner in 2030 is computed from the forecast margin between the top two and the uncertainty on that margin, derived from the probability of winning. When the forecast is nearly certain, the typical uncertainty of the other ridings is used.
 //
-// [4] The chance that one vote decides the winner in 2030 is computed from the forecast margin between the top two and the uncertainty on that margin, derived from the probability of winning. When the forecast is nearly certain, the typical uncertainty of the other ridings is used.
-//
-// [5] Under proportional representation, 4,282,551 valid votes for 127 seats give one seat per about 34,000 votes. One vote therefore changes one seat about once in 34,000.
+// [4] Under proportional representation, 4,282,551 valid votes for 127 seats give one seat per about 34,000 votes. One vote therefore changes one seat about once in 34,000.
 
 // %% [javascript]
