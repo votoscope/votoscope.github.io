@@ -1,17 +1,19 @@
 // ---
-// title: Québec: la distorsion électorale de 2026
+// title: Québec : la distorsion électorale de 2026
 // id: distorsion-scrutin
 // ---
 
 // %% [markdown]
+// > Les calculs de ce billet peuvent être [reproduits sur tangent/note](https://note.tangent.to/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
+//
 // *CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont on élit nos gouvernements : le *scrutin uninominal majoritaire à un tour*. Voici comment fonctionnent les élections au Québec.
 //
 // 1. tu votes dans ta circonscription, avec un *x* à côté du nom de la personne que tu choisis
 // 1. c'est tout.
 //
-// Ton vote ne dépasse pas ta circonscription. La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu la dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté (permettez la minuscule), invite à former le gouvernement la personne qui a l'appui de la majorité des élu.es. C'est normalement la cheffe ou le chef du parti qui a le plus d'élu.es (le *caucus* gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que ses élu.es l'appuient, et choisit ses ministres parmi elleux. Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.
+// Ton vote ne dépasse pas ta circonscription (enfin, presque, on y reviendra). La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu le dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté, invite à former le gouvernement la personne qui peut obtenir la confiance de l'Assemblée nationale. C'est normalement le leader du parti qui a le plus d'élu.es (le *caucus* gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que l'Assemblée lui garde sa confiance (avec un gouvernement minoritaire, il lui faut l'appui d'autres partis), et choisit ses ministres parmi elleux (en pratique, parmi sa *gang*). Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.
 //
-// Un parti peut donc avoir 13 % des votes exprimés, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote exprimé, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
+// Un parti peut donc avoir 13 % des votes valides, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote valide, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
 //
 // Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
 
@@ -189,8 +191,8 @@ svgSankey.node();
 // %% [javascript] #collapse-cell
 const aq = await import("https://cdn.jsdelivr.net/npm/arquero@8/+esm");
 const op = aq.op;
-const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
-const prevision = await (await fetch("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
+const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/data/2026-10_mode-de-scrutin/resultats_quebec_1970_2026.csv");
+const prevision = await (await fetch("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/data/2026-10_mode-de-scrutin/prevision_2030.json")).json();
 
 const COULEURS = { PQ: "#1d4ed8", PLQ: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", Autres: "#a8a29e" };
 // Sigles des partis. Avant 2012, les données nomment les partis au long.
@@ -253,9 +255,8 @@ Plot.plot({
 // Un parti perd d'autant plus de votes qu'il arrive deuxième ou troisième dans beaucoup de circonscriptions. Les trois quarts des votes de Québec solidaire n'ont élu personne, contre un peu plus du tiers de ceux du PQ.
 
 // %% [markdown]
-// ## Le Québec parmi d'autres pays
-
-// %% [markdown]
+// ## Quand on se compare...
+//
 // Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
 
 // %% [javascript] #collapse-cell
@@ -299,12 +300,12 @@ Plot.plot({
 });
 
 // %% [markdown]
-// Les pays qui votent à la proportionnelle ont des indices plus faibles. En Allemagne, un parti n'obtient de sièges au *Bundestag* que s'il recueille au moins 5 % des votes, (sauf exceptions, me dit-on). En 2025, environ 14 % des votes sont allés à des partis sous ce seuil, d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0* n'est toutefois pas un cas exceptionnel : en 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Inversement, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
+// Les pays qui votent à la proportionnelle ont des indices faibles, mais un scrutin majoritaire n'est pas forcément très distordu : la France (deux tours) et le Canada en 2025 restent sous 10. En Allemagne, un parti n'obtient de sièges au *Bundestag* que s'il recueille au moins 5 % des votes. En 2025, environ 14 % des votes sont allés à des partis sous ce seuil, d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0* n'est toutefois pas un cas exceptionnel. En 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Par ailleurs, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
 
 // %% [markdown]
-// ## L'élection de 2026 à la proportionnelle
+// ## Fiction : l'élection de 2026 à la proportionnelle
 //
-// La figure suivante répartit les 127 sièges entre les cinq grands partis selon leur part des votes de 2026, sans seuil [1]. C'est la forme la plus proportionnelle. Les systèmes en usage s'en écartent par un seuil, comme les 5 % du Bundestag, par des listes régionales, ou en combinant des sièges de circonscription et des sièges de liste, comme le proposait le projet de loi 39.
+// Dans une forme proportionnelle stricte, un parti obtient une proportion de sièges égale à la proportion du vote (en arrondi, évidemment) [1]. Un seuil de 5 % n'y changerait rien en 2026 : les cinq grands partis dépassent tous 12 %. Ce n'est toutefois pas ce qui est proposé par le *Mouvement démocratie nouvelle* (MDN), un organisme québécois qui depuis 1999 demande une réforme du mode de scrutin, dont la proposition actuelle est un [mode de scrutin proportionnel mixte compensatoire avec listes régionales](https://democratie-nouvelle.qc.ca/wp-content/uploads/2026/02/Le-mode-de-scrutin-proportionnel-mixte.pptx.pdf), le mode *Pro-Mix* (non, pas la marque de terreau de rempotage). En gros, le MDN propose l'élection de député.es dans un nombre réduit de circonscriptions, induisant la proportionnalité par des listes de candidat.es dans les régions.
 
 // %% [javascript] #collapse-cell
 // Répartition des 127 sièges à la proportionnelle selon les votes de 2026 (méthode de Sainte-Laguë, sans seuil).
@@ -333,6 +334,11 @@ function banzhaf(sieges, majorite) {
   const total = pivots.reduce((a, b) => a + b, 0);
   return Object.fromEntries(partis.map((p, i) => [p, pivots[i] / total]));
 }
+// Proportionnelle mixte compensatoire du projet de loi 199 (80 circonscriptions, 49 sièges régionaux dans 17 régions,
+// seuil de 4 %, 129 sièges) : simulation du Mouvement démocratie nouvelle sur les votes du 5 octobre 2026, communiqué
+// du 7 octobre 2026, chiffres rapportés par Hélène Buzzetti, « Pour en finir avec la réforme électorale »,
+// Le Nouvelliste, 9 octobre 2026. Pas recalculée ici.
+const siegesMixte = { PQ: 48, PLQ: 33, PCQ: 23, CAQ: 16, QS: 9 };
 const SIEGES = 127, MAJORITE = 64;
 const votesParParti = Object.fromEntries(elus2026.map((d) => [d.parti, d.total]));
 const siegesActuels = Object.fromEntries(luttes.filter((d) => d.election === "2026-10-05").groupby("gagnant").count().objects().map((d) => [sigle(d.gagnant), d.count]));
@@ -344,66 +350,82 @@ const comparaison = Object.keys(votesParParti).map((p) => ({
   "votes (%)": 100 * votesParParti[p] / bilan2026.total,
   "sièges actuels": siegesActuels[p] ?? 0,
   "sièges à la proportionnelle": siegesProportionnels[p],
+  "sièges à la proportionnelle mixte (MDN)": siegesMixte[p] ?? 0,
   "pouvoir de pivot actuel (%)": 100 * (pivotActuel[p] ?? 0),
   "pouvoir de pivot à la proportionnelle (%)": 100 * (pivotProportionnel[p] ?? 0),
 }));
 
-Plot.plot({
-  width: 760,
-  height: 46 * comparaison.length + 50,
-  marginLeft: 62,
-  marginRight: 62,
-  x: { label: "sièges", domain: [0, 70], grid: true },
-  y: { domain: comparaison.map((d) => d.parti), label: null },
-  marks: [
-    Plot.ruleX([MAJORITE], { stroke: "#000", strokeDasharray: "3,3" }),
-    Plot.arrow(comparaison, {
-      x1: "sièges actuels", x2: "sièges à la proportionnelle", y1: "parti", y2: "parti",
-      stroke: (d) => COULEURS[d.parti], strokeWidth: 2, headLength: 5,
-    }),
-    Plot.dot(comparaison, { x: "sièges actuels", y: "parti", fill: (d) => COULEURS[d.parti], r: 4 }),
-    // Étiquettes : sièges actuels près du point, sièges à la proportionnelle après la pointe.
-    ...(() => {
-      const actuel = (r) => `${r["sièges actuels"]} sièges`;
-      const prop = (r) => `${r["sièges à la proportionnelle"]} à la proportionnelle`;
-      const ecart = (r) => r["sièges à la proportionnelle"] - r["sièges actuels"];
-      const wide = comparaison.filter((r) => Math.abs(ecart(r)) >= 3);
-      const tight = comparaison.filter((r) => Math.abs(ecart(r)) < 3);
-      const right = wide.filter((r) => ecart(r) > 0);
-      const left = wide.filter((r) => ecart(r) < 0);
-      const rightFar = right.filter((r) => r["sièges actuels"] >= 12);
-      const rightEdge = right.filter((r) => r["sièges actuels"] < 12);
-      const leftFar = left.filter((r) => r["sièges à la proportionnelle"] >= 8);
-      const leftEdge = left.filter((r) => r["sièges à la proportionnelle"] < 8);
-      const TXT = { fontSize: 11, fill: "#333", y: "parti" };
-      return [
-        Plot.text(rightFar, { ...TXT, x: "sièges actuels", text: actuel, dx: -9, textAnchor: "end" }),
-        Plot.text(rightEdge, { ...TXT, x: "sièges actuels", text: actuel, dx: -4, dy: -12, textAnchor: "start" }),
-        Plot.text(right, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: 11, textAnchor: "start" }),
-        Plot.text(left, { ...TXT, x: "sièges actuels", text: actuel, dx: 9, textAnchor: "start" }),
-        Plot.text(leftFar, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -11, textAnchor: "end" }),
-        Plot.text(leftEdge, { ...TXT, x: "sièges à la proportionnelle", text: prop, dx: -4, dy: -12, textAnchor: "start" }),
-        Plot.text(tight, { ...TXT, x: (r) => Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: prop, dx: 10, dy: -7, textAnchor: "start" }),
-        Plot.text(tight, { ...TXT, x: (r) => Math.max(r["sièges actuels"], r["sièges à la proportionnelle"]), text: actuel, dx: 10, dy: 7, textAnchor: "start" }),
-      ];
-    })(),
-  ],
-  //caption: "Point : sièges obtenus en 2026. Pointe de la flèche : sièges avec les mêmes votes répartis à la proportionnelle. Pointillé : majorité de 64 sièges.",
-})
+// Figure en d3. Deux flèches par parti : des sièges actuels à la proportionnelle pure (courbée vers le bas), puis
+// de la proportionnelle pure à la mixte (vers le haut). Sous trois sièges d'écart, pas de flèche : le symbole
+// d'arrivée suffit. Quand la mixte coïncide avec un autre système (QS : 9 et 9), son rond est décalé vers le haut.
+const ACTUEL = "sièges actuels", PROP = "sièges à la proportionnelle", MIXTE = "sièges à la proportionnelle mixte (MDN)";
+const SYSTEMES = [[ACTUEL, "actuel"], [PROP, "proportionnelle"], [MIXTE, "mixte"]];
+const R_SYMBOLE = 3, RANG = 40, L_F = 760, MG = { haut: 28, droite: 40, bas: 32, gauche: 62 };
+const H_F = MG.haut + RANG * comparaison.length + MG.bas;
+const rang = Object.fromEntries(comparaison.map((d, i) => [d.parti, i]));
+const yMixte = (d) => rang[d.parti] - (d[MIXTE] === d[ACTUEL] || d[MIXTE] === d[PROP] ? 0.25 : 0);
+const xF = d3.scaleLinear([0, 70], [MG.gauche, L_F - MG.droite]);
+const yF = d3.scaleLinear([-0.5, comparaison.length - 0.5], [MG.haut, H_F - MG.bas]);
+const SYMBOLE = { actuel: d3.symbolCircle, proportionnelle: d3.symbolTimes, mixte: d3.symbolCircle };
+const forme = (systeme) => d3.symbol(SYMBOLE[systeme], Math.PI * R_SYMBOLE ** 2)();
 
-// %% [javascript] #collapse-cell
-["votes (%)", "sièges actuels", "sièges à la proportionnelle", "pouvoir de pivot actuel (%)", "pouvoir de pivot à la proportionnelle (%)"]
-  .map((mesure) => ({ mesure, ...Object.fromEntries(comparaison.map((d) => [d.parti, Math.round(d[mesure] * 10) / 10])) }))
+// Arc dont les tangentes font `courbure` degrés avec la corde, bombé vers le bas ou le haut, raccourci de `retrait` px
+// à chaque bout, avec une pointe à l'arrivée.
+function fleche(x1, y1, x2, y2, bombe, courbure = 20, retrait = R_SYMBOLE + 2, pointe = 5) {
+  const th = courbure * Math.PI / 180, dx = x2 - x1, dy = y2 - y1, corde = Math.hypot(dx, dy);
+  const tourne = ([x, y], a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+  const s = (bombe === "bas" ? 1 : -1) * Math.sign(dx);
+  const depart = tourne([dx / corde, dy / corde], s * th), arrivee = tourne([dx / corde, dy / corde], -s * th);
+  const [ax, ay] = [x1 + retrait * depart[0], y1 + retrait * depart[1]], [bx, by] = [x2 - retrait * arrivee[0], y2 - retrait * arrivee[1]];
+  const r = Math.hypot(bx - ax, by - ay) / (2 * Math.sin(th)), sens = (bombe === "bas") === (dx < 0) ? 1 : 0;
+  const tete = [Math.PI - Math.PI / 6, Math.PI + Math.PI / 6].map((a) => tourne(arrivee, a)).map(([px, py]) => `${bx + pointe * px},${by + pointe * py}`);
+  return `M${ax},${ay}A${r},${r} 0 0 ${sens} ${bx},${by}M${tete[0]}L${bx},${by}L${tete[1]}`;
+}
+
+const svgF = d3.create("svg").attr("viewBox", [0, 0, L_F, H_F]).attr("width", L_F).attr("height", H_F)
+  .style("max-width", "100%").style("height", "auto").style("font-family", F_TEXTE).style("font-size", "11px");
+svgF.append("g").attr("stroke", "#ddd").selectAll("line").data(xF.ticks(7)).join("line").attr("x1", xF).attr("x2", xF).attr("y1", MG.haut).attr("y2", H_F - MG.bas);
+svgF.append("g").attr("transform", `translate(0,${H_F - MG.bas})`).attr("color", "#333").call(d3.axisBottom(xF).ticks(7)).call((g) => g.select(".domain").remove());
+svgF.append("text").attr("x", L_F - MG.droite).attr("y", H_F - 2).attr("text-anchor", "end").attr("fill", "#333").text("sièges →");
+svgF.append("g").attr("fill", "#333").selectAll("text").data(comparaison).join("text").attr("x", MG.gauche - 10).attr("y", (d) => yF(rang[d.parti])).attr("dy", "0.35em").attr("text-anchor", "end").text((d) => d.parti);
+svgF.append("line").attr("x1", xF(MAJORITE)).attr("x2", xF(MAJORITE)).attr("y1", MG.haut).attr("y2", H_F - MG.bas).attr("stroke", "#000").attr("stroke-dasharray", "3,3");
+
+const gFleches = svgF.append("g").attr("fill", "none").attr("stroke-width", 1.5);
+for (const d of comparaison) {
+  const y = yF(rang[d.parti]);
+  if (Math.abs(d[PROP] - d[ACTUEL]) >= 3) gFleches.append("path").attr("stroke", COULEURS[d.parti]).attr("d", fleche(xF(d[ACTUEL]), y, xF(d[PROP]), y, "bas"));
+  if (Math.abs(d[MIXTE] - d[PROP]) >= 3) gFleches.append("path").attr("stroke", COULEURS[d.parti]).attr("d", fleche(xF(d[PROP]), y, xF(d[MIXTE]), yF(yMixte(d)), "haut"));
+}
+const points = comparaison.flatMap((d) => SYSTEMES.map(([champ, systeme]) => ({ parti: d.parti, systeme, x: xF(d[champ]), y: yF(champ === MIXTE ? yMixte(d) : rang[d.parti]) })));
+svgF.append("g").attr("stroke-width", 1.5).selectAll("path").data(points).join("path").attr("transform", (d) => `translate(${d.x},${d.y})`)
+  .attr("d", (d) => forme(d.systeme)).attr("fill", (d) => d.systeme === "actuel" ? COULEURS[d.parti] : "none").attr("stroke", (d) => COULEURS[d.parti]);
+
+// Étiquettes : le nombre seulement ; à gauche du premier symbole (dessous près de l'axe), à droite du dernier,
+// au-dessus de celui du milieu. Deux valeurs égales n'en reçoivent qu'une.
+const PLACES = { gauche: [-8, 0, "end"], bord: [0, 13, "middle"], milieu: [0, -10, "middle"], droite: [8, 0, "start"] };
+const etiquettes = comparaison.flatMap((d) => [...new Set(SYSTEMES.map(([champ]) => d[champ]))].sort((a, b) => a - b)
+  .map((x, i, t) => ({ parti: d.parti, x, place: i === 0 ? (x < 6 ? "bord" : "gauche") : i === t.length - 1 ? "droite" : "milieu" })));
+svgF.append("g").attr("fill", "#333").selectAll("text").data(etiquettes).join("text").attr("dy", "0.35em")
+  .attr("x", (d) => xF(d.x) + PLACES[d.place][0]).attr("y", (d) => yF(rang[d.parti]) + PLACES[d.place][1]).attr("text-anchor", (d) => PLACES[d.place][2]).text((d) => d.x);
+
+// Légende, sur une ligne dans la marge du haut.
+const LEGENDE = [["actuel", "sièges actuels", 0], ["proportionnelle", "proportionnelle pure", 120], ["mixte", "mixte (simulation du MDN)", 260]];
+const gLegende = svgF.append("g").attr("transform", `translate(${MG.gauche},${MG.haut - 14})`).attr("fill", "#555").attr("stroke-width", 1.5);
+gLegende.selectAll("path").data(LEGENDE).join("path").attr("transform", (d) => `translate(${d[2]},0)`).attr("d", (d) => forme(d[0])).attr("fill", (d) => d[0] === "actuel" ? "#555" : "none").attr("stroke", "#555");
+gLegende.selectAll("text").data(LEGENDE).join("text").attr("x", (d) => d[2] + 8).attr("dy", "0.35em").text((d) => d[1]);
+
+// Légende de figure : Rond plein : sièges obtenus en 2026. Première flèche : les mêmes votes répartis à la proportionnelle
+// (croix). Seconde flèche : proportionnelle mixte du projet de loi 199, simulation du Mouvement démocratie nouvelle,
+// 129 sièges (rond vide). Pointillé : majorité de 64 sièges.
+svgF.node()
 
 // %% [markdown]
-// Aucun parti n'aurait la majorité de 64 sièges. Une seule paire de partis l'atteindrait : le PQ et le PLQ, avec 67 sièges. Toutes les autres combinaisons demanderaient trois partis.
-//
-// Dans un gouvernement minoritaire, un parti détient la balance du pouvoir quand ses votes suffisent à donner la majorité au gouvernement, ou à le faire tomber. Plusieurs partis peuvent la détenir en même temps : en 2026, le PCQ et QS la détiennent tous les deux, puisque chacun peut donner la majorité au PQ. Le pouvoir de pivot en donne une mesure arithmétique, qui compte toutes les combinaisons de partis, opposition officielle comprise [2]. On énumère toutes les combinaisons de partis qui atteignent 64 sièges. Dans chacune, un parti est pivot si la combinaison perd sa majorité sans lui. Le pouvoir de pivot d'un parti est sa part de toutes ces positions de pivot. Avec les sièges réels, le PQ en détient la moitié. À la proportionnelle, le PQ et le PLQ en auraient chacun un peu moins de 30 %, et la CAQ passerait de zéro à environ 14 %.
+// À la proportionnelle pure, le PQ aurait 36 sièges plutôt que 59, et 48 en mode *Pro-Mix* (qui aurait 129 sièges donc un seuil de majorité de 65 sièges. Un gouvernements majoritaire de coalition 48 (PQ) + 23 (PCQ) = 71 (avec opposition PLQ), aurait été possible. Aujourd'hui, le PQ pourrait coaliser avec le PCQ ou QS (ou miser sur 5 transfuges) pour obtenir une majorité.
 
 // %% [markdown]
 // ## Ton vote change-t-il quelque chose ?
 //
-// Un vote change le résultat d'une circonscription seulement s'il brise une égalité. Depuis 1970, l'élection la plus serrée a été celle de Hull, en 1976, gagnée par 2 voix. En 2026, Vachon a été gagnée par 10 voix.
+// Le mode de scrutin change aussi fondamentalement l'importance d'un vote. Aujourd'hui, un vote ne change le résultat d'une circonscription que s'il brise une égalité. Depuis 1970, l'élection la plus serrée a été celle de Hull, en 1976, gagnée par 2 voix. En 2026, Vachon a été gagnée par 10 voix.
 
 // %% [javascript] #collapse-cell
 // Écart entre les deux premiers dans chaque circonscription, de 1970 à 2026.
@@ -434,9 +456,9 @@ Plot.plot({
 })
 
 // %% [markdown]
-// Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 élections [3].
+// Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 luttes de circonscription [3].
 //
-// La prévision Votovision pour 2030 permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
+// La [prévision Votovision pour 2030](https://votovision.github.io/fr/quebec/) permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
 
 // %% [javascript] #collapse-cell
 // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
@@ -488,18 +510,18 @@ Plot.plot({
 })
 
 // %% [markdown]
-// Dans Ungava, la circonscription la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions.
+// Dans la circonscription d'Ungava, la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions (moins que le gros lot du 6/49, environ 1 sur 14 millions).
 //
-// À la proportionnelle, un vote change la répartition des sièges environ une fois sur 34 000 [5], un peu moins qu'aujourd'hui en moyenne (environ 1 sur 24 000). Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
+// À la proportionnelle, tous les votes comptent, mais un vote change la répartition des sièges environ une fois sur 34 000 [5], un peu moins que la médiane d'aujourd'hui. Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
 
 // %% [markdown]
 // ## Pourquoi voter quand même
 //
-// Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangeurosité × la probabilité que ça arrive.
+// Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangerosité × la probabilité que ça arrive. Ce qui compte, c'est l'ampleur de la conséquence par rapport à sa probabilité. Une probabilité faible que quelque chose d'énorme arrive, là on n'est plus dans une attaque de requin dans un autobus, et c'est du sérieux.
 //
-// Donc une chance sur 26 000 de faire la différence, c'est négligeable. L'enjeu, par contre, touche tout le Québec : des budgets, des lois, tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabiilté d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets, multipliés font que voter reste un acte démocratique *rationnel* pour qui se soucie des autres et de la postérité ([Edlin, Gelman et Kaplan, 2007](https://www.nber.org/papers/w13562)).
+// Que ce soit une chance sur 26 000 ou 34 000 de faire la différence, c'est négligeable. Mais l'enjeu touche tout le Québec (des budgets, des lois, des mesures d'urgence), tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabilité d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets combinés font que voter reste un acte démocratique [*rationnel*]((https://www.nber.org/papers/w13562)) pour qui se soucie des autres et de la postérité.
 //
-// Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. Un vote rapporte ainsi environ 3 $ par année à son parti, ou 12 $ sur quatre ans. Une personne peut donner au plus 100 $ par année à un parti.
+// Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. L'enveloppe est fixe : ton vote ne crée pas d'argent, il en déplace environ 3 $ par année vers ton parti (12 $ sur quatre ans), aux dépens des autres. Une personne peut donner au plus 100 $ par année à un parti.
 
 // %% [javascript] #collapse-cell
 const ALLOCATION_PAR_INSCRIT = 1.99;
@@ -516,18 +538,20 @@ elus2026.map((d) => ({
 // %% [markdown]
 // La CAQ n'a aucun député, mais ses votes lui rapportent environ 1 700 000 $ par année. Le score d'un parti compte aussi en dehors de l'argent : il influence sa couverture médiatique et sa capacité de recruter des candidat.es.
 //
-// Le vote stratégique consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd presque tout son sens, puisque presque aucun vote n'est perdu.
+// Le vote stratégique consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd beaucoup de son sens, puisque presque aucun vote n'est perdu. Il ne disparaît pas tout à fait : avec un seuil, certains prêtent leur vote à un allié menacé de passer sous la barre, comme en Allemagne.
 
 // %% [markdown]
 // ## Pourquoi le mode de scrutin ne change pas
 //
-// Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale, et c'est le gouvernement qui la propose. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque n'a jamais réussi à la faire adopter. En 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé le projet de loi 39 en 2019, puis l'a abandonné en décembre 2021. Aux élections suivantes, elle a obtenu 72 % des sièges avec 41 % des votes.
+// Introduire davantage de proportionnalité permettrait une meilleure représentation des courants politiques, une plus grande équité territoriale et, puisque les partis formeraient davantage un spectre continu que des clans tranchés (du moins en théorie), un meilleur esprit de coopération entre les élu.es. Alors, si les avantages sont si nombreux, pourquoi le mode de scrutin semble-t-il coulé dans le béton ?
 //
-// Le maintien du mode de scrutin actuel a quelques arguments valides. Chaque circonscription a sa député.e, que l'électorat juge directement, et les régions peu peuplées gardent leurs élu.es. Toutefois, on dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026 - moins prévisibles, mais le terme *instabilité* reste un peu fort en café. Une système mixte trop compliqué? Si ça fonctionnent en Allemagne, en Nouvelle-Zélande et en Écosse, pourquoi pas au Québec? On dit enfin que la proportionnelle ouvrirait la porte aux petits partis extrêmes, mais un seuil, comme les 5 % allemands, limite l'entrée des très petits partis. Par ailleurs, on a pu constater que le mode de scrutin actuel n'est pas non plus immunisé contre des élu.es aux propos incongrus.
+// Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au programme du Parti québécois dès ses débuts, et René Lévesque n'a jamais réussi à la faire adopter. Cinquante ans plus tard, en 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé le projet de loi 39 en 2019, puis l'a abandonné. Aux élections suivantes, elle a obtenu 72 % des sièges avec 41 % des votes.
 //
-// Lors du débat des chefs de Radio-Canada, le candidat du Parti québécois, maintenant premier ministre élu, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
+// Les arguments en faveur du mode actuel circulent, mais à mon avis, ils méritent peu d'attention. Aujourd'hui, en effet, chaque circonscription a sa député.e, que l'électorat juge directement, et les régions peu peuplées gardent leurs élu.es : ce serait aussi le cas avec la proposition du MDN, même si les circonscriptions seraient plus grandes. On dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026 (moins prévisibles, certes, mais le terme *instabilité* reste un peu fort en café). Un système mixte trop compliqué ? Oui, c'est plus compliqué, mais si ça fonctionne en Allemagne, en Nouvelle-Zélande et en Écosse, je pense que les Québécois.es, [réputé.es particulièrement brillant.es en maths](https://cmec.ca/docs/pisa2025/PISA_2025_Highlights_FR.pdf), sont en mesure de comprendre.
 //
-// Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
+// On dit enfin que la proportionnelle ouvrirait la porte aux partis extrêmes. Le modèle du MDN prévoit un seuil de 4 % à l'échelle totale, et comme la compensation se fait par région, il faut dans les faits bien davantage pour obtenir un siège hors des régions plus populeuses. Mais, et c'est particulièrement important ici, *un seuil protège contre la fragmentation, pas contre l'extrémisme*. L'AfD, un parti allemand d'extrême droite, a dépassé les 5 % et siège aujourd'hui au *Bundestag*. Au Québec, on a pu constater que le mode de scrutin actuel n'est pas non plus immunisé contre des élu.es aux propos extrémistes et incongrus.
+//
+// Lors du débat des chefs de Radio-Canada, le chef du Parti québécois, maintenant premier ministre, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
 
 // %% [markdown]
 // -----
@@ -560,6 +584,7 @@ elus2026.map((d) => ({
 // - Financement des partis : Élections Québec, allocation annuelle aux partis autorisés (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.
 // - Prévision 2030 : Votovision, prévision du 13 octobre 2026.
 // - Projet de loi 39, *Loi établissant un nouveau mode de scrutin*, Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.
-// - Réforme du mode de scrutin : la proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné en décembre 2021. Voir J. Verville, *La réforme du mode de scrutin au Québec*, 2020, et *Options politiques*, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
+// - Simulation de la proportionnelle mixte compensatoire (projet de loi 199 : 80 circonscriptions, 49 sièges régionaux dans 17 régions, seuil de 4 %, 129 sièges) sur les votes du 5 octobre 2026 : Mouvement démocratie nouvelle, communiqué du 7 octobre 2026 ; chiffres rapportés par Hélène Buzzetti, « Pour en finir avec la réforme électorale », *Le Nouvelliste*, 9 octobre 2026.
+// - Réforme du mode de scrutin : la proportionnelle figurait au programme du Parti québécois dès ses débuts. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné avant les élections de 2022. Voir J. Verville, *La réforme du mode de scrutin au Québec*, 2020, et *Options politiques*, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
 
 // %% [javascript]

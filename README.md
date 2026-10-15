@@ -24,9 +24,13 @@ npm run build        # builds the posts, then the site
 - `posts/<lang>/<slug>/`: one folder per post, published at `/<lang>/posts/<slug>/`:
   `index.html` (Observable Notebook Kit notebook, `<notebook>` format, with a `<title>` and a
   `<meta name="date" content="YYYY-MM-DD">`), `source.js` (the authoring source, not built) and any
-  attached files (images, data). Each language lists only its own posts; a post naming its
+  attached images. Data files shared by the languages of a post live in `posts/data/<slug>/` and are
+  read from GitHub by absolute URL, not served by the site. Each language lists only its own posts; a post naming its
   translation (`<meta name="translation" content="/en/posts/<slug>/">`) links to it from the language switch.
 - `templates/post-fr.html`, `templates/post-en.html`: the site template applied to posts.
+- `scripts/render-post.mjs posts/<lang>/<slug>`: renders a post's `index.html` from its `source.js`
+  (front matter `// title:`, `// date:`, optional `// translation:`; cells `// %% [markdown]` and
+  `// %% [javascript]`).
 
 ## Publishing
 
