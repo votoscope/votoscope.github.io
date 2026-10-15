@@ -4,7 +4,7 @@
 // ---
 
 // %% [markdown]
-// > The calculations in this post can be [reproduced on tangent/note](https://note.tangent.to/votovision/votovision.github.io/posts/en/2026-10_electoral-distortion/source.js).
+// > The calculations in this post can be [reproduced on tangent/note](https://note.tangent.to/gh/votovision/votovision.github.io/posts/en/2026-10_electoral-distortion/source.js).
 //
 // *CAQ: 0*. Not 0% of the vote, but 0 candidates elected. No conspiracy here, nothing but the expected result of the governments are elected in Quebec: *first past the post*, one member per riding. Here is how elections work in Quebec.
 //

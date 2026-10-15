@@ -4,7 +4,7 @@
 // ---
 
 // %% [markdown]
-// > Les calculs de ce billet peuvent être [reproduits sur tangent/note](https://note.tangent.to/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
+// > Les calculs de ce billet peuvent être [reproduits sur tangent/note](https://note.tangent.to/gh/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
 //
 // *CAQ : 0*. Pas 0 % du vote, mais 0 candidat élu. Aucun complot ici, rien d'autre que le résultat attendu de la manière dont les gouvernements sont élus au Québec : le *scrutin uninominal majoritaire à un tour*. Voici comment fonctionnent les élections au Québec.
 //
