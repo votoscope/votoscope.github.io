@@ -14,7 +14,7 @@
 
     Ton vote ne dépasse pas ta circonscription (enfin, presque, on y reviendra). La plupart des candidat.es sont associé.es à un parti, et le parti le plus représenté forme le gouvernement. Un parti, c'est une organisation privée autorisée par le Directeur général des élections du Québec. Tu formes un parti, il y a des règles sur la manière dont tu ramasses l'argent et comment tu le dépenses. Une fois les résultats officialisés, le lieutenant-gouverneur, représentant de sa majesté, invite à former le gouvernement la personne qui peut obtenir la confiance de l'Assemblée nationale. C'est normalement le leader du parti qui a le plus d'élu.es (le *caucus* gagnant). Les membres du parti ont choisi cette personne, pas l'électorat. Elle reste première ministre tant que l'Assemblée lui garde sa confiance (avec un gouvernement minoritaire, il lui faut l'appui d'autres partis), et choisit ses ministres parmi elleux (en pratique, parmi sa *gang*). Normalement, on a une idée claire de la personne qui sera choisie. Mais non, tu ne choisis pas qui sera premier ministre. Tu choisis juste la personne qui représentera ta circonscription : ton vote s'arrête là.
 
-    Un parti peut donc avoir 13 % des votes valides, sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote valide, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
+    Un parti peut donc [avoir 13 % des votes valides](https://www.electionsquebec.qc.ca/resultats-et-statistiques/), sans avoir de député, CAQ 0 avec 13 %. Il peut aussi passer sur la fesse un peu partout, avoir 28 % du vote valide, et former le gouvernement avec 59 député.es sur les 127 postes disponibles (les *sièges*) : c'est le cas du PQ en 2026. Il peut aussi passer proche partout et former une grande majorité de 72 % des *sièges* avec 41 % du vote : c'était le cas de la CAQ en 2022.
 
     Ce n'est pas tout le monde qui a le droit de vote, c'est pas tout le monde parmi les personnes qui y ont droit qui votent, et (résultat du mode de scrutin) les personnes qui votent ne sont pas nécessairement bien représentées.
   </script>
@@ -185,6 +185,8 @@
     svgSankey.node();
   </script>
   <script id="3" type="text/markdown">
+    *Sources du graphique : population au 1er janvier 2026, [Institut de la statistique du Québec](https://statistique.quebec.ca/fr/fichier/bilan-demographique-quebec-edition-2026.pdf) ; électeurs inscrits et votes, [Élections Québec](https://www.electionsquebec.qc.ca/resultats-et-statistiques/).*
+
     ## Voter dans le vide
 
     Dans chaque circonscription, seuls les votes pour la personne gagnante servent à élire quelqu'un. Les autres votes n'ont aucun effet sur la composition de l'Assemblée nationale. En 2026, c'est le cas de 58 % des votes. Aucun des 572 000 votes de la CAQ n'a élu de député.
@@ -258,7 +260,7 @@
   <script id="6" type="text/markdown">
     ## Quand on se compare...
 
-    Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. Wikipédia répertorie les indices de Gallagher un peu partout dans le monde. Comment se situe le Québec ?
+    Les politicologues aiment bien avoir des indicateurs de distorsion du vote. L'indice de Gallagher (non, pas en l'honneur de Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, mesure l'écart entre parts de votes et parts de sièges. Plus l'indice est élevé, plus il y a d'écart entre les deux. [Wikipédia répertorie les indices de Gallagher](https://en.wikipedia.org/wiki/Gallagher_index) un peu partout dans le monde. Comment se situe le Québec ?
   </script>
   <script id="7" type="module">
     const gallagherMonde = [ // de Wikipedia
@@ -301,7 +303,7 @@
     });
   </script>
   <script id="8" type="text/markdown">
-    Les pays qui votent à la proportionnelle ont des indices faibles, mais un scrutin majoritaire n'est pas forcément très distordu : la France (deux tours) et le Canada en 2025 restent sous 10. En Allemagne, un parti n'obtient de sièges au *Bundestag* que s'il recueille au moins 5 % des votes. En 2025, environ 14 % des votes sont allés à des partis sous ce seuil, d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0* n'est toutefois pas un cas exceptionnel. En 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Par ailleurs, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
+    Les pays qui votent à la proportionnelle ont des indices faibles, mais un scrutin majoritaire n'est pas forcément très distordu : la France (deux tours) et le Canada en 2025 restent sous 10. En Allemagne, un parti n'obtient de sièges au *Bundestag* que s'il recueille au moins 5 % des votes. En 2025, [environ 14 % des votes sont allés à des partis sous ce seuil](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html), d'où un indice plus élevé. Pour la *Chambre des représentants* des États-Unis, la plupart des États élisent une personne par circonscription, comme au Québec. Presque tous les votes vont à deux partis, et les sièges suivent à peu près les votes. Le Québec vit dans la zone des scrutins majoritaires les plus distordus. L'effet *CAQ : 0* n'est toutefois pas un cas exceptionnel. En 2022, le PCQ a lui aussi obtenu environ 13 % des votes, et aucun siège. Par ailleurs, lors des élections de 2022, la CAQ a encore été davantage avantagée par la distorsion que l'a été le PQ en 2026.
   </script>
   <script id="9" type="text/markdown">
     ## Fiction : l'élection de 2026 à la proportionnelle
@@ -337,7 +339,7 @@
     }
     // Proportionnelle mixte compensatoire du projet de loi 199 (80 circonscriptions, 49 sièges régionaux dans 17 régions,
     // seuil de 4 %, 129 sièges) : simulation du Mouvement démocratie nouvelle sur les votes du 5 octobre 2026, communiqué
-    // du 7 octobre 2026, chiffres rapportés par Hélène Buzzetti, « Pour en finir avec la réforme électorale »,
+    // du 7 octobre 2026, chiffres rapportés par Hélène Buzzetti, [« Pour en finir avec la réforme électorale »](https://www.lenouvelliste.ca/chroniques/helene-buzzetti/2026/10/09/pour-en-finir-avec-la-reforme-electorale-Q5RHI6WFGRCP5DS46QPM3TO4EY/),
     // Le Nouvelliste, 9 octobre 2026. Pas recalculée ici.
     const siegesMixte = { PQ: 48, PLQ: 33, PCQ: 23, CAQ: 16, QS: 9 };
     const SIEGES = 127, MAJORITE = 64;
@@ -421,7 +423,7 @@
     svgF.node()
   </script>
   <script id="11" type="text/markdown">
-    À la proportionnelle pure, le PQ aurait 36 sièges plutôt que 59, et 48 en mode *Pro-Mix* (qui aurait 129 sièges, donc un seuil de majorité de 65 sièges). Un gouvernement majoritaire de coalition 48 (PQ) + 23 (PCQ) = 71 (avec opposition PLQ), aurait été possible. Aujourd'hui, le PQ pourrait coaliser avec le PCQ ou QS (ou miser sur 5 transfuges) pour obtenir une majorité.
+    À la proportionnelle pure, le PQ aurait 36 sièges plutôt que 59, et [48 en mode *Pro-Mix*](https://www.lenouvelliste.ca/chroniques/helene-buzzetti/2026/10/09/pour-en-finir-avec-la-reforme-electorale-Q5RHI6WFGRCP5DS46QPM3TO4EY/) (qui aurait 129 sièges, donc un seuil de majorité de 65 sièges). Un gouvernement majoritaire de coalition 48 (PQ) + 23 (PCQ) = 71 (avec opposition PLQ), aurait été possible. Aujourd'hui, le PQ pourrait coaliser avec le PCQ ou QS (ou miser sur 5 transfuges) pour obtenir une majorité.
   </script>
   <script id="12" type="text/markdown">
     ## Ton vote change-t-il quelque chose ?
@@ -459,7 +461,7 @@
   <script id="15" type="text/markdown">
     Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 luttes de circonscription [3].
 
-    La [prévision Votovision pour 2030](https://votovision.github.io/fr/quebec/) permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
+    La [prévision Votovision pour 2030](https://votovision.github.io/fr/quebec/) permet le même calcul pour chaque circonscription. [La chance qu'un vote décide du gagnant](https://doi.org/10.1111/j.1465-7295.2010.00272.x) dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
   </script>
   <script id="16" type="module">
     // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
@@ -520,9 +522,9 @@
 
     Pour la même raison que le danger n'est pas le risque. Une attaque de requin, c'est dangereux. Mais c'est tellement peu probable (en particulier si en ce moment tu es dans un autobus), que le risque est pratiquement nul. Le risque, c'est la dangerosité × la probabilité que ça arrive. Ce qui compte, c'est l'ampleur de la conséquence par rapport à sa probabilité. Une probabilité faible que quelque chose d'énorme arrive, là on n'est plus dans une attaque de requin dans un autobus, et c'est du sérieux.
 
-    Que ce soit une chance sur 26 000 ou 34 000 de faire la différence, c'est négligeable. Mais l'enjeu touche tout le Québec (des budgets, des lois, des mesures d'urgence), tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabilité d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets combinés font que voter reste un acte démocratique [*rationnel*]((https://www.nber.org/papers/w13562)) pour qui se soucie des autres et de la postérité.
+    Que ce soit une chance sur 26 000 ou 34 000 de faire la différence, c'est négligeable. Mais l'enjeu touche tout le Québec (des budgets, des lois, des mesures d'urgence), tout ça étalé sur quatre ans de gouvernement (le cas d'un gouvernement majoritaire). Plus il y a d'électeurs, plus la probabilité d'être décisif est petite... mais plus l'enjeu est grand. Les deux effets combinés font que voter reste un acte démocratique [*rationnel*](https://www.nber.org/papers/w13562) pour qui se soucie des autres et de la postérité.
 
-    Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, l'État verse aux partis environ 2 $ par électeur inscrit, soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. L'enveloppe est fixe : ton vote ne crée pas d'argent, il en déplace environ 3 $ par année vers ton parti (12 $ sur quatre ans), aux dépens des autres. Une personne peut donner au plus 100 $ par année à un parti.
+    Ton vote a aussi un effet déterminé, même si ton choix perd. Chaque année, [l'État verse aux partis environ 2 $ par électeur inscrit](https://www.electionsquebec.qc.ca/partis-politiques/financement/), soit près de 13 millions de dollars, répartis selon leur part des votes à la dernière élection. L'enveloppe est fixe : ton vote ne crée pas d'argent, il en déplace environ 3 $ par année vers ton parti (12 $ sur quatre ans), aux dépens des autres. Une personne peut donner au plus 100 $ par année à un parti.
   </script>
   <script id="19" type="module">
     const ALLOCATION_PAR_INSCRIT = 1.99;
@@ -539,20 +541,20 @@
   <script id="20" type="text/markdown">
     La CAQ n'a aucun député, mais ses votes lui rapportent environ 1 700 000 $ par année. Le score d'un parti compte aussi en dehors de l'argent : il influence sa couverture médiatique et sa capacité de recruter des candidat.es.
 
-    Le vote stratégique consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd beaucoup de son sens, puisque presque aucun vote n'est perdu. Il ne disparaît pas tout à fait : avec un seuil, certains prêtent leur vote à un allié menacé de passer sous la barre, comme en Allemagne.
+    [Le vote stratégique](https://www.cambridge.org/core/books/making-votes-count/42CD9425E1410457FFC5079EC851F32B) consiste à voter pour bloquer un parti qu'on veut voir perdre. Il ne change le résultat que si ta circonscription est serrée et que ton vote brise une égalité, le même pari minuscule que le vote ordinaire. En revanche, ton parti préféré perd à coup sûr environ 3 $ par année et un peu de son score. À la proportionnelle, le vote stratégique perd beaucoup de son sens, puisque presque aucun vote n'est perdu. Il ne disparaît pas tout à fait : avec un seuil, certains prêtent leur vote à un allié menacé de passer sous la barre, comme en Allemagne.
   </script>
   <script id="21" type="text/markdown">
     ## Pourquoi le mode de scrutin ne change pas
 
     Selon ses partisans, introduire davantage de proportionnalité permettrait une meilleure représentation des courants politiques, une plus grande équité territoriale et, puisque les partis formeraient davantage un spectre continu que des clans tranchés (du moins en théorie), un meilleur esprit de coopération entre les élu.es. Pourquoi, alors, le mode de scrutin semble-t-il coulé dans le béton ?
 
-    Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au programme du Parti québécois dès ses débuts, et René Lévesque n'a jamais réussi à la faire adopter. Cinquante ans plus tard, en 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé le projet de loi 39 en 2019, qui a été abandonné avant les élections de 2022.
+    Changer le mode de scrutin demande une loi adoptée par l'Assemblée nationale. Or le parti au gouvernement est presque toujours celui que le mode de scrutin a avantagé. La proportionnelle figurait au programme du Parti québécois dès ses débuts, et René Lévesque n'a jamais réussi à la faire adopter. Cinquante ans plus tard, en 2018, la CAQ s'est engagée avec le PQ, Québec solidaire et le Parti vert à introduire une part de proportionnelle. Une fois au pouvoir, elle a déposé [le projet de loi 39 en 2019](https://www.quebec.ca/nouvelles/actualites/details/le-gouvernement-du-quebec-depose-un-projet-de-loi-etablissant-un-nouveau-mode-de-scrutin), qui a été abandonné avant les élections de 2022.
 
     Les défenseurs du mode actuel avancent plusieurs arguments, auxquels les partisans de la réforme répondent. Aujourd'hui, chaque circonscription a sa député.e, que l'électorat juge directement, et les régions peu peuplées gardent leurs élu.es : ce serait aussi le cas avec la proposition du MDN, même si les circonscriptions seraient plus grandes. On dit que le mode actuel produit des gouvernements majoritaires stables, mais le Québec a eu des gouvernements minoritaires en 2007, en 2012 et en 2026. Un système mixte serait trop compliqué, mais il est en usage en Allemagne, en Nouvelle-Zélande et en Écosse.
 
-    On dit enfin que la proportionnelle ouvrirait la porte aux partis extrêmes. Le modèle du MDN prévoit un seuil de 4 % à l'échelle totale, et comme la compensation se fait par région, il faut dans les faits bien davantage pour obtenir un siège hors des régions plus populeuses. Mais, et c'est particulièrement important ici, *un seuil protège contre la fragmentation, pas contre l'extrémisme*. L'AfD, un parti allemand d'extrême droite, a dépassé les 5 % et siège aujourd'hui au *Bundestag*. Au Québec, le mode de scrutin actuel n'a pas empêché l'élection de personnes ayant tenu des propos antivaccins ou publié des photos de prétendues traînées chimiques (*chemtrails*), une théorie sans fondement scientifique.
+    On dit enfin que la proportionnelle ouvrirait la porte aux partis extrêmes. Le modèle du MDN prévoit un seuil de 4 % à l'échelle totale, et comme la compensation se fait par région, il faut dans les faits bien davantage pour obtenir un siège hors des régions plus populeuses. Mais, et c'est particulièrement important ici, *un seuil protège contre la fragmentation, pas contre l'extrémisme*. L'AfD, un parti allemand d'extrême droite, [a dépassé les 5 %](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html) et siège aujourd'hui au *Bundestag*. Au Québec, le mode de scrutin actuel n'a pas empêché l'élection de personnes ayant tenu des [propos antivaccins](https://www.985fm.ca/audio/797908/une-candidate-du-pcq-aux-propos-anti-vaccins-elle-a-des-idees-hors-consensus) ou publié des [photos de prétendues traînées chimiques](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais) (*chemtrails*), une théorie sans fondement scientifique.
 
-    Lors du débat des chefs de Radio-Canada, le chef du Parti québécois, maintenant premier ministre, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
+    [Lors du débat des chefs de Radio-Canada](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription), le chef du Parti québécois, maintenant premier ministre, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
   </script>
   <script id="22" type="text/markdown">
     -----
@@ -574,20 +576,21 @@
 
     ### Sources
 
-    - Résultats : Élections Québec, résultats officiels des élections générales de 2018, 2022 et 2026.
-    - Population : Institut de la statistique du Québec, *Le bilan démographique du Québec*, édition 2026.
-    - Indices de Gallagher hors Québec : Wikipédia.
-    - Allemagne 2025 : résultats officiels du Bundestag, environ 14 % des votes sans élu.
-    - Chance qu'un vote soit décisif : A. Gelman, N. Silver et A. Edlin, « What is the probability your vote will make a difference? », *Economic Inquiry*, 2012.
-    - Le vote comme choix rationnel pour le bien des autres : A. Edlin, A. Gelman et N. Kaplan, « Voting as a rational choice », *Rationality and Society*, 2007.
-    - Le paradoxe du vote : A. Downs, *An Economic Theory of Democracy*, 1957, et W. Riker et P. Ordeshook, *American Political Science Review*, 1968.
-    - Vote stratégique et mode de scrutin : M. Duverger, *Les partis politiques*, 1951, et G. Cox, *Making Votes Count*, 1997.
-    - Financement des partis : Élections Québec, allocation annuelle aux partis autorisés (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.
+    - Résultats : [Élections Québec, résultats officiels des élections générales](https://www.electionsquebec.qc.ca/resultats-et-statistiques/) de 2018, 2022 et 2026.
+    - Population : Institut de la statistique du Québec, [*Le bilan démographique du Québec*, édition 2026](https://statistique.quebec.ca/fr/fichier/bilan-demographique-quebec-edition-2026.pdf).
+    - [Indices de Gallagher hors Québec : Wikipédia](https://en.wikipedia.org/wiki/Gallagher_index).
+    - Allemagne 2025 : [résultats officiels du Bundestag](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html), environ 14 % des votes sans élu.
+    - Chance qu'un vote soit décisif : A. Gelman, N. Silver et A. Edlin, [« What is the probability your vote will make a difference? »](https://doi.org/10.1111/j.1465-7295.2010.00272.x), *Economic Inquiry*, 2012.
+    - Le vote comme choix rationnel pour le bien des autres : A. Edlin, A. Gelman et N. Kaplan, [« Voting as a rational choice »](https://doi.org/10.1177/1043463107077384), *Rationality and Society*, 2007.
+    - Le paradoxe du vote : [W. Riker et P. Ordeshook, *American Political Science Review*, 1968](https://doi.org/10.2307/1953324).
+    - Vote stratégique et mode de scrutin : [G. Cox, *Making Votes Count*, 1997](https://www.cambridge.org/core/books/making-votes-count/42CD9425E1410457FFC5079EC851F32B).
+    - Financement des partis : [Élections Québec, allocation annuelle aux partis autorisés](https://www.electionsquebec.qc.ca/partis-politiques/financement/) (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.
     - Prévision 2030 : Votovision, prévision du 13 octobre 2026.
-    - Propos antivaccins et traînées chimiques : *Le Journal de Montréal*, [« Non, le Parti conservateur ne croit pas aux chemtrails, mais… »](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais), 30 septembre 2026, et 98.5, « Une candidate du PCQ aux propos anti-vaccins », 2026.
-    - Projet de loi 39, *Loi établissant un nouveau mode de scrutin*, Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.
-    - Simulation de la proportionnelle mixte compensatoire (projet de loi 199 : 80 circonscriptions, 49 sièges régionaux dans 17 régions, seuil de 4 %, 129 sièges) sur les votes du 5 octobre 2026 : Mouvement démocratie nouvelle, communiqué du 7 octobre 2026 ; chiffres rapportés par Hélène Buzzetti, « Pour en finir avec la réforme électorale », *Le Nouvelliste*, 9 octobre 2026.
-    - Réforme du mode de scrutin : la proportionnelle figurait au programme du Parti québécois dès ses débuts. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné avant les élections de 2022. Voir J. Verville, *La réforme du mode de scrutin au Québec*, 2020, et *Options politiques*, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
+    - Engagement du chef du Parti québécois à réformer le mode de scrutin : Radio-Canada, [« Le débat des chefs 2026 », transcription](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription).
+    - Propos antivaccins et traînées chimiques : *Le Journal de Montréal*, [« Non, le Parti conservateur ne croit pas aux chemtrails, mais… »](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais), 30 septembre 2026, et [98.5, « Une candidate du PCQ aux propos anti-vaccins »](https://www.985fm.ca/audio/797908/une-candidate-du-pcq-aux-propos-anti-vaccins-elle-a-des-idees-hors-consensus), 2026.
+    - [Projet de loi 39, *Loi établissant un nouveau mode de scrutin*](https://www.quebec.ca/nouvelles/actualites/details/le-gouvernement-du-quebec-depose-un-projet-de-loi-etablissant-un-nouveau-mode-de-scrutin), Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.
+    - Simulation de la proportionnelle mixte compensatoire (projet de loi 199 : 80 circonscriptions, 49 sièges régionaux dans 17 régions, seuil de 4 %, 129 sièges) sur les votes du 5 octobre 2026 : [Mouvement démocratie nouvelle, communiqué du 7 octobre 2026](https://www.pressegauche.org/Le-MDN-reclame-la-collaboration-pour-adopter-rapidement-la-reforme-du-mode-de) ; chiffres rapportés par Hélène Buzzetti, « Pour en finir avec la réforme électorale », *Le Nouvelliste*, 9 octobre 2026.
+    - Réforme du mode de scrutin : la proportionnelle figurait au programme du Parti québécois dès ses débuts. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné avant les élections de 2022. Voir J. Verville, [*La réforme du mode de scrutin au Québec*](https://www.puq.ca/catalogue/livres/reforme-mode-scrutin-quebec-3925.html), 2020, et *Options politiques*, [« Pour une réforme du système électoral au Québec sans référendum »](https://policyoptions.irpp.org/fr/2021/02/pour-une-reforme-du-systeme-electoral-au-quebec-sans-referendum/), février 2021.
   </script>
   <script id="24" type="module" pinned>
 

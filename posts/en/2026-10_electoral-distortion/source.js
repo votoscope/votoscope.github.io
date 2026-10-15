@@ -13,7 +13,7 @@
 //
 // Your vote doesn't go beyond your riding (well, almost; we will come back to that). Most candidates are tied to a party, and the party with the most members forms the government. A party is a private organization authorized by the Chief Electoral Officer of Quebec. You form a party, there are rules on how you raise money and how you spend it. Once the results are official, the lieutenant governor, the King's representative, invites the person who can win the confidence of the National Assembly to form the government. That is normally the leader of the party with the most members elected (the winning *caucus*). The party's members chose that person, not the voters. They stay premier as long as the Assembly keeps its confidence in them (with a minority government, they need the support of other parties), and pick their ministers among the members (in practice, among their gang). Normally, we have a clear idea of who will be chosen. But no, you do not choose who will be premier. You only choose the person who will represent your riding: your vote stops there.
 //
-// A party can therefore get 13% of the valid votes without electing a single member: CAQ 0 with 13%. It can also squeak through just about everywhere, get 28% of the valid vote, and form the government with 59 members out of the 127 available positions (the *seats*): that is the PQ in 2026. It can also come close everywhere and form a large majority of 72% of the *seats* with 41% of the vote: that was the CAQ in 2022.
+// A party can therefore [get 13% of the valid votes](https://www.electionsquebec.qc.ca/resultats-et-statistiques/) without electing a single member: CAQ 0 with 13%. It can also squeak through just about everywhere, get 28% of the valid vote, and form the government with 59 members out of the 127 available positions (the *seats*): that is the PQ in 2026. It can also come close everywhere and form a large majority of 72% of the *seats* with 41% of the vote: that was the CAQ in 2022.
 //
 // Not everyone has the right to vote, not everyone who has it votes, and (a result of the electoral system) those who vote are not necessarily well represented.
 
@@ -184,6 +184,8 @@ svgSankey.attr("viewBox", [0, 0, X_SIEGES + 130, Math.max(480, yS + 10)]);
 svgSankey.node();
 
 // %% [markdown]
+// *Chart sources: population on 1 January 2026, [Institut de la statistique du Québec](https://statistique.quebec.ca/fr/fichier/bilan-demographique-quebec-edition-2026.pdf); registered electors and votes, [Élections Québec](https://www.electionsquebec.qc.ca/resultats-et-statistiques/).*
+//
 // ## Oblivion voting
 //
 // In each riding, only the votes for the winner elect someone. The other votes have no effect on the makeup of the National Assembly. In 2026, that is the case for 58% of the votes. None of the CAQ's 572,000 votes elected a member.
@@ -258,7 +260,7 @@ Plot.plot({
 // %% [markdown]
 // ## But compared to...
 //
-// Political scientists like to have indicators of vote distortion. The Gallagher index (no, not named after Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, measures the gap between vote shares and seat shares. The higher the index, the larger the gap. Wikipedia lists Gallagher indices for much of the world. Where does Quebec stand?
+// Political scientists like to have indicators of vote distortion. The Gallagher index (no, not named after Brendan), $\sqrt{\tfrac{1}{2}\sum_i (v_i - s_i)^2}$, measures the gap between vote shares and seat shares. The higher the index, the larger the gap. [Wikipedia lists Gallagher indices](https://en.wikipedia.org/wiki/Gallagher_index) for much of the world. Where does Quebec stand?
 
 // %% [javascript] #collapse-cell
 const gallagherMonde = [ // from Wikipedia
@@ -301,7 +303,7 @@ Plot.plot({
 });
 
 // %% [markdown]
-// Countries that vote by proportional representation have low indices, but a majoritarian system is not necessarily very distorted: France (two rounds) and Canada in 2025 stay under 10. In Germany, a party gets seats in the *Bundestag* only if it collects at least 5% of the votes. In 2025, about 14% of the votes went to parties under that threshold, hence a higher index. For the United States *House of Representatives*, most states elect one person per district, as in Quebec. Almost all votes go to two parties, and seats roughly follow votes. Quebec lives in the zone of the most distorted majoritarian systems. The *CAQ: 0* effect is not an exceptional case, though. In 2022, the CPQ also got about 13% of the votes, and no seat. And in the 2022 election, the CAQ benefited from the distortion even more than the PQ did in 2026.
+// Countries that vote by proportional representation have low indices, but a majoritarian system is not necessarily very distorted: France (two rounds) and Canada in 2025 stay under 10. In Germany, a party gets seats in the *Bundestag* only if it collects at least 5% of the votes. In 2025, [about 14% of the votes went to parties under that threshold](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html), hence a higher index. For the United States *House of Representatives*, most states elect one person per district, as in Quebec. Almost all votes go to two parties, and seats roughly follow votes. Quebec lives in the zone of the most distorted majoritarian systems. The *CAQ: 0* effect is not an exceptional case, though. In 2022, the CPQ also got about 13% of the votes, and no seat. And in the 2022 election, the CAQ benefited from the distortion even more than the PQ did in 2026.
 
 // %% [markdown]
 // ## Fiction: the 2026 election under proportional representation
@@ -337,7 +339,7 @@ function banzhaf(sieges, majorite) {
 }
 // Mixed-member proportional system of Bill 199 (80 ridings, 49 regional seats in 17 regions, 4% threshold, 129 seats):
 // simulation by the Mouvement démocratie nouvelle on the votes of 5 October 2026, press release of 7 October 2026,
-// figures reported by Hélène Buzzetti, "Pour en finir avec la réforme électorale", Le Nouvelliste, 9 October 2026.
+// figures reported by Hélène Buzzetti, ["Pour en finir avec la réforme électorale"](https://www.lenouvelliste.ca/chroniques/helene-buzzetti/2026/10/09/pour-en-finir-avec-la-reforme-electorale-Q5RHI6WFGRCP5DS46QPM3TO4EY/), Le Nouvelliste, 9 October 2026.
 // Not recomputed here.
 const siegesMixte = { PQ: 48, QLP: 33, CPQ: 23, CAQ: 16, QS: 9 };
 const SIEGES = 127, MAJORITE = 64;
@@ -421,7 +423,7 @@ gLegende.selectAll("text").data(LEGENDE).join("text").attr("x", (d) => d[2] + 8)
 svgF.node()
 
 // %% [markdown]
-// Under pure proportional representation, the PQ would have 36 seats rather than 59, and 48 under *Pro-Mix* (which would have 129 seats, hence a majority threshold of 65 seats). A majority coalition government, 48 (PQ) + 23 (CPQ) = 71 (with the QLP in opposition), would have been possible. Today, the PQ could join forces with the CPQ or QS (or count on 5 floor-crossers) to reach a majority.
+// Under pure proportional representation, the PQ would have 36 seats rather than 59, and [48 under *Pro-Mix*](https://www.lenouvelliste.ca/chroniques/helene-buzzetti/2026/10/09/pour-en-finir-avec-la-reforme-electorale-Q5RHI6WFGRCP5DS46QPM3TO4EY/) (which would have 129 seats, hence a majority threshold of 65 seats). A majority coalition government, 48 (PQ) + 23 (CPQ) = 71 (with the QLP in opposition), would have been possible. Today, the PQ could join forces with the CPQ or QS (or count on 5 floor-crossers) to reach a majority.
 
 // %% [markdown]
 // ## Does your vote change anything?
@@ -459,7 +461,7 @@ Plot.plot({
 // %% [markdown]
 // Over nearly 2,000 riding races since 1970, 25 were won by fewer than 100 votes. A perfect tie in a riding happens about once in 7,800 riding races [3].
 //
-// The [Votovision forecast for 2030](https://votovision.github.io/en/quebec/) allows the same calculation for each riding. The chance that one vote decides the winner depends on the forecast margin between the top two and on the number of electors [4].
+// The [Votovision forecast for 2030](https://votovision.github.io/en/quebec/) allows the same calculation for each riding. [The chance that one vote decides the winner](https://doi.org/10.1111/j.1465-7295.2010.00272.x) depends on the forecast margin between the top two and on the number of electors [4].
 
 // %% [javascript] #collapse-cell
 // Chance that a single vote changes the winner of each riding in 2030.
@@ -522,7 +524,7 @@ Plot.plot({
 //
 // Whether it is one chance in 26,000 or in 34,000 of making the difference, it is negligible. But the stakes affect all of Quebec (budgets, laws, emergency measures), all spread over four years of government (in the case of a majority government). The more electors there are, the smaller the probability of being decisive... but the greater the stakes. The two effects combined make voting a [*rational*](https://www.nber.org/papers/w13562) democratic act for anyone who cares about others and about posterity.
 //
-// Your vote also has a definite effect, even if your choice loses. Every year, the State pays the parties about $2 per registered elector, nearly $13 million, shared according to their share of the votes at the last election. The envelope is fixed: your vote creates no money, it moves about $3 a year to your party ($12 over four years), at the expense of the others. A person can give at most $100 a year to a party.
+// Your vote also has a definite effect, even if your choice loses. Every year, [the State pays the parties about $2 per registered elector](https://www.electionsquebec.qc.ca/partis-politiques/financement/), nearly $13 million, shared according to their share of the votes at the last election. The envelope is fixed: your vote creates no money, it moves about $3 a year to your party ($12 over four years), at the expense of the others. A person can give at most $100 a year to a party.
 
 // %% [javascript] #collapse-cell
 const ALLOCATION_PAR_INSCRIT = 1.99;
@@ -539,20 +541,20 @@ elus2026.map((d) => ({
 // %% [markdown]
 // The CAQ has no member, but its votes bring it about $1,700,000 a year. A party's score also counts beyond money: it affects its media coverage and its ability to recruit candidates.
 //
-// Strategic voting means voting to block a party you want to see lose. It changes the result only if your riding is close and your vote breaks a tie, the same tiny bet as an ordinary vote. On the other hand, your preferred party loses about $3 a year for sure, and a bit of its score. Under proportional representation, strategic voting loses much of its point, since almost no vote is wasted. It does not disappear entirely: with a threshold, some lend their vote to an ally at risk of falling under the bar, as in Germany.
+// [Strategic voting](https://www.cambridge.org/core/books/making-votes-count/42CD9425E1410457FFC5079EC851F32B) means voting to block a party you want to see lose. It changes the result only if your riding is close and your vote breaks a tie, the same tiny bet as an ordinary vote. On the other hand, your preferred party loses about $3 a year for sure, and a bit of its score. Under proportional representation, strategic voting loses much of its point, since almost no vote is wasted. It does not disappear entirely: with a threshold, some lend their vote to an ally at risk of falling under the bar, as in Germany.
 
 // %% [markdown]
 // ## Why the electoral system does not change
 //
 // According to its supporters, bringing in more proportionality would allow better representation of political currents, more territorial fairness and, since the parties would form more of a continuous spectrum than sharply drawn clans (in theory at least), a better spirit of cooperation among elected members. Why, then, does the electoral system seem set in concrete?
 //
-// Changing the electoral system requires a law passed by the National Assembly. But the governing party is almost always the one the electoral system favoured. Proportional representation was in the Parti québécois's platform from its beginnings, and René Lévesque never managed to get it adopted. Fifty years later, in 2018, the CAQ committed, with the PQ, Québec solidaire and the Green Party, to introducing a share of proportionality. Once in power, it tabled Bill 39 in 2019, which was dropped before the 2022 election.
+// Changing the electoral system requires a law passed by the National Assembly. But the governing party is almost always the one the electoral system favoured. Proportional representation was in the Parti québécois's platform from its beginnings, and René Lévesque never managed to get it adopted. Fifty years later, in 2018, the CAQ committed, with the PQ, Québec solidaire and the Green Party, to introducing a share of proportionality. Once in power, it tabled [Bill 39 in 2019](https://www.quebec.ca/nouvelles/actualites/details/le-gouvernement-du-quebec-depose-un-projet-de-loi-etablissant-un-nouveau-mode-de-scrutin), which was dropped before the 2022 election.
 //
 // Defenders of the current system put forward several arguments, to which supporters of reform respond. Today, each riding has its member, whom the voters judge directly, and sparsely populated regions keep their members: that would also be the case with the MDN's proposal, even if ridings would be larger. It is said that the current system produces stable majority governments, but Quebec had minority governments in 2007, 2012 and 2026. A mixed system would be too complicated, but it is in use in Germany, New Zealand and Scotland.
 //
-// Finally, it is said that proportional representation would open the door to extremist parties. The MDN's model sets a 4% threshold overall, and since compensation is done by region, in practice it takes much more to win a seat outside the more populous regions. But, and this matters here, *a threshold protects against fragmentation, not against extremism*. The AfD, a German far-right party, passed 5% and now sits in the *Bundestag*. In Quebec, the current system did not prevent the election of people who had made anti-vaccine claims or posted photos of supposed chemtrails, a theory with no scientific basis.
+// Finally, it is said that proportional representation would open the door to extremist parties. The MDN's model sets a 4% threshold overall, and since compensation is done by region, in practice it takes much more to win a seat outside the more populous regions. But, and this matters here, *a threshold protects against fragmentation, not against extremism*. The AfD, a German far-right party, [passed 5%](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html) and now sits in the *Bundestag*. In Quebec, the current system did not prevent the election of people who had made [anti-vaccine claims](https://www.985fm.ca/audio/797908/une-candidate-du-pcq-aux-propos-anti-vaccins-elle-a-des-idees-hors-consensus) or posted [photos of supposed chemtrails](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais), a theory with no scientific basis.
 //
-// At the Radio-Canada leaders' debate, the leader of the Parti québécois, now premier, committed to reforming the electoral system, without giving details.
+// [At the Radio-Canada leaders' debate](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription), the leader of the Parti québécois, now premier, committed to reforming the electoral system, without giving details.
 
 // %% [markdown]
 // -----
@@ -574,19 +576,20 @@ elus2026.map((d) => ({
 //
 // ### Sources
 //
-// - Results: Élections Québec, official results of the 2018, 2022 and 2026 general elections.
-// - Population: Institut de la statistique du Québec, *Le bilan démographique du Québec*, 2026 edition.
-// - Gallagher indices outside Quebec: Wikipedia.
-// - Germany 2025: official results of the Bundestag, about 14% of the votes without a member elected.
-// - Chance that a vote is decisive: A. Gelman, N. Silver and A. Edlin, "What is the probability your vote will make a difference?", *Economic Inquiry*, 2012.
-// - Voting as a rational choice for the good of others: A. Edlin, A. Gelman and N. Kaplan, "Voting as a rational choice", *Rationality and Society*, 2007.
-// - The paradox of voting: A. Downs, *An Economic Theory of Democracy*, 1957, and W. Riker and P. Ordeshook, *American Political Science Review*, 1968.
-// - Strategic voting and electoral systems: M. Duverger, *Les partis politiques*, 1951, and G. Cox, *Making Votes Count*, 1997.
-// - Party financing: Élections Québec, annual allowance to authorized parties ($1.99 per registered elector in 2026) and maximum contribution of $100 per party per year.
+// - Results: [Élections Québec, official results of the](https://www.electionsquebec.qc.ca/resultats-et-statistiques/) 2018, 2022 and 2026 general elections.
+// - Population: Institut de la statistique du Québec, [*Le bilan démographique du Québec*, 2026 edition](https://statistique.quebec.ca/fr/fichier/bilan-demographique-quebec-edition-2026.pdf).
+// - [Gallagher indices outside Quebec: Wikipedia](https://en.wikipedia.org/wiki/Gallagher_index).
+// - Germany 2025: [official results of the Bundestag](https://www.bundeswahlleiterin.de/bundestagswahlen/2025/ergebnisse.html), about 14% of the votes without a member elected.
+// - Chance that a vote is decisive: A. Gelman, N. Silver and A. Edlin, ["What is the probability your vote will make a difference?"](https://doi.org/10.1111/j.1465-7295.2010.00272.x), *Economic Inquiry*, 2012.
+// - Voting as a rational choice for the good of others: A. Edlin, A. Gelman and N. Kaplan, ["Voting as a rational choice"](https://doi.org/10.1177/1043463107077384), *Rationality and Society*, 2007.
+// - The paradox of voting: [W. Riker and P. Ordeshook, *American Political Science Review*, 1968](https://doi.org/10.2307/1953324).
+// - Strategic voting and electoral systems: [G. Cox, *Making Votes Count*, 1997](https://www.cambridge.org/core/books/making-votes-count/42CD9425E1410457FFC5079EC851F32B).
+// - Party financing: [Élections Québec, annual allowance to authorized parties](https://www.electionsquebec.qc.ca/partis-politiques/financement/) ($1.99 per registered elector in 2026) and maximum contribution of $100 per party per year.
 // - 2030 forecast: Votovision, forecast of 13 October 2026.
-// - Anti-vaccine claims and chemtrails: *Le Journal de Montréal*, ["Non, le Parti conservateur ne croit pas aux chemtrails, mais…"](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais), 30 September 2026, and 98.5, "Une candidate du PCQ aux propos anti-vaccins", 2026.
-// - Bill 39, *An Act to establish a new electoral system*, National Assembly of Québec, 2019: 80 riding seats and 45 regional seats.
-// - Simulation of the mixed-member proportional system (Bill 199: 80 ridings, 49 regional seats in 17 regions, 4% threshold, 129 seats) on the votes of 5 October 2026: Mouvement démocratie nouvelle, press release of 7 October 2026; figures reported by Hélène Buzzetti, "Pour en finir avec la réforme électorale", *Le Nouvelliste*, 9 October 2026.
-// - Electoral reform: proportional representation was in the Parti québécois's platform from its beginnings. René Lévesque, Jean Charest and François Legault promised a reform, then backed down. Bill 39, tabled in 2019, was dropped before the 2022 election. See J. Verville, *La réforme du mode de scrutin au Québec*, 2020, and *Options politiques*, "Pour une réforme du système électoral au Québec sans référendum", February 2021.
+// - Commitment of the Parti québécois leader to reform the electoral system: Radio-Canada, ["Le débat des chefs 2026", transcript](https://ici.radio-canada.ca/ohdio/premiere/emissions/emission-speciale/episodes/1273212/le-debat-des-chefs-2026/transcription).
+// - Anti-vaccine claims and chemtrails: *Le Journal de Montréal*, ["Non, le Parti conservateur ne croit pas aux chemtrails, mais…"](https://www.journaldemontreal.com/2026/09/30/non-le-parti-conservateur-ne-croit-pas-aux-chemtrails-mais), 30 September 2026, and [98.5, "Une candidate du PCQ aux propos anti-vaccins"](https://www.985fm.ca/audio/797908/une-candidate-du-pcq-aux-propos-anti-vaccins-elle-a-des-idees-hors-consensus), 2026.
+// - [Bill 39, *An Act to establish a new electoral system*](https://www.quebec.ca/nouvelles/actualites/details/le-gouvernement-du-quebec-depose-un-projet-de-loi-etablissant-un-nouveau-mode-de-scrutin), National Assembly of Québec, 2019: 80 riding seats and 45 regional seats.
+// - Simulation of the mixed-member proportional system (Bill 199: 80 ridings, 49 regional seats in 17 regions, 4% threshold, 129 seats) on the votes of 5 October 2026: [Mouvement démocratie nouvelle, press release of 7 October 2026](https://www.pressegauche.org/Le-MDN-reclame-la-collaboration-pour-adopter-rapidement-la-reforme-du-mode-de); figures reported by Hélène Buzzetti, "Pour en finir avec la réforme électorale", *Le Nouvelliste*, 9 October 2026.
+// - Electoral reform: proportional representation was in the Parti québécois's platform from its beginnings. René Lévesque, Jean Charest and François Legault promised a reform, then backed down. Bill 39, tabled in 2019, was dropped before the 2022 election. See J. Verville, [*La réforme du mode de scrutin au Québec*](https://www.puq.ca/catalogue/livres/reforme-mode-scrutin-quebec-3925.html), 2020, and *Options politiques*, ["Pour une réforme du système électoral au Québec sans référendum"](https://policyoptions.irpp.org/fr/2021/02/pour-une-reforme-du-systeme-electoral-au-quebec-sans-referendum/), February 2021.
 
 // %% [javascript]
