@@ -20,7 +20,7 @@ export const PARTIES = {
 };
 
 /** Data folder of a model repository: local copy in development, published repository otherwise. */
-export const repoData = (repo) => (import.meta.env.DEV ? `/data/${repo}/` : `https://raw.githubusercontent.com/votoscope/${repo}/main/data/`);
+export const repoData = (repo) => (import.meta.env.DEV ? `/data/${repo}/` : `https://raw.githubusercontent.com/votovision/${repo}/main/data/`);
 
 /** Language of the page (<html lang>) and the matching locale. */
 export const LANG = typeof document !== "undefined" && document.documentElement.lang === "en" ? "en" : "fr";

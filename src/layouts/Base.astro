@@ -20,7 +20,7 @@ const otherLang = lang === "fr" ? "en" : "fr";
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title === "Votoscope" ? title : `${title} · Votoscope`}</title>
+    <title>{title === "Votovision" ? title : `${title} · Votovision`}</title>
     <meta name="description" content={description} />
     <link rel="alternate" hreflang={otherLang} href={new URL(translationOf(path), Astro.site)} />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
@@ -32,7 +32,7 @@ const otherLang = lang === "fr" ? "en" : "fr";
   </head>
   <body data-election={election}>
     <nav class="site">
-      <a class="brand" href={home}><img src="/logo.svg" alt="" width="31" height="34" />Votoscope</a>
+      <a class="brand" href={home}><img src="/logo.svg" alt="" width="31" height="34" />Votovision</a>
       <ul>
         {items.map((it) => it.links
           ? <li class="menu"><details><summary class={it.links.some((l) => l.current) ? "current" : undefined}>{it.label}<span class="live-dot" hidden></span></summary>
@@ -58,7 +58,7 @@ const otherLang = lang === "fr" ? "en" : "fr";
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const d of menus) d.open = false; });
     </script>
     <footer class="site">
-      <p>{S.footer} <a href="https://github.com/votoscope">github.com/votoscope</a>.</p>
+      <p>{S.footer} <a href="https://github.com/votovision">github.com/votovision</a>.</p>
     </footer>
   </body>
 </html>

@@ -189,8 +189,8 @@ svgSankey.node();
 // %% [javascript] #collapse-cell
 const aq = await import("https://cdn.jsdelivr.net/npm/arquero@8/+esm");
 const op = aq.op;
-const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
-const prevision = await (await fetch("https://raw.githubusercontent.com/votoscope/votoscope.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
+const resultats = await aq.loadCSV("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/resultats_quebec_1970_2026.csv");
+const prevision = await (await fetch("https://raw.githubusercontent.com/votovision/votovision.github.io/refs/heads/main/posts/fr/2026-10_mode-de-scrutin/data/prevision_2030.json")).json();
 
 const COULEURS = { PQ: "#1d4ed8", PLQ: "#d62728", PCQ: "#8b5cf6", CAQ: "#0891b2", QS: "#ea7c0c", Autres: "#a8a29e" };
 // Sigles des partis. Avant 2012, les données nomment les partis au long.
@@ -436,7 +436,7 @@ Plot.plot({
 // %% [markdown]
 // Sur près de 2 000 circonscriptions depuis 1970, 25 ont été gagnées par moins de 100 voix. Une égalité parfaite dans une circonscription arrive environ une fois sur 7 800 élections [3].
 //
-// La prévision Votoscope pour 2030 permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
+// La prévision Votovision pour 2030 permet le même calcul pour chaque circonscription. La chance qu'un vote décide du gagnant dépend de l'écart prévu entre les deux premiers et du nombre d'électeurs [4].
 
 // %% [javascript] #collapse-cell
 // Chance qu'un seul vote change le gagnant de chaque circonscription en 2030.
@@ -527,7 +527,7 @@ elus2026.map((d) => ({
 //
 // Lors du débat des chefs de Radio-Canada, le candidat du Parti québécois, maintenant premier ministre élu, s'est engagé à réformer le mode de scrutin, sans donner plus de détails.
 //
-// Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votoscope/votoscope.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
+// Les calculs de ce billet peuvent être [consultés sur tangent/note](https://note.tangent.to/votovision/votovision.github.io/posts/fr/2026-10_mode-de-scrutin/source.js).
 
 // %% [markdown]
 // -----
@@ -558,7 +558,7 @@ elus2026.map((d) => ({
 // - Le paradoxe du vote : A. Downs, *An Economic Theory of Democracy*, 1957, et W. Riker et P. Ordeshook, *American Political Science Review*, 1968.
 // - Vote stratégique et mode de scrutin : M. Duverger, *Les partis politiques*, 1951, et G. Cox, *Making Votes Count*, 1997.
 // - Financement des partis : Élections Québec, allocation annuelle aux partis autorisés (1,99 $ par électeur inscrit en 2026) et contribution maximale de 100 $ par parti et par année.
-// - Prévision 2030 : Votoscope, prévision du 13 octobre 2026.
+// - Prévision 2030 : Votovision, prévision du 13 octobre 2026.
 // - Projet de loi 39, *Loi établissant un nouveau mode de scrutin*, Assemblée nationale du Québec, 2019 : 80 sièges de circonscription et 45 sièges régionaux.
 // - Réforme du mode de scrutin : la proportionnelle figurait au premier programme du Parti québécois, fondé en 1968. René Lévesque, Jean Charest et François Legault ont promis une réforme, puis reculé. Le projet de loi 39, déposé en 2019, a été abandonné en décembre 2021. Voir J. Verville, *La réforme du mode de scrutin au Québec*, 2020, et *Options politiques*, « Pour une réforme du système électoral au Québec sans référendum », février 2021.
 

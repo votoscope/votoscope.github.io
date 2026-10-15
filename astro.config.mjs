@@ -15,7 +15,7 @@ const postIndex = {
 };
 
 export default defineConfig({
-  site: "https://votoscope.github.io",
+  site: "https://votovision.github.io",
   trailingSlash: "always",
   vite: { plugins: [postIndex] },
 });

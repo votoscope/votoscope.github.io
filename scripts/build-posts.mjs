@@ -98,7 +98,7 @@ for (const [lang, other] of Object.entries(LANGUAGES)) {
       : "";
     if (title) {
       html = html.replace("<main>", `<main><header class="post"><h1>${title}</h1>${dateText ? `<p class="date">${dateText}</p>` : ""}</header>`)
-        .replace(/<title>[^<]*<\/title>/, `<title>${title} · Votoscope</title>`);
+        .replace(/<title>[^<]*<\/title>/, `<title>${title} · Votovision</title>`);
     }
     const translation = /<meta\s+name="translation"\s+content="([^"]+)"/.exec(notebook)?.[1];
     if (translation) html = html.replace(`<a href="/${other}/posts/" hreflang="${other}"`, `<a href="${translation}" hreflang="${other}"`);

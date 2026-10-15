@@ -1,7 +1,7 @@
 ---
-name: votoscope-writing
+name: votovision-writing
 description: |
-  How to write for Votoscope, in French and in English: posts, site pages, dashboard text,
+  How to write for Votovision, in French and in English: posts, site pages, dashboard text,
   methodology, figure captions and code comments. Use whenever you write or correct prose or
   comments in this project, and before handing any text back to the author. Covers clarity
   (explain the mechanism, define every term, one idea per sentence), numbers, French and English
@@ -9,9 +9,9 @@ description: |
   the author's posts. Works with the humanizer skill, which removes AI writing patterns.
 ---
 
-# Writing for Votoscope
+# Writing for Votovision
 
-Votoscope publishes election forecasts and posts about elections, in French and in English. Its
+Votovision publishes election forecasts and posts about elections, in French and in English. Its
 readers are curious but are not political scientists or statisticians. The author writes the posts
 and must be able to read, understand and correct every sentence Claude produces. A sentence the
 author cannot correct is a failed sentence, however accurate it is.

@@ -1,10 +1,10 @@
-# votoscope.github.io
+# votovision.github.io
 
-Votoscope site (https://votoscope.github.io): home page, model dashboards, method, about and posts, in
+Votovision site (https://votovision.github.io): home page, model dashboards, method, about and posts, in
 French (`/fr/`) and English (`/en/`).
 
 Static Astro site. The dashboards read the projections published by the model repositories
-([votoscope/quebec](https://github.com/votoscope/quebec), [votoscope/canada](https://github.com/votoscope/canada)).
+([votovision/quebec](https://github.com/votovision/quebec), [votovision/canada](https://github.com/votovision/canada)).
 
 ```
 npm install

@@ -19,12 +19,12 @@ export const ELECTION_DATES = { bc: "2026-10-24", quebec: "2030-10-07" };
 export const SITE = {
   fr: {
     description: "Prévisions électorales fondées sur les sondages publics et les résultats passés, à code et données ouverts.",
-    footer: "Votoscope est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts :",
+    footer: "Votovision est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts :",
     otherLanguage: "English",
   },
   en: {
     description: "Election forecasts built from public polls and past results, with open code and data.",
-    footer: "Votoscope is an independent project, with no partisan affiliation and no sponsor. Open code and data:",
+    footer: "Votovision is an independent project, with no partisan affiliation and no sponsor. Open code and data:",
     otherLanguage: "Français",
   },
 };

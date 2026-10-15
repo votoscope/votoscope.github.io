@@ -1,5 +1,5 @@
 {
-  "name": "votoscope-site",
+  "name": "votovision-site",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -19,7 +19,7 @@
     "astro": "^7.3.8",
     "leaflet": "^1.9.4"
   },
-  "description": "Votoscope site: election projections and posts",
+  "description": "Votovision site: election projections and posts",
   "license": "GPL-3.0-only",
   "devDependencies": {
     "@observablehq/notebook-kit": "^2.7.0",
