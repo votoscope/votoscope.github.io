@@ -8,8 +8,8 @@ export const PAGES = Object.fromEntries(
 // [page, name], separated by a rule (provinces in alphabetical order, then
 // the federal level).
 export const NAV = {
-  fr: [["Prévisions", [[["bc", "Colombie-Britannique"], ["quebec", "Québec"]], [["canada", "Canada"]]]], ["posts", "Billets"], ["method", "Méthode"], ["about", "À propos"]],
-  en: [["Forecasts", [[["bc", "British Columbia"], ["quebec", "Quebec"]], [["canada", "Canada"]]]], ["posts", "Posts"], ["method", "Method"], ["about", "About"]],
+  fr: [["Prévisions", [[["bc", "Colombie-Britannique"], ["quebec", "Québec"]], [["canada", "Canada"]]]], ["posts", "Billets"], ["À propos", [[["about", "Le projet"], ["method", "Méthode"]]]]],
+  en: [["Forecasts", [[["bc", "British Columbia"], ["quebec", "Quebec"]], [["canada", "Canada"]]]], ["posts", "Posts"], ["About", [[["about", "The project"], ["method", "Method"]]]]],
 };
 
 // Date of the next general election, when known: the menu marks an election
@@ -19,12 +19,12 @@ export const ELECTION_DATES = { bc: "2026-10-24", quebec: "2030-10-07" };
 export const SITE = {
   fr: {
     description: "Prévisions électorales fondées sur les sondages publics et les résultats passés, à code et données ouverts.",
-    footer: "Votovision est un projet indépendant, sans affiliation partisane ni commanditaire. Code et données ouverts :",
+    footer: "Votovision est un projet indépendant, sans affiliation partisane ni commanditaire. Données ouvertes et code source libre :",
     otherLanguage: "English",
   },
   en: {
     description: "Election forecasts built from public polls and past results, with open code and data.",
-    footer: "Votovision is an independent project, with no partisan affiliation and no sponsor. Open code and data:",
+    footer: "Votovision is an independent project, with no partisan affiliation and no sponsor. Open data and open-source code:",
     otherLanguage: "Français",
   },
 };

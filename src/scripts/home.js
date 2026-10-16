@@ -8,19 +8,19 @@ import { PARTIES, repoData, LANG, LOCALE, partyLabel, formatPercent } from "./pa
 
 const T = {
   fr: {
-    name: { qc: "Québec", bc: "Colombie-Britannique", ca: "Canada" }, short: { bc: "C.-B." }, party: "Parti", seats: "Élus", interval: "Intervalle à 90 %",
-    majority: (n) => `Majorité : ${n} élus`, seatsOf: (p, n) => `${p} : ${n} élus`,
-    house: (t, n) => `${t} circonscriptions · majorité : ${n}`,
-    first: (p) => `${p} premier en nombre d'élus`, majorityGov: "Gouvernement majoritaire",
-    asOf: (d, n) => `Sondages au ${d} · ${n} sondages`, unavailable: "Prévision indisponible.", live: (d) => `Élections le ${d}`,
+    name: { qc: "Québec", bc: "Colombie-Britannique", ca: "Canada" }, short: { bc: "C.-B." }, party: "Parti", seats: "Sièges", interval: "Intervalle à 90 %",
+    majority: (n) => `Majorité : ${n} sièges`, seatsOf: (p, n) => `${p} : ${n} sièges`,
+    house: (t, n) => `${t} sièges · majorité : ${n}`,
+    first: (p) => `${p} avec le plus de sièges`, majorityGov: "Gouvernement majoritaire",
+    asOf: (d, n) => `Sondages au ${d} · ${n} sondages`, unavailable: "Prévision indisponible.", live: (d) => `Élections du ${d}`, next: (d) => `Prochaines élections : au plus tard le ${d}`,
     colon: " :",
   },
   en: {
     name: { qc: "Quebec", bc: "British Columbia", ca: "Canada" }, short: { bc: "B.C." }, party: "Party", seats: "Seats", interval: "90% interval",
     majority: (n) => `Majority: ${n} seats`, seatsOf: (p, n) => `${p}: ${n} seats`,
-    house: (t, n) => `${t} ridings · majority: ${n}`,
-    first: (p) => `${p} first in seats`, majorityGov: "Majority government",
-    asOf: (d, n) => `Polls as of ${d} · ${n} polls`, unavailable: "Forecast unavailable.", live: (d) => `Election on ${d}`,
+    house: (t, n) => `${t} seats · majority: ${n}`,
+    first: (p) => `${p} with the most seats`, majorityGov: "Majority government",
+    asOf: (d, n) => `Polls as of ${d} · ${n} polls`, unavailable: "Forecast unavailable.", live: (d) => `Election on ${d}`, next: (d) => `Next election: by ${d}`,
     colon: ":",
   },
 }[LANG];
@@ -78,12 +78,12 @@ function trend(proj, P) {
   const lift = Math.max(0, 0.03 - last.at(-1).y);
   for (const l of last) l.y += lift;
   return Plot.plot({
-    width: 320, height: 150, marginLeft: 0, marginRight: 70, marginTop: 8, marginBottom: 22,
+    width: 320, height: 150, marginLeft: 0, marginRight: 82, marginTop: 8, marginBottom: 22,
     x: { ticks: 0, label: null }, y: { axis: null, domain: [0, Math.max(...points.map((d) => d.v), ...last.map((d) => d.y)) * 1.08] },
     marks: [
       Plot.ruleY([0], { stroke: "#d6d3d1" }),
       Plot.lineY(points, { x: "date", y: "v", z: "p", stroke: (d) => P.color(d.p), strokeWidth: 2 }),
-      Plot.text(last, { x: () => end, y: "y", text: (d) => `${P.label(d.p)} ${(d.v * 100).toFixed(0)}`, dx: 6, textAnchor: "start", fill: "#44403c", fontSize: 13 }),
+      Plot.text(last, { x: () => end, y: "y", text: (d) => `${P.label(d.p)} ${formatPercent(d.v)}`, dx: 6, textAnchor: "start", fill: "#44403c", fontSize: 13 }),
       Plot.text([start], { x: (d) => d, frameAnchor: "bottom", dy: 14, text: monthYear, textAnchor: "start", fill: "#6b6560", fontSize: 13 }),
       Plot.text([end], { x: (d) => d, frameAnchor: "bottom", dy: 14, text: monthYear, textAnchor: "end", fill: "#6b6560", fontSize: 13 }),
     ],
@@ -105,6 +105,12 @@ function summarise(election, proj) {
     badge.className = "live-badge";
     badge.textContent = T.live(formatDate(proj.meta.electionDate));
     tile.querySelector("h2").after(badge);
+  } else if (days !== null && days > 60) {
+    // Otherwise, the date by which the next election must be held (fixed-date law; it can come sooner).
+    const next = document.createElement("p");
+    next.className = "next-election";
+    next.textContent = T.next(formatDate(proj.meta.electionDate));
+    host.closest(".tile.election").querySelector("h2").after(next);
   }
 
   const { bar, order, seats, threshold } = seatBar(proj, P);
@@ -176,7 +182,7 @@ function latestPolls(batches) {
     const li = document.createElement("li");
     li.innerHTML = `<span class="jurisdiction">${T.short[s.election] ?? T.name[s.election]}</span>` +
       `<span class="firm">${s.firm}</span>` +
-      `<span class="leading"><span class="sw" style="background:${s.color}"></span>${s.label} ${Math.round(s.value)}</span>` +
+      `<span class="leading"><span class="sw" style="background:${s.color}"></span>${s.label} ${formatPercent(s.value / 100)}</span>` +
       `<span class="date">${formatDate(s.date)}</span>`;
     ol.appendChild(li);
   }

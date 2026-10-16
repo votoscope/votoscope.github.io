@@ -515,7 +515,7 @@ Plot.plot({
 })
 
 // %% [markdown]
-// Dans la circonscription d'Ungava, la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions (moins que le gros lot du 6/49, environ 1 sur 14 millions).
+// Dans la circonscription d'Ungava, la plus serrée et l'une des moins peuplées, cette chance est d'environ 1 sur 4 100. Dans la circonscription médiane, elle est d'environ 1 sur 26 000. Dans 7 circonscriptions, elle est sous 1 sur 10 millions, l'ordre de grandeur du gros lot du 6/49 (environ 1 sur 14 millions).
 //
 // À la proportionnelle, tous les votes comptent, mais un vote change la répartition des sièges environ une fois sur 34 000 [4], un peu moins que la médiane d'aujourd'hui. Cette chance serait toutefois la même partout. Aujourd'hui, un vote pèse beaucoup plus dans une circonscription serrée que dans une circonscription sûre.
 

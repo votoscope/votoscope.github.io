@@ -9,21 +9,17 @@ const posts = listPosts(lang).slice(0, 3);
 const T = {
   fr: {
     headline: "Prévisions électorales",
-    intro: "Élections fédérales et provinciales au Canada : la probabilité de victoire de chaque parti dans chaque circonscription, calculée à partir des sondages et des résultats des élections précédentes. Modèles, code et données ouverts.",
+    intro: "Élections fédérales et provinciales au Canada : la probabilité de victoire de chaque parti dans chaque circonscription, calculée à partir des sondages et des résultats des élections précédentes. Données, code et modèles ouverts.",
     qc: "Québec", bc: "Colombie-Britannique", ca: "Canada",
     loading: "Chargement…", dashboard: "Tableau de bord", polls: "Derniers sondages",
     posts: "Billets", noPosts: "Aucun billet publié.", allPosts: "Tous les billets",
-    method: "Méthode", methodLink: "La méthode",
-    methodSummary: "Moyenne des sondages par processus gaussien sur les log-ratios des parts, report par circonscription à partir du dernier scrutin, simulation de l'incertitude. Chaque ajustement est estimé des données et retenu seulement s'il améliore la prévision d'élections passées.",
   },
   en: {
     headline: "Election forecasts",
-    intro: "Federal and provincial elections in Canada: each party's chance of winning every riding, built from polls and the results of previous elections. Open models, code and data.",
+    intro: "Federal and provincial elections in Canada: each party's chance of winning every riding, built from polls and the results of previous elections. Open data, code and models.",
     qc: "Quebec", bc: "British Columbia", ca: "Canada",
     loading: "Loading…", dashboard: "Dashboard", polls: "Latest polls",
     posts: "Posts", noPosts: "No posts yet.", allPosts: "All posts",
-    method: "Method", methodLink: "The method",
-    methodSummary: "Poll average by Gaussian process on the log-ratios of party shares, riding-level forecast from the last election, simulation of the uncertainty. Every adjustment is estimated from the data and kept only if it improves the forecast of past elections.",
   },
 }[lang];
 ---
@@ -64,11 +60,6 @@ const T = {
             {posts.map((p) => <li><a href={p.href}>{p.title}</a>{p.dateText && <span class="date">{p.dateText}</span>}</li>)}
           </ul>}
       <a class="more" href={PAGES.posts[lang]}>{T.allPosts}</a>
-    </section>
-    <section class="tile">
-      <h2>{T.method}</h2>
-      <p>{T.methodSummary}</p>
-      <a class="more" href={PAGES.method[lang]}>{T.methodLink}</a>
     </section>
   </div>
 

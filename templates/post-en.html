@@ -88,8 +88,12 @@
           </ul>
         </details></li>
         <li><a href="/en/posts/">Posts</a></li>
-        <li><a href="/en/method/">Method</a></li>
-        <li><a href="/en/about/">About</a></li>
+        <li class="menu"><details><summary>About</summary>
+          <ul>
+            <li><a href="/en/about/">The project</a></li>
+            <li><a href="/en/method/">Method</a></li>
+          </ul>
+        </details></li>
         <li class="language"><a href="/fr/posts/" hreflang="fr" lang="fr">Français</a></li>
       </ul>
     </nav>
@@ -108,7 +112,7 @@
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") burger.setAttribute("aria-expanded", nav.classList.toggle("open", false)); });
     </script>
     <footer class="site">
-      <p>Votovision is an independent project, with no partisan affiliation and no sponsor. Open code and data: <a href="https://github.com/votovision">github.com/votovision</a>.</p>
+      <p>Votovision is an independent project, with no partisan affiliation and no sponsor. Open data and open-source code: <a href="https://github.com/votovision">github.com/votovision</a>.</p>
     </footer>
   </body>
 </html>

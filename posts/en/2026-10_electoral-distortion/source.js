@@ -516,7 +516,7 @@ Plot.plot({
 })
 
 // %% [markdown]
-// In the riding of Ungava, the closest and one of the least populous, that chance is about 1 in 4,100. In the median riding, it is about 1 in 26,000. In 7 ridings, it is under 1 in 10 million (less than the Lotto 6/49 jackpot, about 1 in 14 million).
+// In the riding of Ungava, the closest and one of the least populous, that chance is about 1 in 4,100. In the median riding, it is about 1 in 26,000. In 7 ridings, it is under 1 in 10 million, the same order of magnitude as the Lotto 6/49 jackpot (about 1 in 14 million).
 //
 // Under proportional representation, every vote counts, but a vote changes the distribution of seats about once in 34,000 [4], a little less than today's median. That chance would be the same everywhere, though. Today, a vote weighs much more in a close riding than in a safe one.
 
